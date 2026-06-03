@@ -2219,22 +2219,23 @@ export default function Dashboard() {
               return (
                 <div style={{
                   position: "relative",
-                  backgroundColor: "#1e1e1e",
+                  backgroundColor: "#161616",
                   border: `1px solid ${S.border}`,
+                  borderRadius: "3px",
                   padding: "14px",
                   textAlign: "center",
                   display: "flex",
                   flexDirection: "column",
                   justifyContent: "center",
                   alignItems: "center",
-                  minHeight: "88px",
+                  minHeight: "95px",
                   overflow: "hidden"
                 }}>
                   {isLocked && (
                     <div style={{
                       position: "absolute",
                       inset: 0,
-                      backgroundColor: "rgba(20, 20, 20, 0.9)",
+                      backgroundColor: "rgba(20, 20, 20, 0.92)",
                       display: "flex",
                       flexDirection: "column",
                       alignItems: "center",
@@ -2242,8 +2243,12 @@ export default function Dashboard() {
                       padding: "8px",
                       zIndex: 2
                     }}>
-                      <span style={{ fontSize: "11px", color: S.orange, fontWeight: "bold" }}>STATS MOD</span>
-                      <span style={{ fontSize: "9px", color: S.muted, marginTop: "2px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Required</span>
+                      <span style={{ fontSize: "11px", color: S.orange, fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                        Stats Mod
+                      </span>
+                      <span style={{ fontSize: "8px", color: S.muted, marginTop: "2px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                        Required
+                      </span>
                     </div>
                   )}
                   <div style={{ filter: isLocked ? "blur(3px)" : "none", width: "100%", zIndex: 1 }}>
@@ -2253,7 +2258,7 @@ export default function Dashboard() {
                     <div style={{ fontSize: "20px", fontWeight: 700, color: color, marginTop: "6px", fontFamily: "monospace" }}>
                       {value}
                     </div>
-                    <span style={{ fontSize: "9.5px", color: S.muted, marginTop: "3px", display: "block" }}>
+                    <span style={{ fontSize: "9.5px", color: S.muted, marginTop: "4px", display: "block" }}>
                       {desc}
                     </span>
                   </div>
@@ -2265,237 +2270,397 @@ export default function Dashboard() {
               <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
                 <TabHeader label="Status & Control" icon={<Ico.Status />} />
 
-                <div style={{ padding: "16px 20px", display: "flex", flexDirection: "column", gap: "16px" }}>
+                <div style={{ padding: "20px", display: "flex", flexDirection: "column", gap: "20px" }}>
 
-                  {/* ── Identity + Controls row ── */}
-                  <div style={{
-                    backgroundColor: "#1e1e1e",
-                    border: `1px solid ${S.border}`,
-                    padding: "14px 18px",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    flexWrap: "wrap",
-                    gap: "14px",
-                  }}>
-                    {/* Identity */}
-                    <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                      <div style={{ fontSize: "16px", fontWeight: 600, color: S.white }}>MeowTopia</div>
-                      <div style={{ fontSize: "11px", color: S.muted, fontFamily: "monospace" }}>
-                        {statusData?.ip || "meowtopia-panel.duckdns.org:25565"}
-                        <span style={{ marginLeft: "12px" }}>Paper {statusData?.mcVersion || "1.21.11"}</span>
-                        <span style={{ marginLeft: "12px" }}>Java {statusData?.javaVersion || "21"}</span>
+                  {/* SERVER STATUS HERO CARD */}
+                  <div
+                    style={{
+                      backgroundColor: "#1c1c1c",
+                      border: `1px solid ${S.border}`,
+                      borderRadius: "4px",
+                      padding: "20px 24px",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      flexWrap: "wrap",
+                      gap: "20px",
+                      position: "relative",
+                      overflow: "hidden"
+                    }}
+                  >
+                    {/* Left side: Server Identity */}
+                    <div style={{ display: "flex", flexDirection: "column", gap: "6px", zIndex: 1 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                        <span style={{ fontSize: "10px", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "1.5px", color: S.cyan }}>
+                          Server Instance
+                        </span>
+                        <span style={{ fontSize: "10px", color: S.muted, fontFamily: "monospace", background: "rgba(255,255,255,0.05)", padding: "1px 6px", borderRadius: "3px" }}>
+                          ID: {statusData?.serverId || "946f16b4"}
+                        </span>
+                      </div>
+                      <h1 style={{ fontSize: "22px", fontWeight: 700, color: S.white, letterSpacing: "-0.5px", margin: 0 }}>
+                        MeowTopia Server
+                      </h1>
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "2px", fontSize: "12px", color: S.muted }}>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ opacity: 0.7 }}>
+                          <circle cx="12" cy="12" r="10" />
+                          <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
+                          <path d="M2 12h20" />
+                        </svg>
+                        <span style={{ fontFamily: "monospace" }}>{statusData?.ip || "meowtopia-panel.duckdns.org:25565"}</span>
                       </div>
                     </div>
 
-                    {/* Status + Uptime */}
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "3px" }}>
+                    {/* Center: Live Status Indicator */}
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px", zIndex: 1, minWidth: "150px" }}>
                       {actionLoading ? (
-                        <span style={{ fontFamily: "monospace", fontSize: "12px", color: S.orange, fontWeight: 600, letterSpacing: "0.5px" }}>
-                          [{actionLoading.toUpperCase()}ING]
-                        </span>
-                      ) : (
-                        <span style={{
-                          fontFamily: "monospace",
-                          fontSize: "13px",
-                          fontWeight: 700,
-                          letterSpacing: "1px",
-                          color: isOnline ? S.green : S.red
+                        <div style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                          background: "rgba(221, 136, 0, 0.1)",
+                          border: "1px solid rgba(221, 136, 0, 0.3)",
+                          padding: "6px 14px",
+                          borderRadius: "3px",
+                          color: "#ffaa33",
+                          fontWeight: "bold",
+                          fontSize: "12px",
+                          letterSpacing: "0.5px",
+                          textTransform: "uppercase"
                         }}>
-                          {isOnline ? "[  ONLINE  ]" : "[ OFFLINE ]"}
-                        </span>
+                          <span className="spinner-mini" style={{ borderTopColor: "#ffaa33", width: "10px", height: "10px" }} />
+                          {actionLoading}ING
+                        </div>
+                      ) : isOnline ? (
+                        <div style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                          background: "rgba(68, 170, 68, 0.1)",
+                          border: "1px solid rgba(68, 170, 68, 0.3)",
+                          padding: "6px 14px",
+                          borderRadius: "3px",
+                          color: "#66cc66",
+                          fontWeight: "bold",
+                          fontSize: "12px",
+                          letterSpacing: "0.5px"
+                        }}>
+                          <span style={{
+                            width: "7px",
+                            height: "7px",
+                            borderRadius: "50%",
+                            backgroundColor: "#44aa44",
+                            display: "inline-block"
+                          }} />
+                          ONLINE
+                        </div>
+                      ) : (
+                        <div style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                          background: "rgba(204, 51, 51, 0.1)",
+                          border: "1px solid rgba(204, 51, 51, 0.3)",
+                          padding: "6px 14px",
+                          borderRadius: "3px",
+                          color: "#ff6666",
+                          fontWeight: "bold",
+                          fontSize: "12px",
+                          letterSpacing: "0.5px"
+                        }}>
+                          <span style={{
+                            width: "7px",
+                            height: "7px",
+                            borderRadius: "50%",
+                            backgroundColor: "#cc3333",
+                            display: "inline-block"
+                          }} />
+                          OFFLINE
+                        </div>
                       )}
-                      <span style={{ fontSize: "10.5px", color: S.muted, fontFamily: "monospace" }}>
-                        {isOnline ? `up ${uptimeDisplay}` : "stopped"}
+
+                      <span style={{ fontSize: "11px", color: S.muted, fontWeight: 500, fontFamily: "monospace" }}>
+                        {isOnline ? `Uptime: ${uptimeDisplay}` : "Process Stopped"}
                       </span>
                     </div>
 
-                    {/* Power Controls */}
-                    <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                    {/* Right side: Power Controls */}
+                    <div style={{ display: "flex", gap: "8px", alignItems: "center", zIndex: 1 }}>
+                      {/* Start Button */}
                       <button
                         disabled={isOnline || !!actionLoading}
                         onClick={() => doPower("start")}
+                        title="Start Server"
                         className="button-hover"
                         style={{
-                          padding: "7px 14px",
-                          backgroundColor: isOnline || !!actionLoading ? "#2a2a2a" : S.green,
-                          border: `1px solid ${isOnline || !!actionLoading ? S.border : S.green}`,
-                          color: isOnline || !!actionLoading ? S.muted : "#0a0a0a",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: "6px",
+                          padding: "8px 14px",
+                          backgroundColor: isOnline || !!actionLoading ? "rgba(255,255,255,0.02)" : "rgba(68, 170, 68, 0.08)",
+                          border: `1px solid ${isOnline || !!actionLoading ? "rgba(255,255,255,0.05)" : "rgba(68, 170, 68, 0.3)"}`,
+                          borderRadius: "3px",
+                          color: isOnline || !!actionLoading ? S.muted : "#66cc66",
                           fontSize: "11.5px",
-                          fontWeight: 700,
+                          fontWeight: "bold",
                           cursor: isOnline || !!actionLoading ? "not-allowed" : "pointer",
-                          letterSpacing: "0.5px",
+                          opacity: isOnline || !!actionLoading ? 0.4 : 1,
+                          pointerEvents: isOnline || !!actionLoading ? "none" : "auto",
+                          transition: "all 0.1s ease"
                         }}
-                      >START</button>
+                      >
+                        <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor">
+                          <path d="M3 2l10 6-10 6z" />
+                        </svg>
+                        Start
+                      </button>
+
+                      {/* Restart Button */}
                       <button
                         disabled={!isOnline || !!actionLoading}
                         onClick={() => doPower("restart")}
+                        title="Restart Server"
                         className="button-hover"
                         style={{
-                          padding: "7px 14px",
-                          backgroundColor: !isOnline || !!actionLoading ? "#2a2a2a" : S.cyan,
-                          border: `1px solid ${!isOnline || !!actionLoading ? S.border : S.cyan}`,
-                          color: !isOnline || !!actionLoading ? S.muted : "#0a0a0a",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: "6px",
+                          padding: "8px 14px",
+                          backgroundColor: !isOnline || !!actionLoading ? "rgba(255,255,255,0.02)" : "rgba(78, 201, 225, 0.08)",
+                          border: `1px solid ${!isOnline || !!actionLoading ? "rgba(255,255,255,0.05)" : "rgba(78, 201, 225, 0.3)"}`,
+                          borderRadius: "3px",
+                          color: !isOnline || !!actionLoading ? S.muted : "#4ec9e1",
                           fontSize: "11.5px",
-                          fontWeight: 700,
+                          fontWeight: "bold",
                           cursor: !isOnline || !!actionLoading ? "not-allowed" : "pointer",
+                          opacity: !isOnline || !!actionLoading ? 0.4 : 1,
+                          pointerEvents: !isOnline || !!actionLoading ? "none" : "auto",
+                          transition: "all 0.1s ease"
                         }}
-                      >RESTART</button>
+                      >
+                        <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.5">
+                          <path d="M2 8a6 6 0 1 1 2.5 5" />
+                          <polyline points="1.5,10.5 2.5,13.5 5.5,12.5" />
+                        </svg>
+                        Restart
+                      </button>
+
+                      {/* Stop Button */}
                       <button
                         disabled={!isOnline || !!actionLoading}
                         onClick={() => doPower("stop")}
+                        title="Stop Server"
                         className="button-hover"
                         style={{
-                          padding: "7px 14px",
-                          backgroundColor: !isOnline || !!actionLoading ? "#2a2a2a" : S.red,
-                          border: `1px solid ${!isOnline || !!actionLoading ? S.border : S.red}`,
-                          color: !isOnline || !!actionLoading ? S.muted : S.white,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: "6px",
+                          padding: "8px 14px",
+                          backgroundColor: !isOnline || !!actionLoading ? "rgba(255,255,255,0.02)" : "rgba(204, 51, 51, 0.08)",
+                          border: `1px solid ${!isOnline || !!actionLoading ? "rgba(255,255,255,0.05)" : "rgba(204, 51, 51, 0.3)"}`,
+                          borderRadius: "3px",
+                          color: !isOnline || !!actionLoading ? S.muted : "#ff6666",
                           fontSize: "11.5px",
-                          fontWeight: 700,
+                          fontWeight: "bold",
                           cursor: !isOnline || !!actionLoading ? "not-allowed" : "pointer",
+                          opacity: !isOnline || !!actionLoading ? 0.4 : 1,
+                          pointerEvents: !isOnline || !!actionLoading ? "none" : "auto",
+                          transition: "all 0.1s ease"
                         }}
-                      >STOP</button>
+                      >
+                        <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor">
+                          <rect x="3" y="3" width="10" height="10" />
+                        </svg>
+                        Stop
+                      </button>
+
+                      {/* Force Kill Button */}
                       <button
                         disabled={!!actionLoading}
                         onClick={() => doPower("kill")}
+                        title="Force Kill Server"
                         className="button-hover"
                         style={{
-                          padding: "7px 14px",
-                          backgroundColor: "#2a2a2a",
-                          border: `1px solid ${S.border}`,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: "6px",
+                          padding: "8px 14px",
+                          backgroundColor: !!actionLoading ? "rgba(255,255,255,0.02)" : "rgba(136, 136, 136, 0.05)",
+                          border: `1px solid ${!!actionLoading ? "rgba(255,255,255,0.05)" : "rgba(136, 136, 136, 0.25)"}`,
+                          borderRadius: "3px",
                           color: S.muted,
                           fontSize: "11.5px",
-                          fontWeight: 700,
+                          fontWeight: "bold",
                           cursor: !!actionLoading ? "not-allowed" : "pointer",
-                          letterSpacing: "0.5px",
+                          opacity: !!actionLoading ? 0.4 : 1,
+                          pointerEvents: !!actionLoading ? "none" : "auto",
+                          transition: "all 0.1s ease"
                         }}
-                      >KILL</button>
-                    </div>
-                  </div>
-
-                  {/* ── Resources: CPU + RAM ── */}
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(380px, 1fr))", gap: "14px" }}>
-
-                    {/* CPU */}
-                    <div style={{
-                      backgroundColor: "#1e1e1e",
-                      border: `1px solid ${S.border}`,
-                      padding: "16px",
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "10px"
-                    }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                        <span style={{ fontSize: "10.5px", color: S.muted, textTransform: "uppercase", letterSpacing: "0.8px" }}>CPU Usage</span>
-                        <span style={{ fontSize: "16px", fontWeight: 700, color: S.orange, fontFamily: "monospace" }}>{cpuPct.toFixed(1)}%</span>
-                      </div>
-                      <div style={{ height: "52px", border: `1px solid ${S.border}`, overflow: "hidden" }}>
-                        <BarChart values={cpuHistory} color={S.chartOrange} />
-                      </div>
-                      <span style={{ fontSize: "10.5px", color: S.muted }}>
-                        {statusData?.maxCpus ? `${statusData.maxCpus} core limit` : "No core limit set"}
-                      </span>
-                    </div>
-
-                    {/* RAM */}
-                    <div style={{
-                      backgroundColor: "#1e1e1e",
-                      border: `1px solid ${S.border}`,
-                      padding: "16px",
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "10px"
-                    }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                        <span style={{ fontSize: "10.5px", color: S.muted, textTransform: "uppercase", letterSpacing: "0.8px" }}>Memory Usage</span>
-                        <span style={{ fontSize: "16px", fontWeight: 700, color: S.cyan, fontFamily: "monospace" }}>
-                          {Math.max(0, (((statusData?.memory || 0) - (ramBoostOffset * 1024 * 1024)) / (statusData?.maxMemory || 1)) * 100).toFixed(1)}%
-                        </span>
-                      </div>
-                      <div style={{ height: "52px", border: `1px solid ${S.border}`, overflow: "hidden" }}>
-                        <BarChart values={ramHistory.map(v => Math.max(0, v - (ramBoostOffset / 1024)))} color={S.chartBlue} />
-                      </div>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <span style={{ fontSize: "10.5px", color: S.muted }}>
-                          {Math.max(0, Number(ramMb) - ramBoostOffset)} MB used / {maxRamMb} MB allocated
-                        </span>
-                        <button
-                          onClick={boostRam}
-                          disabled={boostingRam || !isOnline}
-                          className="button-hover"
-                          style={{
-                            padding: "4px 10px",
-                            backgroundColor: boostingRam || !isOnline ? "#2a2a2a" : S.cyan,
-                            border: `1px solid ${boostingRam || !isOnline ? S.border : S.cyan}`,
-                            color: boostingRam || !isOnline ? S.muted : "#0a0a0a",
-                            fontSize: "11px",
-                            fontWeight: 700,
-                            cursor: boostingRam || !isOnline ? "not-allowed" : "pointer",
-                          }}
-                        >
-                          {boostingRam ? "Boosting..." : "Boost RAM"}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* ── Diagnostics & Telemetry ── */}
-                  <div style={{
-                    backgroundColor: "#1e1e1e",
-                    border: `1px solid ${S.border}`,
-                    padding: "16px",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "14px"
-                  }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <span style={{ fontSize: "10.5px", color: S.muted, textTransform: "uppercase", letterSpacing: "0.8px" }}>Diagnostics & Telemetry</span>
-                      <button
-                        onClick={() => {
-                          setHasStatsMod(!hasStatsMod);
-                          showToast(hasStatsMod ? "Stats Add-on disabled." : "Stats Add-on enabled.", hasStatsMod ? "info" : "success");
-                        }}
-                        style={{
-                          padding: "3px 8px",
-                          backgroundColor: hasStatsMod ? "#1a3a1a" : "#2a2a2a",
-                          border: `1px solid ${hasStatsMod ? S.green : S.border}`,
-                          color: hasStatsMod ? S.green : S.muted,
-                          fontSize: "11px",
-                          fontWeight: 600,
-                          cursor: "pointer",
-                        }}
-                        className="tab-hover"
                       >
-                        {hasStatsMod ? "STATS MOD: ON" : "STATS MOD: OFF"}
+                        <svg width="8" height="8" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.5">
+                          <path d="M1 1l14 14M15 1l-14 14" />
+                        </svg>
+                        Kill
                       </button>
                     </div>
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "10px" }}>
-                      {statCard("TPS", !isOnline ? "–" : (statusData?.tps || 20).toFixed(1), "Target: 20.0", true,
-                        isOnline && (statusData?.tps || 20) < 18.0 ? S.red : isOnline && (statusData?.tps || 20) < 19.5 ? S.orange : "#66cc66")}
-                      {statCard("Loaded Chunks", !isOnline ? "–" : (statusData?.loadedChunks || 0).toLocaleString(), "Active map regions", true, S.cyan)}
-                      {statCard("Entities", !isOnline ? "–" : (statusData?.loadedEntities || 0).toLocaleString(), "Active mobs/items", true, S.orange)}
-                      {statCard("Disk", fmtBytes(statusData?.diskUsageBytes || 3.46 * 1024 * 1024 * 1024), "World folder size", false, S.white)}
-                      {statCard("Net In", !isOnline ? "0 B/s" : `${fmtBytes(statusData?.networkIncoming || 0)}/s`, "Downloaded bytes", false, S.white)}
-                      {statCard("Net Out", !isOnline ? "0 B/s" : `${fmtBytes(statusData?.networkOutgoing || 0)}/s`, "Uploaded bytes", false, S.white)}
-                    </div>
                   </div>
 
-                  {/* ── Version + Specs row ── */}
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(380px, 1fr))", gap: "14px" }}>
+                  {/* TELEMETRY & RESOURCES GRID */}
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))", gap: "20px" }}>
 
-                    {/* Version Manager */}
+                    {/* SYSTEM RESOURCE CARD */}
                     <div style={{
-                      backgroundColor: "#1e1e1e",
+                      backgroundColor: "#1c1c1c",
                       border: `1px solid ${S.border}`,
-                      padding: "16px",
+                      padding: "20px",
+                      borderRadius: "4px",
                       display: "flex",
                       flexDirection: "column",
-                      gap: "14px"
+                      gap: "20px"
                     }}>
-                      <span style={{ fontSize: "10.5px", color: S.muted, textTransform: "uppercase", letterSpacing: "0.8px" }}>Version Manager</span>
-                      <div style={{ display: "flex", gap: "10px", alignItems: "flex-end", flexWrap: "wrap" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <div>
+                          <h2 style={{ fontSize: "14px", fontWeight: "bold", color: S.white, margin: 0 }}>System Resources</h2>
+                          <p style={{ fontSize: "11px", color: S.muted, margin: "2px 0 0" }}>Process hardware usage overview</p>
+                        </div>
+                      </div>
+
+                      <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                        {/* CPU */}
+                        <div>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "8px" }}>
+                            <span style={{ fontSize: "12px", color: S.white, fontWeight: 500 }}>CPU Usage</span>
+                            <span style={{ fontSize: "13px", fontWeight: "bold", color: S.orange, fontFamily: "monospace" }}>{cpuPct.toFixed(1)}%</span>
+                          </div>
+                          <div style={{ height: "60px", border: `1px solid ${S.border}`, overflow: "hidden" }}>
+                            <BarChart values={cpuHistory} color={S.chartOrange} />
+                          </div>
+                          <span style={{ fontSize: "10.5px", color: S.muted, marginTop: "4px", display: "block" }}>
+                            {statusData?.maxCpus ? `${statusData.maxCpus} core limit` : "No core limit set"}
+                          </span>
+                        </div>
+
+                        {/* RAM */}
+                        <div>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "8px" }}>
+                            <span style={{ fontSize: "12px", color: S.white, fontWeight: 500 }}>Memory Usage</span>
+                            <span style={{ fontSize: "13px", fontWeight: "bold", color: S.cyan, fontFamily: "monospace" }}>
+                              {Math.max(0, (((statusData?.memory || 0) - (ramBoostOffset * 1024 * 1024)) / (statusData?.maxMemory || 1)) * 100).toFixed(1)}%
+                            </span>
+                          </div>
+                          <div style={{ height: "60px", border: `1px solid ${S.border}`, overflow: "hidden" }}>
+                            <BarChart values={ramHistory.map(v => Math.max(0, v - (ramBoostOffset / 1024)))} color={S.chartBlue} />
+                          </div>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "6px" }}>
+                            <span style={{ fontSize: "10.5px", color: S.muted }}>
+                              {Math.max(0, Number(ramMb) - ramBoostOffset)} MB used / {maxRamMb} MB allocated
+                            </span>
+                            <button
+                              onClick={boostRam}
+                              disabled={boostingRam || !isOnline}
+                              className="button-hover"
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "4px",
+                                padding: "4px 10px",
+                                backgroundColor: boostingRam || !isOnline ? "rgba(255,255,255,0.02)" : "rgba(78, 201, 225, 0.08)",
+                                border: `1px solid ${boostingRam || !isOnline ? S.border : "rgba(78, 201, 225, 0.3)"}`,
+                                borderRadius: "3px",
+                                color: boostingRam || !isOnline ? S.muted : S.cyan,
+                                fontSize: "11px",
+                                fontWeight: "bold",
+                                cursor: boostingRam || !isOnline ? "not-allowed" : "pointer",
+                                opacity: isOnline ? 1 : 0.5,
+                                pointerEvents: isOnline ? "auto" : "none",
+                                transition: "all 0.1s ease"
+                              }}
+                            >
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                <path d="M12 2L2 22h20L12 2z" />
+                              </svg>
+                              <span>{boostingRam ? "Boosting..." : "Boost RAM"}</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* DIAGNOSTICS & TELEMETRY */}
+                    <div style={{
+                      backgroundColor: "#1c1c1c",
+                      border: `1px solid ${S.border}`,
+                      padding: "20px",
+                      borderRadius: "4px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "20px"
+                    }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <div>
+                          <h2 style={{ fontSize: "14px", fontWeight: "bold", color: S.white, margin: 0 }}>Diagnostics & Telemetry</h2>
+                          <p style={{ fontSize: "11px", color: S.muted, margin: "2px 0 0" }}>In-game stats & network load</p>
+                        </div>
+                        <button
+                          onClick={() => {
+                            setHasStatsMod(!hasStatsMod);
+                            showToast(hasStatsMod ? "Stats Add-on disabled." : "Stats Add-on enabled.", hasStatsMod ? "info" : "success");
+                          }}
+                          style={{
+                            padding: "4px 8px",
+                            backgroundColor: hasStatsMod ? "rgba(68, 170, 68, 0.08)" : "rgba(255,255,255,0.02)",
+                            border: `1px solid ${hasStatsMod ? "rgba(68, 170, 68, 0.3)" : S.border}`,
+                            borderRadius: "3px",
+                            color: hasStatsMod ? S.green : S.cyan,
+                            fontSize: "11px",
+                            fontWeight: "bold",
+                            cursor: "pointer",
+                            transition: "all 0.1s"
+                          }}
+                          className="tab-hover"
+                        >
+                          {hasStatsMod ? "Stats Mod: Active" : "Enable Stats Mod"}
+                        </button>
+                      </div>
+
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px", position: "relative" }}>
+                        {statCard("TPS", !isOnline ? "–" : (statusData?.tps || 20).toFixed(1), "Target: 20.0", true,
+                          isOnline && (statusData?.tps || 20) < 18.0 ? S.red : isOnline && (statusData?.tps || 20) < 19.5 ? S.orange : "#66cc66")}
+                        {statCard("Loaded Chunks", !isOnline ? "–" : (statusData?.loadedChunks || 0).toLocaleString(), "Active map regions", true, S.cyan)}
+                        {statCard("Entities", !isOnline ? "–" : (statusData?.loadedEntities || 0).toLocaleString(), "Active mobs/items", true, S.orange)}
+                        {statCard("Disk Space", fmtBytes(statusData?.diskUsageBytes || 3.46 * 1024 * 1024 * 1024), "World folder size", false, S.white)}
+                        {statCard("Incoming Net", !isOnline ? "0 B/s" : `${fmtBytes(statusData?.networkIncoming || 0)}/s`, "Downloaded bytes", false, S.white)}
+                        {statCard("Outgoing Net", !isOnline ? "0 B/s" : `${fmtBytes(statusData?.networkOutgoing || 0)}/s`, "Uploaded bytes", false, S.white)}
+                      </div>
+                    </div>
+
+                  </div>
+
+                  {/* SPECIFICATIONS & VERSION CONTROL SPLIT */}
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))", gap: "20px" }}>
+
+                    {/* VERSION MANAGER CARD */}
+                    <div style={{
+                      backgroundColor: "#1c1c1c",
+                      border: `1px solid ${S.border}`,
+                      padding: "20px",
+                      borderRadius: "4px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "16px"
+                    }}>
+                      <div>
+                        <h2 style={{ fontSize: "14px", fontWeight: "bold", color: S.white, margin: 0 }}>Version Manager</h2>
+                        <p style={{ fontSize: "11px", color: S.muted, margin: "2px 0 0" }}>Update or install server software</p>
+                      </div>
+
+                      <div style={{ display: "flex", gap: "12px", alignItems: "flex-end", flexWrap: "wrap" }}>
                         <div style={{ flex: 1, minWidth: "200px" }}>
-                          <label style={{ display: "block", fontSize: "11px", color: S.muted, marginBottom: "5px" }}>Software Version</label>
+                          <label style={{ display: "block", fontSize: "11px", color: S.muted, marginBottom: "6px" }}>Select Software Version</label>
                           <select
                             value={selectedVersion}
                             onChange={(e) => setSelectedVersion(e.target.value)}
@@ -2504,133 +2669,212 @@ export default function Dashboard() {
                               backgroundColor: S.input,
                               border: `1px solid ${S.inputBdr}`,
                               color: S.white,
-                              padding: "8px",
+                              padding: "10px",
                               fontSize: "12px",
                               outline: "none",
+                              borderRadius: "3px"
                             }}
                           >
-                            <option value="1.21.11">1.21.11 {statusData?.mcVersion === "1.21.11" ? "(Current)" : "(Latest)"}</option>
-                            <option value="1.21.4">1.21.4 {statusData?.mcVersion === "1.21.4" ? "(Current)" : ""}</option>
-                            <option value="1.21.1">1.21.1 {statusData?.mcVersion === "1.21.1" ? "(Current)" : ""}</option>
-                            <option value="1.20.4">1.20.4 {statusData?.mcVersion === "1.20.4" ? "(Current)" : ""}</option>
-                            <option value="1.20.1">1.20.1 {statusData?.mcVersion === "1.20.1" ? "(Current)" : ""}</option>
-                            <option value="1.19.4">1.19.4 {statusData?.mcVersion === "1.19.4" ? "(Current)" : ""}</option>
-                            <option value="1.18.2">1.18.2 {statusData?.mcVersion === "1.18.2" ? "(Current)" : ""}</option>
-                            <option value="1.16.5">1.16.5 {statusData?.mcVersion === "1.16.5" ? "(Current)" : ""}</option>
+                            <option value="1.21.11">1.21.11 {statusData?.mcVersion === "1.21.11" ? "(Current Version)" : "(Latest Release)"}</option>
+                            <option value="1.21.4">1.21.4 {statusData?.mcVersion === "1.21.4" ? "(Current Version)" : "(Stable Release)"}</option>
+                            <option value="1.21.1">1.21.1 {statusData?.mcVersion === "1.21.1" ? "(Current Version)" : ""}</option>
+                            <option value="1.20.4">1.20.4 {statusData?.mcVersion === "1.20.4" ? "(Current Version)" : "(Recommended Stable)"}</option>
+                            <option value="1.20.1">1.20.1 {statusData?.mcVersion === "1.20.1" ? "(Current Version)" : "(Popular Modded/Plugin)"}</option>
+                            <option value="1.19.4">1.19.4 {statusData?.mcVersion === "1.19.4" ? "(Current Version)" : ""}</option>
+                            <option value="1.18.2">1.18.2 {statusData?.mcVersion === "1.18.2" ? "(Current Version)" : ""}</option>
+                            <option value="1.16.5">1.16.5 {statusData?.mcVersion === "1.16.5" ? "(Current Version)" : "(Classic Legacy)"}</option>
                           </select>
                         </div>
+
                         <button
                           onClick={() => setConfirmReinstallOpen(true)}
                           disabled={reinstallingVersion}
-                          className="button-hover"
                           style={{
-                            padding: "8px 14px",
-                            backgroundColor: reinstallingVersion ? "#2a2a2a" : S.red,
+                            padding: "10px 16px",
+                            backgroundColor: reinstallingVersion ? "rgba(255,255,255,0.02)" : S.red,
                             border: `1px solid ${reinstallingVersion ? S.border : S.red}`,
-                            color: reinstallingVersion ? S.muted : S.white,
-                            fontWeight: 700,
+                            color: S.white,
+                            fontWeight: "bold",
                             fontSize: "12px",
-                            cursor: reinstallingVersion ? "not-allowed" : "pointer",
+                            borderRadius: "3px",
+                            cursor: reinstallingVersion ? "not-allowed" : "pointer"
                           }}
+                          className="button-hover"
                         >
                           {reinstallingVersion ? "Reinstalling..." : "Install & Reset"}
                         </button>
                       </div>
-                      <div style={{
-                        backgroundColor: "#1a1010",
-                        border: `1px solid #553333`,
-                        padding: "10px 12px",
-                        fontSize: "11px",
-                        color: "#cc6666",
-                        lineHeight: "1.5"
-                      }}>
-                        <strong>WARNING:</strong> Installing a new version wipes server files and plugins. Only <strong>backups/</strong> is preserved.
+
+                      <div
+                        style={{
+                          backgroundColor: "rgba(204, 51, 51, 0.05)",
+                          border: "1px dashed rgba(204, 51, 51, 0.25)",
+                          padding: "12px",
+                          borderRadius: "3px",
+                          fontSize: "11px",
+                          color: "#ff6666",
+                          display: "flex",
+                          gap: "8px",
+                          alignItems: "flex-start",
+                          lineHeight: "1.5"
+                        }}
+                      >
+                        <span style={{ fontWeight: "bold" }}>WARNING:</span>
+                        <span>
+                          Installing a new version completely wipes out your current server files, plugins, and worlds to install a fresh JAR. Only archives in the <strong>backups/</strong> folder are preserved. Ensure you have backed up your server first.
+                        </span>
                       </div>
                     </div>
 
-                    {/* Server Specs */}
+                    {/* SERVER SPECIFICATIONS & METADATA */}
                     <div style={{
-                      backgroundColor: "#1e1e1e",
+                      backgroundColor: "#1c1c1c",
                       border: `1px solid ${S.border}`,
-                      padding: "16px",
+                      padding: "20px",
+                      borderRadius: "4px",
                       display: "flex",
                       flexDirection: "column",
-                      gap: "14px"
+                      gap: "16px"
                     }}>
-                      <span style={{ fontSize: "10.5px", color: S.muted, textTransform: "uppercase", letterSpacing: "0.8px" }}>Server Specifications</span>
-                      <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "10px 20px", fontSize: "12px" }}>
+                      <div>
+                        <h2 style={{ fontSize: "14px", fontWeight: "bold", color: S.white, margin: 0 }}>Server Specifications</h2>
+                        <p style={{ fontSize: "11px", color: S.muted, margin: "2px 0 0" }}>Host environment and network parameters</p>
+                      </div>
+
+                      <div style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(2, 1fr)",
+                        gap: "12px 24px",
+                        fontSize: "12px",
+                        lineHeight: "1.6"
+                      }}>
                         <div>
-                          <span style={{ color: S.muted, display: "block", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Software</span>
-                          <span style={{ color: S.white, fontFamily: "monospace" }}>{statusData?.mcVersion || "1.21.1"} (Paper)</span>
+                          <span style={{ color: S.muted, display: "block", fontSize: "10.5px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Minecraft Software</span>
+                          <span style={{ color: S.white, fontWeight: 500 }}>{statusData?.mcVersion || "1.21.1"} (Paper)</span>
                         </div>
                         <div>
-                          <span style={{ color: S.muted, display: "block", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Java</span>
-                          <span style={{ color: S.white, fontFamily: "monospace" }}>Java {statusData?.javaVersion || "21"} (64-bit)</span>
+                          <span style={{ color: S.muted, display: "block", fontSize: "10.5px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Java Environment</span>
+                          <span style={{ color: S.white, fontWeight: 500 }}>Java {statusData?.javaVersion || "21"} (64-Bit)</span>
                         </div>
                         <div>
-                          <span style={{ color: S.muted, display: "block", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Memory</span>
-                          <span style={{ color: S.white, fontFamily: "monospace" }}>{statusData?.allocatedMemory || 12288} MB</span>
+                          <span style={{ color: S.muted, display: "block", fontSize: "10.5px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Allocated Memory</span>
+                          <span style={{ color: S.white, fontWeight: 500 }}>{statusData?.allocatedMemory || 12288} MB</span>
                         </div>
                         <div>
-                          <span style={{ color: S.muted, display: "block", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Network</span>
-                          <span style={{ color: S.white, fontFamily: "monospace" }}>{statusData?.bindIp || "0.0.0.0"}:{statusData?.port || 25565}</span>
+                          <span style={{ color: S.muted, display: "block", fontSize: "10.5px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Network Interface</span>
+                          <span style={{ color: S.white, fontWeight: 500 }}>{statusData?.bindIp || "0.0.0.0"}:{statusData?.port || 25565}</span>
                         </div>
+
                         <div style={{ gridColumn: "1 / -1" }}>
-                          <span style={{ color: S.muted, display: "block", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "4px" }}>MOTD</span>
-                          <div style={{ color: S.orange, fontFamily: "monospace", fontSize: "11px", backgroundColor: "#161616", padding: "6px 10px", border: `1px solid ${S.border}` }}>
+                          <span style={{ color: S.muted, display: "block", fontSize: "10.5px", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "4px" }}>Message of the Day (MOTD)</span>
+                          <div style={{
+                            color: S.orange,
+                            fontFamily: "monospace",
+                            fontSize: "11px",
+                            backgroundColor: "#161616",
+                            padding: "8px 12px",
+                            borderRadius: "3px",
+                            border: `1px solid ${S.border}`
+                          }}>
                             {statusData?.motd?.replace(/\\u00A7[0-9a-fk-or]/g, "") || "A Minecraft Server hosted on PufferPanel"}
                           </div>
                         </div>
-                        <div style={{ gridColumn: "1 / -1", borderTop: `1px solid ${S.border}`, paddingTop: "10px" }}>
-                          <span style={{ color: S.muted, display: "block", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "6px" }}>Quick Connect</span>
-                          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "#161616", padding: "6px 10px", border: `1px solid ${S.border}` }}>
-                              <span style={{ fontFamily: "monospace", fontSize: "11px", color: S.white }}>meowtopia-panel.duckdns.org:{statusData?.port || 25565}</span>
-                              <button onClick={() => { navigator.clipboard.writeText(`meowtopia-panel.duckdns.org:${statusData?.port || 25565}`); showToast("IP copied.", "success"); }}
+
+                        <div style={{ gridColumn: "1 / -1", borderTop: `1px solid ${S.border}`, paddingTop: "12px", marginTop: "4px" }}>
+                          <span style={{ color: S.muted, display: "block", fontSize: "10.5px", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "6px" }}>Quick Connect Info</span>
+                          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "#161616", padding: "8px 12px", borderRadius: "3px", border: `1px solid ${S.border}` }}>
+                              <span style={{ fontFamily: "monospace", fontSize: "11px", color: S.white }}>
+                                IP: meowtopia-panel.duckdns.org:{statusData?.port || 25565}
+                              </span>
+                              <button
+                                onClick={() => {
+                                  navigator.clipboard.writeText(`meowtopia-panel.duckdns.org:${statusData?.port || 25565}`);
+                                  showToast("Game connection IP address copied to clipboard.", "success");
+                                }}
+                                style={{
+                                  backgroundColor: "rgba(78, 201, 225, 0.08)",
+                                  border: `1px solid rgba(78, 201, 225, 0.25)`,
+                                  color: S.cyan,
+                                  padding: "2px 8px",
+                                  fontSize: "10px",
+                                  fontWeight: "bold",
+                                  cursor: "pointer",
+                                  borderRadius: "3px"
+                                }}
                                 className="button-hover"
-                                style={{ backgroundColor: "#2a2a2a", border: `1px solid ${S.border}`, color: S.cyan, padding: "2px 8px", fontSize: "10px", fontWeight: 700, cursor: "pointer" }}>
+                              >
                                 Copy IP
                               </button>
                             </div>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "#161616", padding: "6px 10px", border: `1px solid ${S.border}` }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "#161616", padding: "8px 12px", borderRadius: "3px", border: `1px solid ${S.border}` }}>
                               <span style={{ fontFamily: "monospace", fontSize: "11px", color: S.white, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "80%" }}>
-                                sftp://{statusData?.sftpUsername || "agreeable_guy-946f16b4"}@{statusData?.sftpHost || "meowtopia-panel.duckdns.org"}:{statusData?.sftpPort || 5657}
+                                SFTP: sftp://{statusData?.sftpUsername || "agreeable_guy-946f16b4"}@{statusData?.sftpHost || "meowtopia-panel.duckdns.org"}:{statusData?.sftpPort || 5657}
                               </span>
-                              <button onClick={() => { navigator.clipboard.writeText(`sftp://${statusData?.sftpUsername || "agreeable_guy-946f16b4"}@${statusData?.sftpHost || "meowtopia-panel.duckdns.org"}:${statusData?.sftpPort || 5657}`); showToast("SFTP URI copied.", "success"); }}
+                              <button
+                                onClick={() => {
+                                  navigator.clipboard.writeText(
+                                    `sftp://${statusData?.sftpUsername || "agreeable_guy-946f16b4"}@${
+                                      statusData?.sftpHost || "meowtopia-panel.duckdns.org"
+                                    }:${statusData?.sftpPort || 5657}`
+                                  );
+                                  showToast("SFTP connection URI copied to clipboard.", "success");
+                                }}
+                                style={{
+                                  backgroundColor: "rgba(78, 201, 225, 0.08)",
+                                  border: `1px solid rgba(78, 201, 225, 0.25)`,
+                                  color: S.cyan,
+                                  padding: "2px 8px",
+                                  fontSize: "10px",
+                                  fontWeight: "bold",
+                                  cursor: "pointer",
+                                  borderRadius: "3px"
+                                }}
                                 className="button-hover"
-                                style={{ backgroundColor: "#2a2a2a", border: `1px solid ${S.border}`, color: S.cyan, padding: "2px 8px", fontSize: "10px", fontWeight: 700, cursor: "pointer" }}>
+                              >
                                 Copy SFTP
                               </button>
                             </div>
                           </div>
                         </div>
+
                       </div>
                     </div>
+
                   </div>
 
-                  {/* ── Startup Config ── */}
+                  {/* STARTUP VARIABLES CARD */}
                   <div style={{
-                    backgroundColor: "#1e1e1e",
+                    backgroundColor: "#1c1c1c",
                     border: `1px solid ${S.border}`,
-                    padding: "16px",
+                    padding: "20px",
+                    borderRadius: "4px",
                     display: "flex",
                     flexDirection: "column",
-                    gap: "14px"
+                    gap: "16px"
                   }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <span style={{ fontSize: "10.5px", color: S.muted, textTransform: "uppercase", letterSpacing: "0.8px" }}>Startup Configuration</span>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                      <div>
+                        <h2 style={{ fontSize: "14px", fontWeight: "bold", color: S.white, margin: 0 }}>Startup Configuration</h2>
+                        <p style={{ fontSize: "11px", color: S.muted, margin: "2px 0 0" }}>Configure JVM parameters and server JAR targets</p>
+                      </div>
                       <div style={{ fontSize: "11px", display: "flex", alignItems: "center", gap: "6px" }}>
                         {savingStartup ? (
                           <span style={{ color: S.cyan, display: "flex", alignItems: "center", gap: "4px" }}>
-                            <span className="spinner-mini" /> Saving...
+                            <span className="spinner-mini" style={{ width: "10px", height: "10px" }} /> Saving...
                           </span>
                         ) : startupSavedTime ? (
-                          <span style={{ color: S.green }}>Saved at {startupSavedTime}</span>
+                          <span style={{ color: S.green }}>
+                            ✓ Saved at {startupSavedTime}
+                          </span>
                         ) : (
-                          <span style={{ color: S.muted }}>Saved</span>
+                          <span style={{ color: S.muted }}>
+                            ✓ Saved
+                          </span>
                         )}
                       </div>
                     </div>
+
                     {renderStartupVariablesForm(true)}
                   </div>
 
