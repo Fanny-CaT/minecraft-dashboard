@@ -217,6 +217,94 @@ const S = {
   inputBdr: "#444",
 };
 
+// ─── Popular Plugins Catalog ──────────────────────────────────────────────────
+const POPULAR_PLUGINS_META: Record<string, { name: string; tagline: string; iconUrl: string; provider: string; color: string; bg: string; border: string }> = {
+  essentials: {
+    name: "EssentialsX",
+    tagline: "Essential commands, teleports, economy, and moderating tools for Spigot/Paper.",
+    iconUrl: "https://cdn.modrinth.com/user_content/img/V3a1mU1R.png",
+    provider: "Spiget",
+    color: "#0ea5e9", bg: "rgba(14, 165, 233, 0.1)", border: "rgba(14, 165, 233, 0.3)"
+  },
+  vault: {
+    name: "Vault",
+    tagline: "Secure framework connecting chat, economy, and permission systems with major plugins.",
+    iconUrl: "https://cdn.spigotmc.org/image/resources-logos/3431.png",
+    provider: "Spiget",
+    color: "#0ea5e9", bg: "rgba(14, 165, 233, 0.1)", border: "rgba(14, 165, 233, 0.3)"
+  },
+  luckperms: {
+    name: "LuckPerms",
+    tagline: "Advanced permissions system with web GUI editor and database syncing.",
+    iconUrl: "https://avatars.githubusercontent.com/u/23616654?v=4",
+    provider: "Modrinth",
+    color: "#10b981", bg: "rgba(16, 185, 129, 0.1)", border: "rgba(16, 185, 129, 0.3)"
+  },
+  worldedit: {
+    name: "WorldEdit",
+    tagline: "Extremely fast in-game world generation and block manipulation tool.",
+    iconUrl: "https://cdn.modrinth.com/user_content/img/mC7zV2Ua.png",
+    provider: "Modrinth",
+    color: "#10b981", bg: "rgba(16, 185, 129, 0.1)", border: "rgba(16, 185, 129, 0.3)"
+  },
+  dynmap: {
+    name: "Dynmap",
+    tagline: "Google Maps-like browser viewer of your server worlds showing real-time player locations.",
+    iconUrl: "https://cdn.modrinth.com/user_content/img/c1tZ4p1q.png",
+    provider: "Modrinth",
+    color: "#10b981", bg: "rgba(16, 185, 129, 0.1)", border: "rgba(16, 185, 129, 0.3)"
+  },
+  geyser: {
+    name: "GeyserMC",
+    tagline: "Bridge proxy code enabling Bedrock Edition clients (mobile/consoles) to connect directly.",
+    iconUrl: "https://avatars.githubusercontent.com/u/58882583?v=4",
+    provider: "Modrinth",
+    color: "#10b981", bg: "rgba(16, 185, 129, 0.1)", border: "rgba(16, 185, 129, 0.3)"
+  },
+  viabackwards: {
+    name: "ViaBackwards",
+    tagline: "Allows players using older client versions to connect to your newer server version.",
+    iconUrl: "https://cdn.modrinth.com/user_content/img/z7X4y6vR.png",
+    provider: "Modrinth",
+    color: "#10b981", bg: "rgba(16, 185, 129, 0.1)", border: "rgba(16, 185, 129, 0.3)"
+  },
+  viaversion: {
+    name: "ViaVersion",
+    tagline: "Allows players using newer client versions to connect to your older server version.",
+    iconUrl: "https://cdn.modrinth.com/user_content/img/y3T4b6vQ.png",
+    provider: "Modrinth",
+    color: "#10b981", bg: "rgba(16, 185, 129, 0.1)", border: "rgba(16, 185, 129, 0.3)"
+  },
+  placeholderapi: {
+    name: "PlaceholderAPI",
+    tagline: "Dynamic variables replacement engine displaying rich stats in other plugin UI messages.",
+    iconUrl: "https://cdn.spigotmc.org/image/resources-logos/6245.png",
+    provider: "Spiget",
+    color: "#0ea5e9", bg: "rgba(14, 165, 233, 0.1)", border: "rgba(14, 165, 233, 0.3)"
+  },
+  protocollib: {
+    name: "ProtocolLib",
+    tagline: "Lower-level packets manipulation hook library used by advanced server systems.",
+    iconUrl: "https://cdn.spigotmc.org/image/resources-logos/1996.png",
+    provider: "Spiget",
+    color: "#0ea5e9", bg: "rgba(14, 165, 233, 0.1)", border: "rgba(14, 165, 233, 0.3)"
+  },
+  multiverse: {
+    name: "Multiverse-Core",
+    tagline: "Manage separate dimensions and custom worlds on a single server machine.",
+    iconUrl: "https://cdn.spigotmc.org/image/resources-logos/390.png",
+    provider: "Spiget",
+    color: "#0ea5e9", bg: "rgba(14, 165, 233, 0.1)", border: "rgba(14, 165, 233, 0.3)"
+  },
+  chunky: {
+    name: "Chunky",
+    tagline: "Pre-generates server chunks dynamically to completely resolve player exploration lag.",
+    iconUrl: "https://cdn.modrinth.com/user_content/img/lX7y5p1q.png",
+    provider: "Modrinth",
+    color: "#10b981", bg: "rgba(16, 185, 129, 0.1)", border: "rgba(16, 185, 129, 0.3)"
+  }
+};
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function Dashboard() {
@@ -292,7 +380,7 @@ export default function Dashboard() {
   const [pluginSearch, setPluginSearch] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searchingPlugins, setSearchingPlugins] = useState(false);
-  const [installingPluginId, setInstallingPluginId] = useState<string | null>(null);
+  const [installingPluginIds, setInstallingPluginIds] = useState<Record<string, boolean>>({});
   const [pluginError, setPluginError] = useState("");
   const [pluginCategory, setPluginCategory] = useState<string>("");
   const [filterProvider, setFilterProvider] = useState<string>("all");
@@ -922,7 +1010,7 @@ export default function Dashboard() {
   };
 
   const installPlugin = async (plugin: any) => {
-    setInstallingPluginId(plugin.id);
+    setInstallingPluginIds((prev) => ({ ...prev, [plugin.id]: true }));
     setPluginError("");
     showToast(`Downloading & installing "${plugin.name}"...`, "info");
     try {
@@ -949,7 +1037,11 @@ export default function Dashboard() {
       setPluginError(err.message || "Failed to install plugin");
       showToast(`Plugin install failed: ${err.message}`, "error");
     } finally {
-      setInstallingPluginId(null);
+      setInstallingPluginIds((prev) => {
+        const next = { ...prev };
+        delete next[plugin.id];
+        return next;
+      });
     }
   };
 
@@ -4108,12 +4200,12 @@ export default function Dashboard() {
                                       {loadingPlugins ? "Uninstalling..." : "Uninstall"}
                                     </button>
                                   ) : (
-                                    <Btn
-                                      label={installingPluginId === plugin.id ? "Installing..." : "Install"}
-                                      color={S.green}
-                                      onClick={() => installPlugin(plugin)}
-                                      disabled={installingPluginId !== null}
-                                    />
+                                     <Btn
+                                       label={!!installingPluginIds[plugin.id] ? "Installing..." : "Install"}
+                                       color={S.green}
+                                       onClick={() => installPlugin(plugin)}
+                                       disabled={!!installingPluginIds[plugin.id]}
+                                     />
                                   )}
                                 </div>
                               </div>
@@ -4157,47 +4249,126 @@ export default function Dashboard() {
                       No plugins found in /plugins directory. Try browsing and installing plugins above.
                     </div>
                   ) : (
-                    <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                      {installedPlugins.map((plugin) => (
-                        <div
-                          key={plugin.name}
-                          style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                            padding: "8px 12px",
-                            backgroundColor: "#1e1e1e",
-                            border: `1px solid ${S.border}`,
-                            borderRadius: "3px",
-                          }}
-                        >
-                          <div>
-                            <span style={{ color: S.cyan, fontWeight: "bold", fontFamily: "monospace", fontSize: "12.5px" }}>
-                              📄 {plugin.name}
-                            </span>
-                            {plugin.size !== undefined && (
-                              <span style={{ color: S.muted, fontSize: "10px", marginLeft: "10px" }}>
-                                ({fmtFileSize(plugin.size)})
-                              </span>
-                            )}
-                          </div>
-                          <button
-                            onClick={() => deletePlugin(plugin.name)}
-                            className="button-hover"
+                    <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                      {installedPlugins.map((plugin) => {
+                        const filenameClean = plugin.name.replace(/\.jar$/i, "").toLowerCase().replace(/[^a-z0-9]/g, "");
+                        
+                        let matched: any = searchResults.find((p) => {
+                          const searchNameClean = p.name.toLowerCase().replace(/[^a-z0-9]/g, "");
+                          return filenameClean === searchNameClean || filenameClean.includes(searchNameClean) || searchNameClean.includes(filenameClean);
+                        });
+
+                        if (!matched) {
+                          const key = Object.keys(POPULAR_PLUGINS_META).find((k) => filenameClean.includes(k) || k.includes(filenameClean));
+                          if (key) {
+                            matched = POPULAR_PLUGINS_META[key];
+                          }
+                        }
+
+                        const iconUrl = matched?.iconUrl;
+                        const displayName = matched?.name || plugin.name.replace(/\.jar$/i, "");
+                        const tagline = matched?.tagline || `Local plugin jar file. Path: plugins/${plugin.name}`;
+                        const provider = matched?.provider || "Local File";
+                        const sizeText = plugin.size !== undefined ? fmtFileSize(plugin.size) : "";
+                        const providerColor = matched?.color || S.muted;
+                        const providerBg = matched?.bg || "rgba(255,255,255,0.03)";
+                        const providerBorder = matched?.border || S.border;
+
+                        return (
+                          <div
+                            key={plugin.name}
                             style={{
-                              background: "none",
-                              border: `1px solid #444`,
-                              color: "#aa4444",
-                              cursor: "pointer",
-                              padding: "3px 10px",
-                              fontSize: "11px",
-                              borderRadius: "2px",
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                              padding: "10px 14px",
+                              backgroundColor: "#1e1e1e",
+                              border: `1px solid ${S.border}`,
+                              borderRadius: "3px",
                             }}
                           >
-                            Uninstall
-                          </button>
-                        </div>
-                      ))}
+                            <div style={{ display: "flex", gap: "14px", alignItems: "center", flex: 1, marginRight: "16px", minWidth: 0 }}>
+                              {iconUrl ? (
+                                <img
+                                  src={iconUrl}
+                                  alt={displayName}
+                                  style={{ width: "36px", height: "36px", objectFit: "contain", borderRadius: "4px", backgroundColor: "#252525" }}
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).style.display = "none";
+                                  }}
+                                />
+                              ) : (
+                                <div style={{
+                                  width: "36px",
+                                  height: "36px",
+                                  borderRadius: "4px",
+                                  backgroundColor: "#252525",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  color: S.cyan,
+                                  border: `1px solid ${S.border}`,
+                                  flexShrink: 0
+                                }}>
+                                  <Ico.Plugins />
+                                </div>
+                              )}
+                              <div style={{ minWidth: 0, flex: 1 }}>
+                                <div style={{ fontWeight: 600, color: S.white, fontSize: "13.5px", display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                                  <span>{displayName}</span>
+                                  <span style={{
+                                    fontSize: "9px",
+                                    textTransform: "uppercase",
+                                    letterSpacing: "0.5px",
+                                    color: providerColor,
+                                    backgroundColor: providerBg,
+                                    border: `1px solid ${providerBorder}`,
+                                    padding: "1px 5px",
+                                    borderRadius: "3px",
+                                    fontWeight: "bold"
+                                  }}>
+                                    {provider}
+                                  </span>
+                                  {sizeText && (
+                                    <span style={{
+                                      fontSize: "9px",
+                                      letterSpacing: "0.5px",
+                                      color: S.muted,
+                                      backgroundColor: "rgba(255,255,255,0.03)",
+                                      border: `1px solid ${S.border}`,
+                                      padding: "1px 5px",
+                                      borderRadius: "3px"
+                                    }}>
+                                      {sizeText}
+                                    </span>
+                                  )}
+                                </div>
+                                <div style={{ fontSize: "11px", color: S.muted, marginTop: "3px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                  {tagline}
+                                </div>
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => deletePlugin(plugin.name)}
+                              className="button-hover"
+                              style={{
+                                backgroundColor: "rgba(239, 68, 68, 0.08)",
+                                border: "1px solid rgba(239, 68, 68, 0.25)",
+                                color: "#ef4444",
+                                cursor: "pointer",
+                                padding: "5px 12px",
+                                fontSize: "11px",
+                                borderRadius: "3px",
+                                fontWeight: "bold",
+                                transition: "all 0.1s"
+                              }}
+                              disabled={loadingPlugins}
+                            >
+                              {loadingPlugins ? "Uninstalling..." : "Uninstall"}
+                            </button>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
