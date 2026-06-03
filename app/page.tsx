@@ -2048,7 +2048,7 @@ export default function Dashboard() {
           backgroundColor: S.topBar,
           borderBottom: `1px solid ${S.border}`,
           padding: "0 16px",
-          height: "32px",
+          height: "36px",
           fontSize: "12px",
           color: S.muted,
           display: "flex",
@@ -2057,17 +2057,23 @@ export default function Dashboard() {
           flexShrink: 0,
         }}
       >
-        <span style={{ fontWeight: 600, color: S.white, letterSpacing: "0.3px" }}>MEOWTOPIA</span>
+        {/* Pixel cat icon */}
+        <img
+          src="/meow_icon.png"
+          alt="MeowTopia"
+          style={{ width: "22px", height: "22px", imageRendering: "pixelated", flexShrink: 0 }}
+        />
+        <span style={{ fontWeight: 700, color: S.white, letterSpacing: "0.5px", fontSize: "13px" }}>MeowTopia</span>
         <span style={{ color: S.border }}>|</span>
-        <span style={{ color: isOnline ? S.green : S.red, fontFamily: "monospace", fontSize: "11px" }}>
-          {isOnline ? "[ONLINE]" : "[OFFLINE]"}
+        <span style={{ color: isOnline ? S.green : S.red, fontFamily: "monospace", fontSize: "11px", fontWeight: 600 }}>
+          {isOnline ? "● ONLINE" : "● OFFLINE"}
         </span>
         <span style={{ color: S.border }}>|</span>
         <span style={{ color: S.muted, fontFamily: "monospace", fontSize: "11px" }}>
           {statusData?.ip || "meowtopia-panel.duckdns.org:25565"}
         </span>
         <span style={{ marginLeft: "auto", color: S.muted, fontFamily: "monospace", fontSize: "11px" }}>
-          id:{statusData?.serverId || "946f16b4"}
+          id:<span style={{ color: S.white }}>{statusData?.serverId || "946f16b4"}</span>
         </span>
       </div>
 
@@ -2123,13 +2129,14 @@ export default function Dashboard() {
                     width: "100%",
                     padding: sidebarCollapsed ? "12px 0" : "12px 18px",
                     justifyContent: sidebarCollapsed ? "center" : "flex-start",
-                    backgroundColor: active ? "#2a2a2a" : "transparent",
-                    color: active ? S.white : S.muted,
+                    backgroundColor: active ? "rgba(221,136,0,0.10)" : "transparent",
+                    color: active ? S.orange : S.cyan,
                     border: "none",
                     borderLeft: active ? `3px solid ${S.orange}` : "3px solid transparent",
                     cursor: "pointer",
                     fontSize: "12.5px",
                     textAlign: "left",
+                    opacity: active ? 1 : 0.85,
                     outline: "none",
                     transition: "background-color 0.1s ease",
                   }}
@@ -2174,6 +2181,7 @@ export default function Dashboard() {
             )}
           </button>
 
+          {/* Sidebar brand footer */}
           <div
             style={{
               padding: "10px 14px",
@@ -2185,7 +2193,11 @@ export default function Dashboard() {
               overflow: "hidden",
             }}
           >
-            {sidebarCollapsed ? "Aether" : "Aether MCMA v2.2.0"}
+            {sidebarCollapsed ? (
+              <img src="/meow_icon.png" alt="" style={{ width: "16px", height: "16px", imageRendering: "pixelated", opacity: 0.5 }} />
+            ) : (
+              <span style={{ color: S.muted }}>Aether MCMA v2.2.0</span>
+            )}
           </div>
         </div>
 
