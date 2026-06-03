@@ -1951,78 +1951,52 @@ export default function Dashboard() {
         .dropdown-menu {
           animation: fadeIn 0.15s ease-out forwards;
         }
-        .glow-hover {
-          transition: all 0.2s ease;
-        }
-        .glow-hover:hover {
-          border-color: #dd8800 !important;
-        }
         .button-hover {
-          transition: all 0.15s ease;
+          transition: opacity 0.12s ease;
         }
         .button-hover:hover {
-          opacity: 0.85 !important;
-          transform: translateY(-0.5px);
-        }
-        .button-hover:active {
-          transform: translateY(0);
+          opacity: 0.8 !important;
         }
         .tab-hover {
-          transition: all 0.15s ease;
+          transition: background-color 0.1s ease;
         }
         .tab-hover:hover {
           background-color: #2e2e2e !important;
         }
-        .chip-hover {
-          transition: all 0.15s ease;
-          cursor: pointer;
-        }
-        .chip-hover:hover {
-          border-color: #dd8800 !important;
-          color: #dd8800 !important;
-        }
         .spinner {
-          border: 2.5px solid rgba(221, 136, 0, 0.1);
+          border: 2px solid #333;
           border-top-color: #dd8800;
           border-radius: 50%;
-          width: 24px;
-          height: 24px;
-          animation: spin 0.8s linear infinite;
+          width: 20px;
+          height: 20px;
+          animation: spin 0.7s linear infinite;
         }
         .spinner-mini {
-          border: 1.5px solid rgba(221, 136, 0, 0.1);
+          border: 1.5px solid #333;
           border-top-color: #dd8800;
           border-radius: 50%;
-          width: 12px;
-          height: 12px;
-          animation: spin 0.8s linear infinite;
+          width: 11px;
+          height: 11px;
+          animation: spin 0.7s linear infinite;
           display: inline-block;
           vertical-align: middle;
         }
         .caution-bar {
           animation: blink 3s infinite ease-in-out;
         }
-        @keyframes pulse-green-kf {
-          0% { box-shadow: 0 0 0 0 rgba(68, 170, 68, 0.4); }
-          70% { box-shadow: 0 0 0 8px rgba(68, 170, 68, 0); }
-          100% { box-shadow: 0 0 0 0 rgba(68, 170, 68, 0); }
-        }
-        .pulse-green {
-          animation: pulse-green-kf 2s infinite;
-        }
       `,
         }}
       />
 
-      {/* Modern Glassmorphic Toast Notifications Container */}
+      {/* Toast Notifications */}
       <div
         style={{
           position: "fixed",
-          top: "16px",
-          right: "16px",
+          top: "14px",
+          right: "14px",
           display: "flex",
           flexDirection: "column",
-          gap: "10px",
+          gap: "6px",
           zIndex: 9999,
           pointerEvents: "none",
         }}
@@ -2032,43 +2006,34 @@ export default function Dashboard() {
             key={t.id}
             style={{
               pointerEvents: "auto",
-              padding: "11px 16px",
-              backgroundColor:
-                t.type === "success"
-                  ? "rgba(34, 55, 34, 0.92)"
-                  : t.type === "error"
-                  ? "rgba(55, 34, 34, 0.92)"
-                  : "rgba(25, 32, 45, 0.92)",
-              border: `1px solid ${
+              padding: "9px 14px 9px 12px",
+              backgroundColor: "#1e1e1e",
+              border: `1px solid #333`,
+              borderLeft: `3px solid ${
                 t.type === "success" ? S.green : t.type === "error" ? S.red : S.cyan
               }`,
-              color: "#ffffff",
-              fontSize: "12.5px",
-              borderRadius: "4px",
-              boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
-              backdropFilter: "blur(6px)",
+              color: S.white,
+              fontSize: "12px",
               display: "flex",
               alignItems: "center",
-              justifyContent: "space-between",
-              gap: "12px",
+              gap: "10px",
               minWidth: "260px",
-              maxWidth: "380px",
-              animation: "slideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+              maxWidth: "360px",
+              animation: "fadeIn 0.15s ease-out forwards",
             }}
           >
-            <span style={{ flex: 1 }}>
-              {t.type === "success" ? "✅" : t.type === "error" ? "❌" : "ℹ️"} {t.msg}
-            </span>
+            <span style={{ flex: 1 }}>{t.msg}</span>
             <button
               onClick={() => setToasts((prev) => prev.filter((item) => item.id !== t.id))}
               style={{
                 background: "none",
                 border: "none",
-                color: "#999",
+                color: S.muted,
                 cursor: "pointer",
                 fontSize: "14px",
-                padding: 0,
+                padding: "0 10px 0 0",
                 lineHeight: 1,
+                flexShrink: 0,
               }}
             >
               ×
@@ -2077,32 +2042,32 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* ── Top bar ── */}
+      {/* Top bar */}
       <div
         style={{
           backgroundColor: S.topBar,
           borderBottom: `1px solid ${S.border}`,
-          padding: "6px 16px",
+          padding: "0 16px",
+          height: "32px",
           fontSize: "12px",
           color: S.muted,
           display: "flex",
           alignItems: "center",
-          gap: "6px",
+          gap: "10px",
           flexShrink: 0,
         }}
       >
-        <span style={{ color: S.orange, marginRight: "4px" }}>🟧</span>
-        <span style={{ fontWeight: "bold", color: S.white }}>Meowtopia Control Panel</span>
+        <span style={{ fontWeight: 600, color: S.white, letterSpacing: "0.3px" }}>MEOWTOPIA</span>
         <span style={{ color: S.border }}>|</span>
-        <span style={{ color: isOnline ? "#44cc44" : S.red }}>
-          {isOnline ? "● ONLINE" : "● OFFLINE"}
+        <span style={{ color: isOnline ? S.green : S.red, fontFamily: "monospace", fontSize: "11px" }}>
+          {isOnline ? "[ONLINE]" : "[OFFLINE]"}
         </span>
         <span style={{ color: S.border }}>|</span>
-        <span style={{ color: S.muted }}>
+        <span style={{ color: S.muted, fontFamily: "monospace", fontSize: "11px" }}>
           {statusData?.ip || "meowtopia-panel.duckdns.org:25565"}
         </span>
-        <span style={{ marginLeft: "auto", color: S.muted, fontSize: "11px" }}>
-          Server ID: <span style={{ color: S.white }}>{statusData?.serverId || "946f16b4"}</span>
+        <span style={{ marginLeft: "auto", color: S.muted, fontFamily: "monospace", fontSize: "11px" }}>
+          id:{statusData?.serverId || "946f16b4"}
         </span>
       </div>
 
@@ -2124,7 +2089,7 @@ export default function Dashboard() {
             flexShrink: 0,
           }}
         >
-          <span>⚠️ Cannot communicate with PufferPanel VM Daemon. Showing cached configuration. Retrying...</span>
+          <span>WARN: Cannot communicate with PufferPanel daemon. Showing cached data. Retrying...</span>
         </div>
       )}
 
@@ -2158,18 +2123,15 @@ export default function Dashboard() {
                     width: "100%",
                     padding: sidebarCollapsed ? "12px 0" : "12px 18px",
                     justifyContent: sidebarCollapsed ? "center" : "flex-start",
-                    backgroundColor: active ? "rgba(221, 136, 0, 0.08)" : "transparent",
-                    color: active ? S.orange : S.cyan,
+                    backgroundColor: active ? "#2a2a2a" : "transparent",
+                    color: active ? S.white : S.muted,
                     border: "none",
                     borderLeft: active ? `3px solid ${S.orange}` : "3px solid transparent",
                     cursor: "pointer",
                     fontSize: "12.5px",
                     textAlign: "left",
-                    opacity: active ? 1 : 0.7,
                     outline: "none",
-                    boxShadow: active ? "inset 0 0 10px rgba(221, 136, 0, 0.1)" : "none",
-                    textShadow: active ? "0 0 8px rgba(221, 136, 0, 0.4)" : "none",
-                    transition: "padding 0.2s ease, justify-content 0.2s ease",
+                    transition: "background-color 0.1s ease",
                   }}
                 >
                   <span style={{ opacity: 0.9, flexShrink: 0, display: "flex", alignItems: "center" }}>{item.icon}</span>
@@ -2245,25 +2207,22 @@ export default function Dashboard() {
               return (
                 <div style={{
                   position: "relative",
-                  backgroundColor: "#1c1c1c",
-                  border: `1px solid rgba(255, 255, 255, 0.05)`,
-                  borderRadius: "6px",
+                  backgroundColor: "#1e1e1e",
+                  border: `1px solid ${S.border}`,
                   padding: "14px",
                   textAlign: "center",
                   display: "flex",
                   flexDirection: "column",
                   justifyContent: "center",
                   alignItems: "center",
-                  minHeight: "95px",
+                  minHeight: "88px",
                   overflow: "hidden"
                 }}>
                   {isLocked && (
                     <div style={{
                       position: "absolute",
                       inset: 0,
-                      backgroundColor: "rgba(20, 20, 20, 0.85)",
-                      backdropFilter: "blur(3px)",
-                      borderRadius: "6px",
+                      backgroundColor: "rgba(20, 20, 20, 0.9)",
                       display: "flex",
                       flexDirection: "column",
                       alignItems: "center",
@@ -2271,20 +2230,18 @@ export default function Dashboard() {
                       padding: "8px",
                       zIndex: 2
                     }}>
-                      <span style={{ fontSize: "11px", color: S.orange, fontWeight: "bold", display: "flex", alignItems: "center", gap: "4px" }}>
-                        ⚠️ Stats Mod
-                      </span>
-                      <span style={{ fontSize: "8px", color: S.muted, marginTop: "2px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Required</span>
+                      <span style={{ fontSize: "11px", color: S.orange, fontWeight: "bold" }}>STATS MOD</span>
+                      <span style={{ fontSize: "9px", color: S.muted, marginTop: "2px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Required</span>
                     </div>
                   )}
                   <div style={{ filter: isLocked ? "blur(3px)" : "none", width: "100%", zIndex: 1 }}>
-                    <span style={{ fontSize: "10px", color: S.muted, textTransform: "uppercase", letterSpacing: "0.5px", display: "block" }}>
+                    <span style={{ fontSize: "9.5px", color: S.muted, textTransform: "uppercase", letterSpacing: "0.8px", display: "block" }}>
                       {label}
                     </span>
-                    <div style={{ fontSize: "20px", fontWeight: 800, color: color, marginTop: "6px", fontFamily: "monospace" }}>
+                    <div style={{ fontSize: "20px", fontWeight: 700, color: color, marginTop: "6px", fontFamily: "monospace" }}>
                       {value}
                     </div>
-                    <span style={{ fontSize: "9.5px", color: S.muted, marginTop: "4px", display: "block" }}>
+                    <span style={{ fontSize: "9.5px", color: S.muted, marginTop: "3px", display: "block" }}>
                       {desc}
                     </span>
                   </div>
@@ -2296,449 +2253,237 @@ export default function Dashboard() {
               <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
                 <TabHeader label="Status & Control" icon={<Ico.Status />} />
 
-                <div style={{ padding: "20px", display: "flex", flexDirection: "column", gap: "20px" }}>
-                  
-                  {/* SERVER STATUS HERO CARD */}
-                  <div
-                    style={{
-                      background: "linear-gradient(135deg, rgba(30, 30, 30, 0.7) 0%, rgba(20, 20, 20, 0.9) 100%)",
-                      backdropFilter: "blur(12px)",
-                      border: `1px solid rgba(255, 255, 255, 0.06)`,
-                      borderRadius: "8px",
-                      padding: "24px",
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      flexWrap: "wrap",
-                      gap: "20px",
-                      boxShadow: isOnline 
-                        ? "0 4px 24px rgba(68, 170, 68, 0.06), inset 0 1px 0 rgba(255,255,255,0.05)" 
-                        : "0 4px 24px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255,255,255,0.03)",
-                      position: "relative",
-                      overflow: "hidden"
-                    }}
-                  >
-                    {/* Glow background flare */}
-                    <div style={{
-                      position: "absolute",
-                      top: "-50px",
-                      left: "-50px",
-                      width: "150px",
-                      height: "150px",
-                      borderRadius: "50%",
-                      background: isOnline ? "rgba(68, 170, 68, 0.08)" : "rgba(204, 51, 51, 0.05)",
-                      filter: "blur(50px)",
-                      pointerEvents: "none"
-                    }} />
+                <div style={{ padding: "16px 20px", display: "flex", flexDirection: "column", gap: "16px" }}>
 
-                    {/* Left side: Server Identity */}
-                    <div style={{ display: "flex", flexDirection: "column", gap: "6px", zIndex: 1 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                        <span style={{ fontSize: "10px", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "1.5px", color: S.cyan }}>
-                          Server Instance
-                        </span>
-                        <span style={{ fontSize: "10px", color: S.muted, fontFamily: "monospace", background: "rgba(255,255,255,0.05)", padding: "1px 6px", borderRadius: "3px" }}>
-                          ID: {statusData?.serverId || "946f16b4"}
-                        </span>
-                      </div>
-                      <h1 style={{ fontSize: "24px", fontWeight: 800, color: S.white, letterSpacing: "-0.5px", margin: 0 }}>
-                        MeowTopia Server
-                      </h1>
-                      <div style={{ display: "flex", alignItems: "center", gap: "12px", marginTop: "4px", fontSize: "12px", color: S.muted }}>
-                        <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                          🌐 {statusData?.ip || "meowtopia-panel.duckdns.org:25565"}
-                        </span>
+                  {/* ── Identity + Controls row ── */}
+                  <div style={{
+                    backgroundColor: "#1e1e1e",
+                    border: `1px solid ${S.border}`,
+                    padding: "14px 18px",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    flexWrap: "wrap",
+                    gap: "14px",
+                  }}>
+                    {/* Identity */}
+                    <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                      <div style={{ fontSize: "16px", fontWeight: 600, color: S.white }}>MeowTopia</div>
+                      <div style={{ fontSize: "11px", color: S.muted, fontFamily: "monospace" }}>
+                        {statusData?.ip || "meowtopia-panel.duckdns.org:25565"}
+                        <span style={{ marginLeft: "12px" }}>Paper {statusData?.mcVersion || "1.21.11"}</span>
+                        <span style={{ marginLeft: "12px" }}>Java {statusData?.javaVersion || "21"}</span>
                       </div>
                     </div>
 
-                    {/* Center: Live Status Indicator */}
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px", zIndex: 1, minWidth: "150px" }}>
+                    {/* Status + Uptime */}
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "3px" }}>
                       {actionLoading ? (
-                        <div style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "8px",
-                          background: "rgba(221, 136, 0, 0.12)",
-                          border: "1px solid rgba(221, 136, 0, 0.3)",
-                          padding: "6px 16px",
-                          borderRadius: "20px",
-                          color: "#ffaa33",
-                          fontWeight: "bold",
-                          fontSize: "13px",
-                          letterSpacing: "0.5px",
-                          textTransform: "uppercase"
-                        }}>
-                          <span className="spinner-mini" style={{ borderTopColor: "#ffaa33" }} />
-                          {actionLoading}ING
-                        </div>
-                      ) : isOnline ? (
-                        <div style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "8px",
-                          background: "rgba(68, 170, 68, 0.12)",
-                          border: "1px solid rgba(68, 170, 68, 0.3)",
-                          padding: "6px 16px",
-                          borderRadius: "20px",
-                          color: "#66cc66",
-                          fontWeight: "bold",
-                          fontSize: "13px",
-                          letterSpacing: "0.5px",
-                          textShadow: "0 0 10px rgba(102, 204, 102, 0.3)"
-                        }} className="pulse-green-container">
-                          <span style={{
-                            width: "8px",
-                            height: "8px",
-                            borderRadius: "50%",
-                            backgroundColor: "#44aa44",
-                            display: "inline-block"
-                          }} className="pulse-green" />
-                          ONLINE
-                        </div>
+                        <span style={{ fontFamily: "monospace", fontSize: "12px", color: S.orange, fontWeight: 600, letterSpacing: "0.5px" }}>
+                          [{actionLoading.toUpperCase()}ING]
+                        </span>
                       ) : (
-                        <div style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "8px",
-                          background: "rgba(204, 51, 51, 0.12)",
-                          border: "1px solid rgba(204, 51, 51, 0.3)",
-                          padding: "6px 16px",
-                          borderRadius: "20px",
-                          color: "#ff6666",
-                          fontWeight: "bold",
+                        <span style={{
+                          fontFamily: "monospace",
                           fontSize: "13px",
-                          letterSpacing: "0.5px"
+                          fontWeight: 700,
+                          letterSpacing: "1px",
+                          color: isOnline ? S.green : S.red
                         }}>
-                          <span style={{
-                            width: "8px",
-                            height: "8px",
-                            borderRadius: "50%",
-                            backgroundColor: "#cc3333",
-                            display: "inline-block"
-                          }} />
-                          OFFLINE
-                        </div>
+                          {isOnline ? "[  ONLINE  ]" : "[ OFFLINE ]"}
+                        </span>
                       )}
-
-                      <span style={{ fontSize: "11px", color: S.muted, fontWeight: 500 }}>
-                        {isOnline ? `Uptime: ${uptimeDisplay}` : "Process Stopped"}
+                      <span style={{ fontSize: "10.5px", color: S.muted, fontFamily: "monospace" }}>
+                        {isOnline ? `up ${uptimeDisplay}` : "stopped"}
                       </span>
                     </div>
 
-                    {/* Right side: Power Controls */}
-                    <div style={{ display: "flex", gap: "8px", alignItems: "center", zIndex: 1 }}>
-                      {/* Start Button */}
+                    {/* Power Controls */}
+                    <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
                       <button
                         disabled={isOnline || !!actionLoading}
                         onClick={() => doPower("start")}
-                        title="Start Server"
                         className="button-hover"
                         style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          gap: "6px",
-                          padding: "10px 16px",
-                          backgroundColor: isOnline ? "rgba(255,255,255,0.02)" : "rgba(68, 170, 68, 0.1)",
-                          border: `1px solid ${isOnline ? "rgba(255,255,255,0.05)" : "rgba(68, 170, 68, 0.3)"}`,
-                          borderRadius: "6px",
-                          color: isOnline ? S.muted : "#66cc66",
-                          fontSize: "12px",
-                          fontWeight: "bold",
+                          padding: "7px 14px",
+                          backgroundColor: isOnline || !!actionLoading ? "#2a2a2a" : S.green,
+                          border: `1px solid ${isOnline || !!actionLoading ? S.border : S.green}`,
+                          color: isOnline || !!actionLoading ? S.muted : "#0a0a0a",
+                          fontSize: "11.5px",
+                          fontWeight: 700,
                           cursor: isOnline || !!actionLoading ? "not-allowed" : "pointer",
-                          opacity: isOnline ? 0.4 : 1,
-                          transition: "all 0.2s ease"
+                          letterSpacing: "0.5px",
                         }}
-                      >
-                        <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
-                          <path d="M3 2l10 6-10 6z" />
-                        </svg>
-                        Start
-                      </button>
-
-                      {/* Restart Button */}
+                      >START</button>
                       <button
                         disabled={!isOnline || !!actionLoading}
                         onClick={() => doPower("restart")}
-                        title="Restart Server"
                         className="button-hover"
                         style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          gap: "6px",
-                          padding: "10px 16px",
-                          backgroundColor: !isOnline ? "rgba(255,255,255,0.02)" : "rgba(78, 201, 225, 0.1)",
-                          border: `1px solid ${!isOnline ? "rgba(255,255,255,0.05)" : "rgba(78, 201, 225, 0.3)"}`,
-                          borderRadius: "6px",
-                          color: !isOnline ? S.muted : "#4ec9e1",
-                          fontSize: "12px",
-                          fontWeight: "bold",
+                          padding: "7px 14px",
+                          backgroundColor: !isOnline || !!actionLoading ? "#2a2a2a" : S.cyan,
+                          border: `1px solid ${!isOnline || !!actionLoading ? S.border : S.cyan}`,
+                          color: !isOnline || !!actionLoading ? S.muted : "#0a0a0a",
+                          fontSize: "11.5px",
+                          fontWeight: 700,
                           cursor: !isOnline || !!actionLoading ? "not-allowed" : "pointer",
-                          opacity: !isOnline ? 0.4 : 1,
-                          transition: "all 0.2s ease"
                         }}
-                      >
-                        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M2 8a6 6 0 1 1 2.5 5" />
-                          <polyline points="1.5,10.5 2.5,13.5 5.5,12.5" />
-                        </svg>
-                        Restart
-                      </button>
-
-                      {/* Stop Button */}
+                      >RESTART</button>
                       <button
                         disabled={!isOnline || !!actionLoading}
                         onClick={() => doPower("stop")}
-                        title="Stop Server"
                         className="button-hover"
                         style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          gap: "6px",
-                          padding: "10px 16px",
-                          backgroundColor: !isOnline ? "rgba(255,255,255,0.02)" : "rgba(204, 51, 51, 0.1)",
-                          border: `1px solid ${!isOnline ? "rgba(255,255,255,0.05)" : "rgba(204, 51, 51, 0.3)"}`,
-                          borderRadius: "6px",
-                          color: !isOnline ? S.muted : "#ff6666",
-                          fontSize: "12px",
-                          fontWeight: "bold",
+                          padding: "7px 14px",
+                          backgroundColor: !isOnline || !!actionLoading ? "#2a2a2a" : S.red,
+                          border: `1px solid ${!isOnline || !!actionLoading ? S.border : S.red}`,
+                          color: !isOnline || !!actionLoading ? S.muted : S.white,
+                          fontSize: "11.5px",
+                          fontWeight: 700,
                           cursor: !isOnline || !!actionLoading ? "not-allowed" : "pointer",
-                          opacity: !isOnline ? 0.4 : 1,
-                          transition: "all 0.2s ease"
                         }}
-                      >
-                        <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
-                          <rect x="3" y="3" width="10" height="10" />
-                        </svg>
-                        Stop
-                      </button>
-
-                      {/* Force Kill Button */}
+                      >STOP</button>
                       <button
                         disabled={!!actionLoading}
                         onClick={() => doPower("kill")}
-                        title="Force Kill Server"
                         className="button-hover"
                         style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          gap: "6px",
-                          padding: "10px 16px",
-                          backgroundColor: "rgba(136, 136, 136, 0.05)",
-                          border: `1px solid rgba(136, 136, 136, 0.2)`,
-                          borderRadius: "6px",
+                          padding: "7px 14px",
+                          backgroundColor: "#2a2a2a",
+                          border: `1px solid ${S.border}`,
                           color: S.muted,
-                          fontSize: "12px",
-                          fontWeight: "bold",
+                          fontSize: "11.5px",
+                          fontWeight: 700,
                           cursor: !!actionLoading ? "not-allowed" : "pointer",
-                          transition: "all 0.2s ease"
+                          letterSpacing: "0.5px",
                         }}
-                      >
-                        <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M1 1l14 14M15 1l-14 14" />
-                        </svg>
-                        Kill
-                      </button>
+                      >KILL</button>
                     </div>
-
                   </div>
 
-                  {/* TELEMETRY & RESOURCES GRID */}
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))", gap: "20px" }}>
-                    
-                    {/* SYSTEM RESOURCE CARD */}
+                  {/* ── Resources: CPU + RAM ── */}
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(380px, 1fr))", gap: "14px" }}>
+
+                    {/* CPU */}
                     <div style={{
-                      backgroundColor: "rgba(30, 30, 30, 0.6)",
-                      backdropFilter: "blur(8px)",
-                      border: "1px solid rgba(255,255,255,0.06)",
-                      padding: "20px",
-                      borderRadius: "8px",
+                      backgroundColor: "#1e1e1e",
+                      border: `1px solid ${S.border}`,
+                      padding: "16px",
                       display: "flex",
                       flexDirection: "column",
-                      gap: "20px"
+                      gap: "10px"
                     }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <div>
-                          <h2 style={{ fontSize: "14px", fontWeight: "bold", color: S.white, margin: 0 }}>System Resources</h2>
-                          <p style={{ fontSize: "11px", color: S.muted, margin: "2px 0 0" }}>Process hardware usage overview</p>
-                        </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                        <span style={{ fontSize: "10.5px", color: S.muted, textTransform: "uppercase", letterSpacing: "0.8px" }}>CPU Usage</span>
+                        <span style={{ fontSize: "16px", fontWeight: 700, color: S.orange, fontFamily: "monospace" }}>{cpuPct.toFixed(1)}%</span>
                       </div>
-
-                      <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                        {/* CPU */}
-                        <div>
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-                            <span style={{ fontSize: "12px", color: S.white, fontWeight: 500 }}>CPU Usage</span>
-                            <span style={{ fontSize: "13px", fontWeight: "bold", color: S.orange }}>{cpuPct.toFixed(1)}%</span>
-                          </div>
-                          <div style={{ height: "60px", borderRadius: "4px", overflow: "hidden", border: `1px solid ${S.border}` }}>
-                            <BarChart values={cpuHistory} color={S.chartOrange} />
-                          </div>
-                          <span style={{ fontSize: "10.5px", color: S.muted, marginTop: "4px", display: "block" }}>
-                            Thread limit: {statusData?.maxCpus || "unlimited"} cores
-                          </span>
-                        </div>
-
-                        {/* RAM */}
-                        <div>
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-                            <span style={{ fontSize: "12px", color: S.white, fontWeight: 500 }}>Memory Usage</span>
-                            <span style={{ fontSize: "13px", fontWeight: "bold", color: S.cyan }}>
-                              {Math.max(0, (((statusData?.memory || 0) - (ramBoostOffset * 1024 * 1024)) / (statusData?.maxMemory || 1)) * 100).toFixed(1)}%
-                            </span>
-                          </div>
-                          <div style={{ height: "60px", borderRadius: "4px", overflow: "hidden", border: `1px solid ${S.border}` }}>
-                            <BarChart values={ramHistory.map(v => Math.max(0, v - (ramBoostOffset / 1024)))} color={S.chartBlue} />
-                          </div>
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "6px" }}>
-                            <span style={{ fontSize: "10.5px", color: S.muted }}>
-                              Used: {Math.max(0, Number(ramMb) - ramBoostOffset)} MB / Allocated: {maxRamMb} MB
-                            </span>
-                            <button
-                              onClick={boostRam}
-                              disabled={boostingRam || !isOnline}
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "4px",
-                                padding: "4px 10px",
-                                backgroundColor: boostingRam ? "transparent" : "rgba(78, 201, 225, 0.1)",
-                                border: `1px solid ${boostingRam ? S.border : "rgba(78, 201, 225, 0.3)"}`,
-                                borderRadius: "4px",
-                                color: boostingRam ? S.muted : S.cyan,
-                                fontSize: "11px",
-                                fontWeight: "bold",
-                                cursor: boostingRam || !isOnline ? "not-allowed" : "pointer",
-                                opacity: isOnline ? 1 : 0.5,
-                                transition: "all 0.2s ease"
-                              }}
-                              className="button-hover"
-                            >
-                              <span>🚀</span>
-                              <span>{boostingRam ? "Boosting..." : "Boost RAM"}</span>
-                            </button>
-                          </div>
-                        </div>
+                      <div style={{ height: "52px", border: `1px solid ${S.border}`, overflow: "hidden" }}>
+                        <BarChart values={cpuHistory} color={S.chartOrange} />
                       </div>
+                      <span style={{ fontSize: "10.5px", color: S.muted }}>
+                        {statusData?.maxCpus ? `${statusData.maxCpus} core limit` : "No core limit set"}
+                      </span>
                     </div>
 
-                    {/* DIAGNOSTICS & TELEMETRY */}
+                    {/* RAM */}
                     <div style={{
-                      backgroundColor: "rgba(30, 30, 30, 0.6)",
-                      backdropFilter: "blur(8px)",
-                      border: "1px solid rgba(255,255,255,0.06)",
-                      padding: "20px",
-                      borderRadius: "8px",
+                      backgroundColor: "#1e1e1e",
+                      border: `1px solid ${S.border}`,
+                      padding: "16px",
                       display: "flex",
                       flexDirection: "column",
-                      gap: "20px"
+                      gap: "10px"
                     }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                        <span style={{ fontSize: "10.5px", color: S.muted, textTransform: "uppercase", letterSpacing: "0.8px" }}>Memory Usage</span>
+                        <span style={{ fontSize: "16px", fontWeight: 700, color: S.cyan, fontFamily: "monospace" }}>
+                          {Math.max(0, (((statusData?.memory || 0) - (ramBoostOffset * 1024 * 1024)) / (statusData?.maxMemory || 1)) * 100).toFixed(1)}%
+                        </span>
+                      </div>
+                      <div style={{ height: "52px", border: `1px solid ${S.border}`, overflow: "hidden" }}>
+                        <BarChart values={ramHistory.map(v => Math.max(0, v - (ramBoostOffset / 1024)))} color={S.chartBlue} />
+                      </div>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <div>
-                          <h2 style={{ fontSize: "14px", fontWeight: "bold", color: S.white, margin: 0 }}>Diagnostics & Telemetry</h2>
-                          <p style={{ fontSize: "11px", color: S.muted, margin: "2px 0 0" }}>In-game stats & network load</p>
-                        </div>
+                        <span style={{ fontSize: "10.5px", color: S.muted }}>
+                          {Math.max(0, Number(ramMb) - ramBoostOffset)} MB used / {maxRamMb} MB allocated
+                        </span>
                         <button
-                          onClick={() => {
-                            setHasStatsMod(!hasStatsMod);
-                            showToast(hasStatsMod ? "Stats Add-on uninstalled." : "Stats Add-on installed successfully!", hasStatsMod ? "info" : "success");
-                          }}
+                          onClick={boostRam}
+                          disabled={boostingRam || !isOnline}
+                          className="button-hover"
                           style={{
-                            padding: "4px 8px",
-                            backgroundColor: hasStatsMod ? "rgba(16, 185, 129, 0.1)" : "transparent",
-                            border: `1px solid ${hasStatsMod ? "rgba(16, 185, 129, 0.3)" : S.border}`,
-                            borderRadius: "4px",
-                            color: hasStatsMod ? "#10b981" : S.cyan,
+                            padding: "4px 10px",
+                            backgroundColor: boostingRam || !isOnline ? "#2a2a2a" : S.cyan,
+                            border: `1px solid ${boostingRam || !isOnline ? S.border : S.cyan}`,
+                            color: boostingRam || !isOnline ? S.muted : "#0a0a0a",
                             fontSize: "11px",
-                            fontWeight: "bold",
-                            cursor: "pointer",
-                            transition: "all 0.2s"
+                            fontWeight: 700,
+                            cursor: boostingRam || !isOnline ? "not-allowed" : "pointer",
                           }}
-                          className="tab-hover"
                         >
-                          {hasStatsMod ? "✓ Stats Mod Active" : "Install Stats Mod"}
+                          {boostingRam ? "Boosting..." : "Boost RAM"}
                         </button>
                       </div>
-
-                      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px", position: "relative" }}>
-                        {/* TPS */}
-                        {statCard(
-                          "TPS",
-                          !isOnline ? "–" : (statusData?.tps || 20).toFixed(1),
-                          `Target: 20.0`,
-                          true,
-                          isOnline && (statusData?.tps || 20) < 18.0 ? S.red : isOnline && (statusData?.tps || 20) < 19.5 ? S.orange : "#66cc66"
-                        )}
-                        {/* Chunks */}
-                        {statCard(
-                          "Loaded Chunks",
-                          !isOnline ? "–" : (statusData?.loadedChunks || 0).toLocaleString(),
-                          "Active map regions",
-                          true,
-                          S.cyan
-                        )}
-                        {/* Entities */}
-                        {statCard(
-                          "Entities",
-                          !isOnline ? "–" : (statusData?.loadedEntities || 0).toLocaleString(),
-                          "Active mobs/items",
-                          true,
-                          S.orange
-                        )}
-                        {/* Disk */}
-                        {statCard(
-                          "Disk Space",
-                          fmtBytes(statusData?.diskUsageBytes || 3.46 * 1024 * 1024 * 1024),
-                          "World folder size",
-                          false,
-                          S.white
-                        )}
-                        {/* Net In */}
-                        {statCard(
-                          "Incoming Net",
-                          !isOnline ? "0 B/s" : `${fmtBytes(statusData?.networkIncoming || 0)}/s`,
-                          "Downloaded bytes",
-                          false,
-                          S.white
-                        )}
-                        {/* Net Out */}
-                        {statCard(
-                          "Outgoing Net",
-                          !isOnline ? "0 B/s" : `${fmtBytes(statusData?.networkOutgoing || 0)}/s`,
-                          "Uploaded bytes",
-                          false,
-                          S.white
-                        )}
-                      </div>
                     </div>
-
                   </div>
 
-                  {/* SPECIFICATIONS & VERSION CONTROL SPLIT */}
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))", gap: "20px" }}>
-                    
-                    {/* VERSION MANAGER CARD */}
+                  {/* ── Diagnostics & Telemetry ── */}
+                  <div style={{
+                    backgroundColor: "#1e1e1e",
+                    border: `1px solid ${S.border}`,
+                    padding: "16px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "14px"
+                  }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <span style={{ fontSize: "10.5px", color: S.muted, textTransform: "uppercase", letterSpacing: "0.8px" }}>Diagnostics & Telemetry</span>
+                      <button
+                        onClick={() => {
+                          setHasStatsMod(!hasStatsMod);
+                          showToast(hasStatsMod ? "Stats Add-on disabled." : "Stats Add-on enabled.", hasStatsMod ? "info" : "success");
+                        }}
+                        style={{
+                          padding: "3px 8px",
+                          backgroundColor: hasStatsMod ? "#1a3a1a" : "#2a2a2a",
+                          border: `1px solid ${hasStatsMod ? S.green : S.border}`,
+                          color: hasStatsMod ? S.green : S.muted,
+                          fontSize: "11px",
+                          fontWeight: 600,
+                          cursor: "pointer",
+                        }}
+                        className="tab-hover"
+                      >
+                        {hasStatsMod ? "STATS MOD: ON" : "STATS MOD: OFF"}
+                      </button>
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "10px" }}>
+                      {statCard("TPS", !isOnline ? "–" : (statusData?.tps || 20).toFixed(1), "Target: 20.0", true,
+                        isOnline && (statusData?.tps || 20) < 18.0 ? S.red : isOnline && (statusData?.tps || 20) < 19.5 ? S.orange : "#66cc66")}
+                      {statCard("Loaded Chunks", !isOnline ? "–" : (statusData?.loadedChunks || 0).toLocaleString(), "Active map regions", true, S.cyan)}
+                      {statCard("Entities", !isOnline ? "–" : (statusData?.loadedEntities || 0).toLocaleString(), "Active mobs/items", true, S.orange)}
+                      {statCard("Disk", fmtBytes(statusData?.diskUsageBytes || 3.46 * 1024 * 1024 * 1024), "World folder size", false, S.white)}
+                      {statCard("Net In", !isOnline ? "0 B/s" : `${fmtBytes(statusData?.networkIncoming || 0)}/s`, "Downloaded bytes", false, S.white)}
+                      {statCard("Net Out", !isOnline ? "0 B/s" : `${fmtBytes(statusData?.networkOutgoing || 0)}/s`, "Uploaded bytes", false, S.white)}
+                    </div>
+                  </div>
+
+                  {/* ── Version + Specs row ── */}
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(380px, 1fr))", gap: "14px" }}>
+
+                    {/* Version Manager */}
                     <div style={{
-                      backgroundColor: "rgba(30, 30, 30, 0.6)",
-                      backdropFilter: "blur(8px)",
-                      border: "1px solid rgba(255,255,255,0.06)",
-                      padding: "20px",
-                      borderRadius: "8px",
+                      backgroundColor: "#1e1e1e",
+                      border: `1px solid ${S.border}`,
+                      padding: "16px",
                       display: "flex",
                       flexDirection: "column",
-                      gap: "16px"
+                      gap: "14px"
                     }}>
-                      <div>
-                        <h2 style={{ fontSize: "14px", fontWeight: "bold", color: S.white, margin: 0 }}>Version Manager</h2>
-                        <p style={{ fontSize: "11px", color: S.muted, margin: "2px 0 0" }}>Update or install server software</p>
-                      </div>
-
-                      <div style={{ display: "flex", gap: "12px", alignItems: "flex-end", flexWrap: "wrap" }}>
+                      <span style={{ fontSize: "10.5px", color: S.muted, textTransform: "uppercase", letterSpacing: "0.8px" }}>Version Manager</span>
+                      <div style={{ display: "flex", gap: "10px", alignItems: "flex-end", flexWrap: "wrap" }}>
                         <div style={{ flex: 1, minWidth: "200px" }}>
-                          <label style={{ display: "block", fontSize: "11px", color: S.muted, marginBottom: "6px" }}>Select Software Version</label>
+                          <label style={{ display: "block", fontSize: "11px", color: S.muted, marginBottom: "5px" }}>Software Version</label>
                           <select
                             value={selectedVersion}
                             onChange={(e) => setSelectedVersion(e.target.value)}
@@ -2747,215 +2492,133 @@ export default function Dashboard() {
                               backgroundColor: S.input,
                               border: `1px solid ${S.inputBdr}`,
                               color: S.white,
-                              padding: "10px",
+                              padding: "8px",
                               fontSize: "12px",
                               outline: "none",
-                              borderRadius: "4px"
                             }}
                           >
-                            <option value="1.21.11">1.21.11 {statusData?.mcVersion === "1.21.11" ? "(Current Version)" : "(Latest Release)"}</option>
-                            <option value="1.21.4">1.21.4 {statusData?.mcVersion === "1.21.4" ? "(Current Version)" : "(Stable Release)"}</option>
-                            <option value="1.21.1">1.21.1 {statusData?.mcVersion === "1.21.1" ? "(Current Version)" : ""}</option>
-                            <option value="1.20.4">1.20.4 {statusData?.mcVersion === "1.20.4" ? "(Current Version)" : "(Recommended Stable)"}</option>
-                            <option value="1.20.1">1.20.1 {statusData?.mcVersion === "1.20.1" ? "(Current Version)" : "(Popular Modded/Plugin)"}</option>
-                            <option value="1.19.4">1.19.4 {statusData?.mcVersion === "1.19.4" ? "(Current Version)" : ""}</option>
-                            <option value="1.18.2">1.18.2 {statusData?.mcVersion === "1.18.2" ? "(Current Version)" : ""}</option>
-                            <option value="1.16.5">1.16.5 {statusData?.mcVersion === "1.16.5" ? "(Current Version)" : "(Classic Legacy)"}</option>
+                            <option value="1.21.11">1.21.11 {statusData?.mcVersion === "1.21.11" ? "(Current)" : "(Latest)"}</option>
+                            <option value="1.21.4">1.21.4 {statusData?.mcVersion === "1.21.4" ? "(Current)" : ""}</option>
+                            <option value="1.21.1">1.21.1 {statusData?.mcVersion === "1.21.1" ? "(Current)" : ""}</option>
+                            <option value="1.20.4">1.20.4 {statusData?.mcVersion === "1.20.4" ? "(Current)" : ""}</option>
+                            <option value="1.20.1">1.20.1 {statusData?.mcVersion === "1.20.1" ? "(Current)" : ""}</option>
+                            <option value="1.19.4">1.19.4 {statusData?.mcVersion === "1.19.4" ? "(Current)" : ""}</option>
+                            <option value="1.18.2">1.18.2 {statusData?.mcVersion === "1.18.2" ? "(Current)" : ""}</option>
+                            <option value="1.16.5">1.16.5 {statusData?.mcVersion === "1.16.5" ? "(Current)" : ""}</option>
                           </select>
                         </div>
-
                         <button
                           onClick={() => setConfirmReinstallOpen(true)}
                           disabled={reinstallingVersion}
-                          style={{
-                            padding: "10px 16px",
-                            backgroundColor: reinstallingVersion ? "transparent" : S.red,
-                            border: `1px solid ${reinstallingVersion ? S.border : S.red}`,
-                            color: S.white,
-                            fontWeight: "bold",
-                            fontSize: "12px",
-                            borderRadius: "4px",
-                            cursor: reinstallingVersion ? "not-allowed" : "pointer"
-                          }}
                           className="button-hover"
+                          style={{
+                            padding: "8px 14px",
+                            backgroundColor: reinstallingVersion ? "#2a2a2a" : S.red,
+                            border: `1px solid ${reinstallingVersion ? S.border : S.red}`,
+                            color: reinstallingVersion ? S.muted : S.white,
+                            fontWeight: 700,
+                            fontSize: "12px",
+                            cursor: reinstallingVersion ? "not-allowed" : "pointer",
+                          }}
                         >
                           {reinstallingVersion ? "Reinstalling..." : "Install & Reset"}
                         </button>
                       </div>
-
-                      <div
-                        style={{
-                          backgroundColor: "rgba(220, 53, 69, 0.06)",
-                          border: "1px dashed rgba(220, 53, 69, 0.25)",
-                          padding: "12px",
-                          borderRadius: "6px",
-                          fontSize: "11px",
-                          color: "#ff6666",
-                          display: "flex",
-                          gap: "8px",
-                          alignItems: "flex-start",
-                          lineHeight: "1.5"
-                        }}
-                      >
-                        <span style={{ fontSize: "14px", marginTop: "-1px" }}>⚠️</span>
-                        <span>
-                          <strong>WARNING:</strong> Installing a new version completely wipes out your current server files, plugins, and worlds to install a fresh JAR. Only archives in the <strong>backups/</strong> folder are preserved. Ensure you have backed up your server first.
-                        </span>
+                      <div style={{
+                        backgroundColor: "#1a1010",
+                        border: `1px solid #553333`,
+                        padding: "10px 12px",
+                        fontSize: "11px",
+                        color: "#cc6666",
+                        lineHeight: "1.5"
+                      }}>
+                        <strong>WARNING:</strong> Installing a new version wipes server files and plugins. Only <strong>backups/</strong> is preserved.
                       </div>
                     </div>
 
-                    {/* SERVER SPECIFICATIONS & METADATA */}
+                    {/* Server Specs */}
                     <div style={{
-                      backgroundColor: "rgba(30, 30, 30, 0.6)",
-                      backdropFilter: "blur(8px)",
-                      border: "1px solid rgba(255,255,255,0.06)",
-                      padding: "20px",
-                      borderRadius: "8px",
+                      backgroundColor: "#1e1e1e",
+                      border: `1px solid ${S.border}`,
+                      padding: "16px",
                       display: "flex",
                       flexDirection: "column",
-                      gap: "16px"
+                      gap: "14px"
                     }}>
-                      <div>
-                        <h2 style={{ fontSize: "14px", fontWeight: "bold", color: S.white, margin: 0 }}>Server Specifications</h2>
-                        <p style={{ fontSize: "11px", color: S.muted, margin: "2px 0 0" }}>Host environment and network parameters</p>
-                      </div>
-
-                      <div style={{
-                        display: "grid",
-                        gridTemplateColumns: "repeat(2, 1fr)",
-                        gap: "12px 24px",
-                        fontSize: "12px",
-                        lineHeight: "1.6"
-                      }}>
+                      <span style={{ fontSize: "10.5px", color: S.muted, textTransform: "uppercase", letterSpacing: "0.8px" }}>Server Specifications</span>
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "10px 20px", fontSize: "12px" }}>
                         <div>
-                          <span style={{ color: S.muted, display: "block", fontSize: "10.5px", textTransform: "uppercase" }}>Minecraft Software</span>
-                          <span style={{ color: S.white, fontWeight: 500 }}>{statusData?.mcVersion || "1.21.1 (Paper)"}</span>
+                          <span style={{ color: S.muted, display: "block", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Software</span>
+                          <span style={{ color: S.white, fontFamily: "monospace" }}>{statusData?.mcVersion || "1.21.1"} (Paper)</span>
                         </div>
                         <div>
-                          <span style={{ color: S.muted, display: "block", fontSize: "10.5px", textTransform: "uppercase" }}>Java Environment</span>
-                          <span style={{ color: S.white, fontWeight: 500 }}>Java {statusData?.javaVersion || "21"} (64-Bit)</span>
+                          <span style={{ color: S.muted, display: "block", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Java</span>
+                          <span style={{ color: S.white, fontFamily: "monospace" }}>Java {statusData?.javaVersion || "21"} (64-bit)</span>
                         </div>
                         <div>
-                          <span style={{ color: S.muted, display: "block", fontSize: "10.5px", textTransform: "uppercase" }}>Allocated Memory</span>
-                          <span style={{ color: S.white, fontWeight: 500 }}>{statusData?.allocatedMemory || 12288} MB</span>
+                          <span style={{ color: S.muted, display: "block", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Memory</span>
+                          <span style={{ color: S.white, fontFamily: "monospace" }}>{statusData?.allocatedMemory || 12288} MB</span>
                         </div>
                         <div>
-                          <span style={{ color: S.muted, display: "block", fontSize: "10.5px", textTransform: "uppercase" }}>Network Interface</span>
-                          <span style={{ color: S.white, fontWeight: 500 }}>{statusData?.bindIp || "0.0.0.0"}:{statusData?.port || 25565}</span>
+                          <span style={{ color: S.muted, display: "block", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Network</span>
+                          <span style={{ color: S.white, fontFamily: "monospace" }}>{statusData?.bindIp || "0.0.0.0"}:{statusData?.port || 25565}</span>
                         </div>
-                        
                         <div style={{ gridColumn: "1 / -1" }}>
-                          <span style={{ color: S.muted, display: "block", fontSize: "10.5px", textTransform: "uppercase", marginBottom: "4px" }}>Message of the Day (MOTD)</span>
-                          <div style={{
-                            color: S.orange,
-                            fontFamily: "monospace",
-                            fontSize: "11px",
-                            backgroundColor: "#161616",
-                            padding: "8px 12px",
-                            borderRadius: "4px",
-                            border: "1px solid rgba(255, 255, 255, 0.04)"
-                          }}>
-                            {statusData?.motd?.replace(/\\u00A7[0-9a-fk-or]/g, "") ||
-                              "A Minecraft Server hosted on PufferPanel"}
+                          <span style={{ color: S.muted, display: "block", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "4px" }}>MOTD</span>
+                          <div style={{ color: S.orange, fontFamily: "monospace", fontSize: "11px", backgroundColor: "#161616", padding: "6px 10px", border: `1px solid ${S.border}` }}>
+                            {statusData?.motd?.replace(/\\u00A7[0-9a-fk-or]/g, "") || "A Minecraft Server hosted on PufferPanel"}
                           </div>
                         </div>
-
-                        <div style={{ gridColumn: "1 / -1", borderTop: "1px solid rgba(255,255,255,0.04)", paddingTop: "12px", marginTop: "4px" }}>
-                          <span style={{ color: S.muted, display: "block", fontSize: "10.5px", textTransform: "uppercase", marginBottom: "6px" }}>Quick Connect Info</span>
-                          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "#161616", padding: "8px 12px", borderRadius: "4px", border: "1px solid rgba(255,255,255,0.03)" }}>
-                              <span style={{ fontFamily: "monospace", fontSize: "11px", color: S.white }}>
-                                IP: meowtopia-panel.duckdns.org:{statusData?.port || 25565}
-                              </span>
-                              <button
-                                onClick={() => {
-                                  navigator.clipboard.writeText(`meowtopia-panel.duckdns.org:${statusData?.port || 25565}`);
-                                  showToast("Game connection IP address copied to clipboard.", "success");
-                                }}
-                                style={{
-                                  backgroundColor: "rgba(78, 201, 225, 0.1)",
-                                  border: `1px solid rgba(78, 201, 225, 0.25)`,
-                                  color: S.cyan,
-                                  padding: "2px 8px",
-                                  fontSize: "10px",
-                                  fontWeight: "bold",
-                                  cursor: "pointer",
-                                  borderRadius: "3px"
-                                }}
+                        <div style={{ gridColumn: "1 / -1", borderTop: `1px solid ${S.border}`, paddingTop: "10px" }}>
+                          <span style={{ color: S.muted, display: "block", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "6px" }}>Quick Connect</span>
+                          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "#161616", padding: "6px 10px", border: `1px solid ${S.border}` }}>
+                              <span style={{ fontFamily: "monospace", fontSize: "11px", color: S.white }}>meowtopia-panel.duckdns.org:{statusData?.port || 25565}</span>
+                              <button onClick={() => { navigator.clipboard.writeText(`meowtopia-panel.duckdns.org:${statusData?.port || 25565}`); showToast("IP copied.", "success"); }}
                                 className="button-hover"
-                              >
+                                style={{ backgroundColor: "#2a2a2a", border: `1px solid ${S.border}`, color: S.cyan, padding: "2px 8px", fontSize: "10px", fontWeight: 700, cursor: "pointer" }}>
                                 Copy IP
                               </button>
                             </div>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "#161616", padding: "8px 12px", borderRadius: "4px", border: "1px solid rgba(255,255,255,0.03)" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "#161616", padding: "6px 10px", border: `1px solid ${S.border}` }}>
                               <span style={{ fontFamily: "monospace", fontSize: "11px", color: S.white, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "80%" }}>
-                                SFTP: sftp://{statusData?.sftpUsername || "agreeable_guy-946f16b4"}@{statusData?.sftpHost || "meowtopia-panel.duckdns.org"}:{statusData?.sftpPort || 5657}
+                                sftp://{statusData?.sftpUsername || "agreeable_guy-946f16b4"}@{statusData?.sftpHost || "meowtopia-panel.duckdns.org"}:{statusData?.sftpPort || 5657}
                               </span>
-                              <button
-                                onClick={() => {
-                                  navigator.clipboard.writeText(
-                                    `sftp://${statusData?.sftpUsername || "agreeable_guy-946f16b4"}@${
-                                      statusData?.sftpHost || "meowtopia-panel.duckdns.org"
-                                    }:${statusData?.sftpPort || 5657}`
-                                  );
-                                  showToast("SFTP connection URI copied to clipboard.", "success");
-                                }}
-                                style={{
-                                  backgroundColor: "rgba(78, 201, 225, 0.1)",
-                                  border: `1px solid rgba(78, 201, 225, 0.25)`,
-                                  color: S.cyan,
-                                  padding: "2px 8px",
-                                  fontSize: "10px",
-                                  fontWeight: "bold",
-                                  cursor: "pointer",
-                                  borderRadius: "3px"
-                                }}
+                              <button onClick={() => { navigator.clipboard.writeText(`sftp://${statusData?.sftpUsername || "agreeable_guy-946f16b4"}@${statusData?.sftpHost || "meowtopia-panel.duckdns.org"}:${statusData?.sftpPort || 5657}`); showToast("SFTP URI copied.", "success"); }}
                                 className="button-hover"
-                              >
+                                style={{ backgroundColor: "#2a2a2a", border: `1px solid ${S.border}`, color: S.cyan, padding: "2px 8px", fontSize: "10px", fontWeight: 700, cursor: "pointer" }}>
                                 Copy SFTP
                               </button>
                             </div>
                           </div>
                         </div>
-
                       </div>
                     </div>
-
                   </div>
 
-                  {/* STARTUP VARIABLES CARD */}
+                  {/* ── Startup Config ── */}
                   <div style={{
-                    backgroundColor: "rgba(30, 30, 30, 0.6)",
-                    backdropFilter: "blur(8px)",
-                    border: "1px solid rgba(255,255,255,0.06)",
-                    padding: "20px",
-                    borderRadius: "8px",
+                    backgroundColor: "#1e1e1e",
+                    border: `1px solid ${S.border}`,
+                    padding: "16px",
                     display: "flex",
                     flexDirection: "column",
-                    gap: "16px"
+                    gap: "14px"
                   }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                      <div>
-                        <h2 style={{ fontSize: "14px", fontWeight: "bold", color: S.white, margin: 0 }}>Startup Configuration</h2>
-                        <p style={{ fontSize: "11px", color: S.muted, margin: "2px 0 0" }}>Configure JVM parameters and server JAR targets</p>
-                      </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <span style={{ fontSize: "10.5px", color: S.muted, textTransform: "uppercase", letterSpacing: "0.8px" }}>Startup Configuration</span>
                       <div style={{ fontSize: "11px", display: "flex", alignItems: "center", gap: "6px" }}>
                         {savingStartup ? (
                           <span style={{ color: S.cyan, display: "flex", alignItems: "center", gap: "4px" }}>
                             <span className="spinner-mini" /> Saving...
                           </span>
                         ) : startupSavedTime ? (
-                          <span style={{ color: S.green }}>
-                            ✓ Saved at {startupSavedTime}
-                          </span>
+                          <span style={{ color: S.green }}>Saved at {startupSavedTime}</span>
                         ) : (
-                          <span style={{ color: S.muted }}>
-                            ✓ Saved
-                          </span>
+                          <span style={{ color: S.muted }}>Saved</span>
                         )}
                       </div>
                     </div>
-
                     {renderStartupVariablesForm(true)}
                   </div>
 
