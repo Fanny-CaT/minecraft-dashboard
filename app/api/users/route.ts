@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { readFile, writeFile, sendConsoleCommand } from "@/lib/pufferpanel";
 
-type ListType = "ops" | "banned-players" | "whitelist";
+type ListType = "ops" | "banned-players" | "whitelist" | "banned-ips";
 
 const FILE_MAP: Record<ListType, string> = {
   "ops":            "ops.json",
   "banned-players": "banned-players.json",
   "whitelist":      "whitelist.json",
+  "banned-ips":      "banned-ips.json",
 };
 
 /**

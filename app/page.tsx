@@ -39,8 +39,8 @@ interface FileEntry {
 }
 
 interface PlayerEntry {
-  uuid: string;
-  name: string;
+  uuid?: string;
+  name?: string;
   level?: number;
   bypassesPlayerLimit?: boolean;
   // banned-players.json fields
@@ -48,6 +48,8 @@ interface PlayerEntry {
   source?: string;
   expires?: string;
   reason?: string;
+  // banned-ips.json fields
+  ip?: string;
 }
 
 type Tab =
@@ -305,6 +307,59 @@ const POPULAR_PLUGINS_META: Record<string, { name: string; tagline: string; icon
   }
 };
 
+// ─── PluginIcon Helper Component ──────────────────────────────────────────────
+interface PluginIconProps {
+  url?: string;
+  size?: number;
+  color?: string;
+}
+
+const PluginIcon: React.FC<PluginIconProps> = ({ url, size = 36, color }) => {
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    setError(false);
+  }, [url]);
+
+  const fallbackColor = color || S.cyan;
+
+  if (url && !error) {
+    return (
+      <img
+        src={url}
+        alt="Plugin Icon"
+        onError={() => setError(true)}
+        style={{
+          width: `${size}px`,
+          height: `${size}px`,
+          borderRadius: "3px",
+          objectFit: "cover",
+          flexShrink: 0,
+        }}
+      />
+    );
+  }
+
+  return (
+    <div
+      style={{
+        width: `${size}px`,
+        height: `${size}px`,
+        borderRadius: "3px",
+        backgroundColor: "rgba(255, 255, 255, 0.05)",
+        border: `1px solid ${S.border}`,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        color: fallbackColor,
+        flexShrink: 0,
+      }}
+    >
+      <Ico.Plugins />
+    </div>
+  );
+};
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function Dashboard() {
@@ -383,6 +438,7 @@ export default function Dashboard() {
   const [installingPluginIds, setInstallingPluginIds] = useState<Record<string, boolean>>({});
   const [pluginError, setPluginError] = useState("");
   const [pluginCategory, setPluginCategory] = useState<string>("");
+  const [selectedPluginDetails, setSelectedPluginDetails] = useState<any | null>(null);
   const [filterProvider, setFilterProvider] = useState<string>("all");
   const [filterVersion, setFilterVersion] = useState<string>("all");
   const [hasStatsMod, setHasStatsMod] = useState(true);
@@ -410,11 +466,25 @@ export default function Dashboard() {
   const [configSearch, setConfigSearch] = useState("");
 
   // ── Users ──
-  const [userList, setUserList] = useState<"ops" | "banned-players" | "whitelist">("ops");
+  const [userList, setUserList] = useState<"ops" | "banned-players" | "whitelist" | "banned-ips">("ops");
   const [players, setPlayers] = useState<PlayerEntry[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [userError, setUserError] = useState("");
   const [userCmd, setUserCmd] = useState("");
+
+  // Players Form Inputs
+  const [whitelistInput, setWhitelistInput] = useState("");
+  const [whitelistRemoveInput, setWhitelistRemoveInput] = useState("");
+  const [opInput, setOpInput] = useState("");
+  const [deopInput, setDeopInput] = useState("");
+  const [banPlayerInput, setBanPlayerInput] = useState("");
+  const [banReasonInput, setBanReasonInput] = useState("");
+  const [pardonInput, setPardonInput] = useState("");
+  const [banIpInput, setBanIpInput] = useState("");
+  const [banIpReasonInput, setBanIpReasonInput] = useState("");
+  const [pardonIpInput, setPardonIpInput] = useState("");
+  const [kickPlayerInput, setKickPlayerInput] = useState("");
+  const [kickReasonInput, setKickReasonInput] = useState("");
 
   // ── Backups ──
   const [backups, setBackups] = useState<any[]>([]);
@@ -1252,6 +1322,11 @@ export default function Dashboard() {
   // ─────────────────────────────────────────────────────────────────────────────
   // Users (whitelist, ops, banned-players)
   // ─────────────────────────────────────────────────────────────────────────────
+
+  const handleAction = async (cmd: string) => {
+    await sendCommandDirect(cmd);
+    setTimeout(() => loadUsers(userList), 1200);
+  };
 
   const loadUsers = async (list: typeof userList) => {
     setLoadingUsers(true);
@@ -2868,7 +2943,7 @@ export default function Dashboard() {
                             borderRadius: "3px",
                             border: `1px solid ${S.border}`
                           }}>
-                            {statusData?.motd?.replace(/\\u00A7[0-9a-fk-or]/g, "") || "A Minecraft Server hosted on PufferPanel"}
+                            {statusData?.motd?.replace(/\\u00A7[0-9a-fk-or]/g, "") || "🐾 Welcome to MeowTopia! 🐾 Have a purr-fect time! 🐱"}
                           </div>
                         </div>
 
@@ -3147,7 +3222,7 @@ export default function Dashboard() {
                   }}
                   title="Force Java garbage collection"
                 >
-                  🧹 GC
+                  GC
                 </button>
                 <button
                   onClick={() => sendCommandDirect("tps")}
@@ -3163,7 +3238,7 @@ export default function Dashboard() {
                   }}
                   title="Check Server tick performance"
                 >
-                  ⚡ TPS
+                  TPS
                 </button>
                 <button
                   onClick={() => sendCommandDirect("save-all")}
@@ -3179,7 +3254,7 @@ export default function Dashboard() {
                   }}
                   title="Force world data save"
                 >
-                  💾 Save
+                  Save
                 </button>
                 <button
                   onClick={() => sendCommandDirect("reload confirm")}
@@ -3195,53 +3270,7 @@ export default function Dashboard() {
                   }}
                   title="Reload plugins configuration"
                 >
-                  🔄 Reload
-                </button>
-                <span style={{ width: "1px", height: "14px", backgroundColor: S.border, margin: "0 4px" }} />
-                <button
-                  onClick={() => sendCommandDirect("whitelist on")}
-                  className="button-hover"
-                  style={{
-                    backgroundColor: "#2e2e2e",
-                    border: `1px solid ${S.border}`,
-                    color: S.cyan,
-                    padding: "3px 8px",
-                    fontSize: "11px",
-                    cursor: "pointer",
-                    borderRadius: "3px",
-                  }}
-                >
-                  🔒 Whitelist On
-                </button>
-                <button
-                  onClick={() => sendCommandDirect("whitelist off")}
-                  className="button-hover"
-                  style={{
-                    backgroundColor: "#2e2e2e",
-                    border: `1px solid ${S.border}`,
-                    color: S.red,
-                    padding: "3px 8px",
-                    fontSize: "11px",
-                    cursor: "pointer",
-                    borderRadius: "3px",
-                  }}
-                >
-                  🔓 Whitelist Off
-                </button>
-                <button
-                  onClick={() => sendCommandDirect("whitelist reload")}
-                  className="button-hover"
-                  style={{
-                    backgroundColor: "#2e2e2e",
-                    border: `1px solid ${S.border}`,
-                    color: S.orange,
-                    padding: "3px 8px",
-                    fontSize: "11px",
-                    cursor: "pointer",
-                    borderRadius: "3px",
-                  }}
-                >
-                  ♻️ Reload list
+                  Reload
                 </button>
               </div>
 
@@ -3945,48 +3974,7 @@ export default function Dashboard() {
                     </span>
                   </div>
 
-                  {/* Category Chips selection */}
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: "6px",
-                      marginBottom: "14px",
-                      flexWrap: "wrap",
-                      alignItems: "center",
-                    }}
-                  >
-                    <span style={{ fontSize: "11.5px", color: S.muted, marginRight: "4px" }}>
-                      Categories:
-                    </span>
-                    {[
-                      { id: "", label: "🔥 All Popular" },
-                      { id: "admin", label: "🛡️ Admin" },
-                      { id: "chat", label: "💬 Chat" },
-                      { id: "world", label: "🌎 World" },
-                      { id: "economy", label: "💰 Economy" },
-                      { id: "utility", label: "⚙️ Utility" },
-                    ].map((cat) => {
-                      const isActive = pluginCategory === cat.id;
-                      return (
-                        <button
-                          key={cat.id}
-                          onClick={() => setPluginCategory(cat.id)}
-                          className="chip-hover"
-                          style={{
-                            padding: "3px 9px",
-                            backgroundColor: isActive ? "#dd8800" : "transparent",
-                            border: `1px solid ${isActive ? "#dd8800" : S.border}`,
-                            color: isActive ? S.white : S.cyan,
-                            borderRadius: "12px",
-                            fontSize: "11px",
-                            cursor: "pointer",
-                          }}
-                        >
-                          {cat.label}
-                        </button>
-                      );
-                    })}
-                  </div>
+
 
                   {/* Search query input form */}
                   <form
@@ -4131,14 +4119,7 @@ export default function Dashboard() {
                                 }}
                               >
                                 <div style={{ display: "flex", gap: "12px", alignItems: "center", flex: 1, marginRight: "16px", minWidth: 0 }}>
-                                  <img
-                                    src={plugin.iconUrl}
-                                    alt={plugin.name}
-                                    style={{ width: "32px", height: "32px", objectFit: "contain", borderRadius: "4px", backgroundColor: "#252525" }}
-                                    onError={(e) => {
-                                      (e.target as HTMLImageElement).src = "/favicon.ico";
-                                    }}
-                                  />
+                                  <PluginIcon url={plugin.iconUrl} size={32} color={theme.text} />
                                   <div style={{ minWidth: 0, flex: 1 }}>
                                     <div style={{ fontWeight: 600, color: S.white, fontSize: "13px", display: "flex", alignItems: "center", gap: "6px" }}>
                                       <span>{plugin.name}</span>
@@ -4180,6 +4161,22 @@ export default function Dashboard() {
                                   </div>
                                 </div>
                                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                  <button
+                                    onClick={() => setSelectedPluginDetails(plugin)}
+                                    className="button-hover"
+                                    style={{
+                                      backgroundColor: "transparent",
+                                      border: `1px solid ${S.border}`,
+                                      color: S.cyan,
+                                      cursor: "pointer",
+                                      padding: "4px 10px",
+                                      fontSize: "11.5px",
+                                      borderRadius: "3px",
+                                      fontWeight: "bold",
+                                    }}
+                                  >
+                                    Details
+                                  </button>
                                   {installedJar ? (
                                     <button
                                       onClick={() => deletePlugin(installedJar.name)}
@@ -4288,31 +4285,7 @@ export default function Dashboard() {
                             }}
                           >
                             <div style={{ display: "flex", gap: "14px", alignItems: "center", flex: 1, marginRight: "16px", minWidth: 0 }}>
-                              {iconUrl ? (
-                                <img
-                                  src={iconUrl}
-                                  alt={displayName}
-                                  style={{ width: "36px", height: "36px", objectFit: "contain", borderRadius: "4px", backgroundColor: "#252525" }}
-                                  onError={(e) => {
-                                    (e.target as HTMLImageElement).style.display = "none";
-                                  }}
-                                />
-                              ) : (
-                                <div style={{
-                                  width: "36px",
-                                  height: "36px",
-                                  borderRadius: "4px",
-                                  backgroundColor: "#252525",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  color: S.cyan,
-                                  border: `1px solid ${S.border}`,
-                                  flexShrink: 0
-                                }}>
-                                  <Ico.Plugins />
-                                </div>
-                              )}
+                              <PluginIcon url={iconUrl} size={36} color={providerColor} />
                               <div style={{ minWidth: 0, flex: 1 }}>
                                 <div style={{ fontWeight: 600, color: S.white, fontSize: "13.5px", display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
                                   <span>{displayName}</span>
@@ -4348,24 +4321,52 @@ export default function Dashboard() {
                                 </div>
                               </div>
                             </div>
-                            <button
-                              onClick={() => deletePlugin(plugin.name)}
-                              className="button-hover"
-                              style={{
-                                backgroundColor: "rgba(239, 68, 68, 0.08)",
-                                border: "1px solid rgba(239, 68, 68, 0.25)",
-                                color: "#ef4444",
-                                cursor: "pointer",
-                                padding: "5px 12px",
-                                fontSize: "11px",
-                                borderRadius: "3px",
-                                fontWeight: "bold",
-                                transition: "all 0.1s"
-                              }}
-                              disabled={loadingPlugins}
-                            >
-                              {loadingPlugins ? "Uninstalling..." : "Uninstall"}
-                            </button>
+                            <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                              <button
+                                onClick={() => setSelectedPluginDetails(matched || {
+                                  id: filenameClean,
+                                  name: displayName,
+                                  tagline: tagline,
+                                  description: tagline,
+                                  provider: provider,
+                                  downloads: 0,
+                                  versions: [],
+                                  categories: [],
+                                  iconUrl: iconUrl
+                                })}
+                                className="button-hover"
+                                style={{
+                                  backgroundColor: "transparent",
+                                  border: `1px solid ${S.border}`,
+                                  color: S.cyan,
+                                  cursor: "pointer",
+                                  padding: "5px 12px",
+                                  fontSize: "11px",
+                                  borderRadius: "3px",
+                                  fontWeight: "bold",
+                                }}
+                              >
+                                Details
+                              </button>
+                              <button
+                                onClick={() => deletePlugin(plugin.name)}
+                                className="button-hover"
+                                style={{
+                                  backgroundColor: "rgba(239, 68, 68, 0.08)",
+                                  border: "1px solid rgba(239, 68, 68, 0.25)",
+                                  color: "#ef4444",
+                                  cursor: "pointer",
+                                  padding: "5px 12px",
+                                  fontSize: "11px",
+                                  borderRadius: "3px",
+                                  fontWeight: "bold",
+                                  transition: "all 0.1s"
+                                }}
+                                disabled={loadingPlugins}
+                              >
+                                {loadingPlugins ? "Uninstalling..." : "Uninstall"}
+                              </button>
+                            </div>
                           </div>
                         );
                       })}
@@ -4572,24 +4573,177 @@ export default function Dashboard() {
                                     {key}
                                   </td>
                                   <td style={{ padding: "6px 12px" }}>
-                                    <input
-                                      type="text"
-                                      value={val}
-                                      onChange={(e) => {
-                                        const next = e.target.value;
-                                        setConfigProps((prev) => ({ ...prev, [key]: next }));
-                                      }}
-                                      style={{
-                                        width: "100%",
-                                        backgroundColor: S.input,
-                                        color: S.white,
-                                        border: `1px solid ${S.inputBdr}`,
-                                        padding: "4px 8px",
-                                        fontSize: "12.5px",
-                                        fontFamily: "monospace",
-                                        outline: "none",
-                                      }}
-                                    />
+                                    {val === "true" || val === "false" ? (
+                                      <div style={{ display: "flex", alignItems: "center", height: "30px" }}>
+                                        <div 
+                                          onClick={() => {
+                                            const next = val === "true" ? "false" : "true";
+                                            setConfigProps((prev) => ({ ...prev, [key]: next }));
+                                          }}
+                                          style={{
+                                            width: "36px",
+                                            height: "18px",
+                                            borderRadius: "9px",
+                                            backgroundColor: val === "true" ? S.green : "#444",
+                                            position: "relative",
+                                            cursor: "pointer",
+                                            transition: "all 0.2s ease-in-out",
+                                            border: `1px solid ${val === "true" ? S.green : "#555"}`,
+                                          }}
+                                        >
+                                          <div 
+                                            style={{
+                                              width: "14px",
+                                              height: "14px",
+                                              borderRadius: "50%",
+                                              backgroundColor: S.white,
+                                              position: "absolute",
+                                              top: "1px",
+                                              left: val === "true" ? "19px" : "1px",
+                                              transition: "all 0.2s ease-in-out",
+                                            }}
+                                          />
+                                        </div>
+                                        <span style={{ fontSize: "11.5px", fontFamily: "monospace", color: val === "true" ? S.green : S.muted, marginLeft: "8px", userSelect: "none" }}>
+                                          {val}
+                                        </span>
+                                      </div>
+                                    ) : key === "difficulty" ? (
+                                      <select
+                                        value={val}
+                                        onChange={(e) => {
+                                          const next = e.target.value;
+                                          setConfigProps((prev) => ({ ...prev, [key]: next }));
+                                        }}
+                                        style={{
+                                          width: "100%",
+                                          backgroundColor: S.input,
+                                          color: S.white,
+                                          border: `1px solid ${S.inputBdr}`,
+                                          padding: "4px 8px",
+                                          fontSize: "12.5px",
+                                          fontFamily: "monospace",
+                                          outline: "none",
+                                          cursor: "pointer",
+                                        }}
+                                      >
+                                        <option value="peaceful">peaceful</option>
+                                        <option value="easy">easy</option>
+                                        <option value="normal">normal</option>
+                                        <option value="hard">hard</option>
+                                      </select>
+                                    ) : key === "gamemode" ? (
+                                      <select
+                                        value={val}
+                                        onChange={(e) => {
+                                          const next = e.target.value;
+                                          setConfigProps((prev) => ({ ...prev, [key]: next }));
+                                        }}
+                                        style={{
+                                          width: "100%",
+                                          backgroundColor: S.input,
+                                          color: S.white,
+                                          border: `1px solid ${S.inputBdr}`,
+                                          padding: "4px 8px",
+                                          fontSize: "12.5px",
+                                          fontFamily: "monospace",
+                                          outline: "none",
+                                          cursor: "pointer",
+                                        }}
+                                      >
+                                        <option value="survival">survival</option>
+                                        <option value="creative">creative</option>
+                                        <option value="adventure">adventure</option>
+                                        <option value="spectator">spectator</option>
+                                      </select>
+                                    ) : key === "level-type" ? (
+                                      <select
+                                        value={val}
+                                        onChange={(e) => {
+                                          const next = e.target.value;
+                                          setConfigProps((prev) => ({ ...prev, [key]: next }));
+                                        }}
+                                        style={{
+                                          width: "100%",
+                                          backgroundColor: S.input,
+                                          color: S.white,
+                                          border: `1px solid ${S.inputBdr}`,
+                                          padding: "4px 8px",
+                                          fontSize: "12.5px",
+                                          fontFamily: "monospace",
+                                          outline: "none",
+                                          cursor: "pointer",
+                                        }}
+                                      >
+                                        <option value="minecraft:normal">minecraft:normal</option>
+                                        <option value="minecraft:flat">minecraft:flat</option>
+                                        <option value="minecraft:large_biomes">minecraft:large_biomes</option>
+                                        <option value="minecraft:amplified">minecraft:amplified</option>
+                                        <option value="minecraft:buffet">minecraft:buffet</option>
+                                      </select>
+                                    ) : key === "op-permission-level" || key === "function-permission-level" ? (
+                                      <select
+                                        value={val}
+                                        onChange={(e) => {
+                                          const next = e.target.value;
+                                          setConfigProps((prev) => ({ ...prev, [key]: next }));
+                                        }}
+                                        style={{
+                                          width: "100%",
+                                          backgroundColor: S.input,
+                                          color: S.white,
+                                          border: `1px solid ${S.inputBdr}`,
+                                          padding: "4px 8px",
+                                          fontSize: "12.5px",
+                                          fontFamily: "monospace",
+                                          outline: "none",
+                                          cursor: "pointer",
+                                        }}
+                                      >
+                                        <option value="1">1</option>
+                                        <option value="2">2</option>
+                                        <option value="3">3</option>
+                                        <option value="4">4</option>
+                                      </select>
+                                    ) : /^-?\d+$/.test(val) ? (
+                                      <input
+                                        type="number"
+                                        value={val}
+                                        onChange={(e) => {
+                                          const next = e.target.value;
+                                          setConfigProps((prev) => ({ ...prev, [key]: next }));
+                                        }}
+                                        style={{
+                                          width: "100%",
+                                          backgroundColor: S.input,
+                                          color: S.white,
+                                          border: `1px solid ${S.inputBdr}`,
+                                          padding: "4px 8px",
+                                          fontSize: "12.5px",
+                                          fontFamily: "monospace",
+                                          outline: "none",
+                                        }}
+                                      />
+                                    ) : (
+                                      <input
+                                        type="text"
+                                        value={val}
+                                        onChange={(e) => {
+                                          const next = e.target.value;
+                                          setConfigProps((prev) => ({ ...prev, [key]: next }));
+                                        }}
+                                        style={{
+                                          width: "100%",
+                                          backgroundColor: S.input,
+                                          color: S.white,
+                                          border: `1px solid ${S.inputBdr}`,
+                                          padding: "4px 8px",
+                                          fontSize: "12.5px",
+                                          fontFamily: "monospace",
+                                          outline: "none",
+                                        }}
+                                      />
+                                    )}
                                   </td>
                                 </tr>
                               ))
@@ -4672,7 +4826,7 @@ export default function Dashboard() {
                       overflow: "hidden",
                     }}
                   >
-                    {(["ops", "whitelist", "banned-players"] as const).map((l) => (
+                    {(["ops", "whitelist", "banned-players", "banned-ips"] as const).map((l) => (
                       <button
                         key={l}
                         onClick={() => setUserList(l)}
@@ -4686,7 +4840,7 @@ export default function Dashboard() {
                           fontWeight: "bold",
                         }}
                       >
-                        {l.toUpperCase()}
+                        {l === "banned-players" ? "BANNED PLAYERS" : l === "banned-ips" ? "BANNED IPS" : l.toUpperCase()}
                       </button>
                     ))}
                   </div>
@@ -4713,6 +4867,627 @@ export default function Dashboard() {
               )}
 
               <div style={{ flex: 1, padding: "18px", overflow: "auto", display: "flex", flexDirection: "column", gap: "18px" }}>
+                {/* Whitelist Switch Card & Action Forms Grid */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "16px" }}>
+                  {/* Whitelist Controls */}
+                  <div
+                    style={{
+                      border: `1px solid ${S.border}`,
+                      backgroundColor: "#242424",
+                      padding: "16px",
+                      borderRadius: "3px",
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: "13px", fontWeight: 600, color: S.white, marginBottom: "4px" }}>
+                        Global Whitelist Control
+                      </div>
+                      <div style={{ fontSize: "11px", color: S.muted, marginBottom: "12px" }}>
+                        Toggle enforce whitelist on this server.
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                      <button
+                        onClick={() => handleAction("whitelist on")}
+                        className="button-hover"
+                        style={{
+                          backgroundColor: "#2e2e2e",
+                          border: `1px solid ${S.border}`,
+                          color: S.cyan,
+                          padding: "5px 10px",
+                          fontSize: "11px",
+                          cursor: "pointer",
+                          borderRadius: "3px",
+                          fontWeight: "bold",
+                        }}
+                      >
+                        Enable
+                      </button>
+                      <button
+                        onClick={() => handleAction("whitelist off")}
+                        className="button-hover"
+                        style={{
+                          backgroundColor: "#2e2e2e",
+                          border: `1px solid ${S.border}`,
+                          color: "#ff4d4d",
+                          padding: "5px 10px",
+                          fontSize: "11px",
+                          cursor: "pointer",
+                          borderRadius: "3px",
+                          fontWeight: "bold",
+                        }}
+                      >
+                        Disable
+                      </button>
+                      <button
+                        onClick={() => handleAction("whitelist reload")}
+                        className="button-hover"
+                        style={{
+                          backgroundColor: "#2e2e2e",
+                          border: `1px solid ${S.border}`,
+                          color: S.orange,
+                          padding: "5px 10px",
+                          fontSize: "11px",
+                          cursor: "pointer",
+                          borderRadius: "3px",
+                          fontWeight: "bold",
+                        }}
+                      >
+                        Reload
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Whitelist Add */}
+                  <div
+                    style={{
+                      border: `1px solid ${S.border}`,
+                      backgroundColor: "#242424",
+                      padding: "16px",
+                      borderRadius: "3px",
+                    }}
+                  >
+                    <div style={{ fontSize: "13px", fontWeight: 600, color: S.white, marginBottom: "4px" }}>
+                      Add to Whitelist
+                    </div>
+                    <div style={{ fontSize: "11px", color: S.muted, marginBottom: "12px" }}>
+                      Allow a player to join when whitelist is enabled.
+                    </div>
+                    <div style={{ display: "flex", gap: "8px" }}>
+                      <input
+                        type="text"
+                        placeholder="Player username"
+                        value={whitelistInput}
+                        onChange={(e) => setWhitelistInput(e.target.value)}
+                        style={{
+                          flex: 1,
+                          backgroundColor: S.input,
+                          border: `1px solid ${S.inputBdr}`,
+                          color: S.white,
+                          padding: "5px 8px",
+                          fontSize: "12px",
+                          outline: "none",
+                        }}
+                      />
+                      <button
+                        onClick={() => {
+                          if (!whitelistInput.trim()) return;
+                          handleAction(`whitelist add ${whitelistInput.trim()}`);
+                          setWhitelistInput("");
+                        }}
+                        className="button-hover"
+                        style={{
+                          backgroundColor: S.cyan,
+                          border: "none",
+                          color: "#1a1a1a",
+                          padding: "5px 12px",
+                          fontSize: "11px",
+                          cursor: "pointer",
+                          borderRadius: "2px",
+                          fontWeight: "bold",
+                        }}
+                      >
+                        Add
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* OP Player */}
+                  <div
+                    style={{
+                      border: `1px solid ${S.border}`,
+                      backgroundColor: "#242424",
+                      padding: "16px",
+                      borderRadius: "3px",
+                    }}
+                  >
+                    <div style={{ fontSize: "13px", fontWeight: 600, color: S.white, marginBottom: "4px" }}>
+                      Promote to Operator (OP)
+                    </div>
+                    <div style={{ fontSize: "11px", color: S.muted, marginBottom: "12px" }}>
+                      Grant full admin/moderator permissions.
+                    </div>
+                    <div style={{ display: "flex", gap: "8px" }}>
+                      <input
+                        type="text"
+                        placeholder="Player username"
+                        value={opInput}
+                        onChange={(e) => setOpInput(e.target.value)}
+                        style={{
+                          flex: 1,
+                          backgroundColor: S.input,
+                          border: `1px solid ${S.inputBdr}`,
+                          color: S.white,
+                          padding: "5px 8px",
+                          fontSize: "12px",
+                          outline: "none",
+                        }}
+                      />
+                      <button
+                        onClick={() => {
+                          if (!opInput.trim()) return;
+                          handleAction(`op ${opInput.trim()}`);
+                          setOpInput("");
+                        }}
+                        className="button-hover"
+                        style={{
+                          backgroundColor: S.cyan,
+                          border: "none",
+                          color: "#1a1a1a",
+                          padding: "5px 12px",
+                          fontSize: "11px",
+                          cursor: "pointer",
+                          borderRadius: "2px",
+                          fontWeight: "bold",
+                        }}
+                      >
+                        OP
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Ban Player */}
+                  <div
+                    style={{
+                      border: `1px solid ${S.border}`,
+                      backgroundColor: "#242424",
+                      padding: "16px",
+                      borderRadius: "3px",
+                    }}
+                  >
+                    <div style={{ fontSize: "13px", fontWeight: 600, color: S.white, marginBottom: "4px" }}>
+                      Ban Player
+                    </div>
+                    <div style={{ fontSize: "11px", color: S.muted, marginBottom: "12px" }}>
+                      Prevent player from connecting to the server.
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                      <input
+                        type="text"
+                        placeholder="Player username"
+                        value={banPlayerInput}
+                        onChange={(e) => setBanPlayerInput(e.target.value)}
+                        style={{
+                          backgroundColor: S.input,
+                          border: `1px solid ${S.inputBdr}`,
+                          color: S.white,
+                          padding: "5px 8px",
+                          fontSize: "12px",
+                          outline: "none",
+                        }}
+                      />
+                      <div style={{ display: "flex", gap: "8px" }}>
+                        <input
+                          type="text"
+                          placeholder="Reason (optional)"
+                          value={banReasonInput}
+                          onChange={(e) => setBanReasonInput(e.target.value)}
+                          style={{
+                            flex: 1,
+                            backgroundColor: S.input,
+                            border: `1px solid ${S.inputBdr}`,
+                            color: S.white,
+                            padding: "5px 8px",
+                            fontSize: "12px",
+                            outline: "none",
+                          }}
+                        />
+                        <button
+                          onClick={() => {
+                            if (!banPlayerInput.trim()) return;
+                            const cmd = banReasonInput.trim()
+                              ? `ban ${banPlayerInput.trim()} ${banReasonInput.trim()}`
+                              : `ban ${banPlayerInput.trim()}`;
+                            handleAction(cmd);
+                            setBanPlayerInput("");
+                            setBanReasonInput("");
+                          }}
+                          className="button-hover"
+                          style={{
+                            backgroundColor: "#ff4d4d",
+                            border: "none",
+                            color: S.white,
+                            padding: "5px 12px",
+                            fontSize: "11px",
+                            cursor: "pointer",
+                            borderRadius: "2px",
+                            fontWeight: "bold",
+                          }}
+                        >
+                          Ban
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Ban IP */}
+                  <div
+                    style={{
+                      border: `1px solid ${S.border}`,
+                      backgroundColor: "#242424",
+                      padding: "16px",
+                      borderRadius: "3px",
+                    }}
+                  >
+                    <div style={{ fontSize: "13px", fontWeight: 600, color: S.white, marginBottom: "4px" }}>
+                      Ban IP Address
+                    </div>
+                    <div style={{ fontSize: "11px", color: S.muted, marginBottom: "12px" }}>
+                      Ban a specific IP address from accessing the server.
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                      <input
+                        type="text"
+                        placeholder="IP Address (e.g. 192.168.1.1)"
+                        value={banIpInput}
+                        onChange={(e) => setBanIpInput(e.target.value)}
+                        style={{
+                          backgroundColor: S.input,
+                          border: `1px solid ${S.inputBdr}`,
+                          color: S.white,
+                          padding: "5px 8px",
+                          fontSize: "12px",
+                          outline: "none",
+                        }}
+                      />
+                      <div style={{ display: "flex", gap: "8px" }}>
+                        <input
+                          type="text"
+                          placeholder="Reason (optional)"
+                          value={banIpReasonInput}
+                          onChange={(e) => setBanIpReasonInput(e.target.value)}
+                          style={{
+                            flex: 1,
+                            backgroundColor: S.input,
+                            border: `1px solid ${S.inputBdr}`,
+                            color: S.white,
+                            padding: "5px 8px",
+                            fontSize: "12px",
+                            outline: "none",
+                          }}
+                        />
+                        <button
+                          onClick={() => {
+                            if (!banIpInput.trim()) return;
+                            const cmd = banIpReasonInput.trim()
+                              ? `ban-ip ${banIpInput.trim()} ${banIpReasonInput.trim()}`
+                              : `ban-ip ${banIpInput.trim()}`;
+                            handleAction(cmd);
+                            setBanIpInput("");
+                            setBanIpReasonInput("");
+                          }}
+                          className="button-hover"
+                          style={{
+                            backgroundColor: "#ff4d4d",
+                            border: "none",
+                            color: S.white,
+                            padding: "5px 12px",
+                            fontSize: "11px",
+                            cursor: "pointer",
+                            borderRadius: "2px",
+                            fontWeight: "bold",
+                          }}
+                        >
+                          Ban IP
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Whitelist Remove */}
+                  <div
+                    style={{
+                      border: `1px solid ${S.border}`,
+                      backgroundColor: "#242424",
+                      padding: "16px",
+                      borderRadius: "3px",
+                    }}
+                  >
+                    <div style={{ fontSize: "13px", fontWeight: 600, color: S.white, marginBottom: "4px" }}>
+                      Remove from Whitelist
+                    </div>
+                    <div style={{ fontSize: "11px", color: S.muted, marginBottom: "12px" }}>
+                      Remove a player's access when whitelist is enabled.
+                    </div>
+                    <div style={{ display: "flex", gap: "8px" }}>
+                      <input
+                        type="text"
+                        placeholder="Player username"
+                        value={whitelistRemoveInput}
+                        onChange={(e) => setWhitelistRemoveInput(e.target.value)}
+                        style={{
+                          flex: 1,
+                          backgroundColor: S.input,
+                          border: `1px solid ${S.inputBdr}`,
+                          color: S.white,
+                          padding: "5px 8px",
+                          fontSize: "12px",
+                          outline: "none",
+                        }}
+                      />
+                      <button
+                        onClick={() => {
+                          if (!whitelistRemoveInput.trim()) return;
+                          handleAction(`whitelist remove ${whitelistRemoveInput.trim()}`);
+                          setWhitelistRemoveInput("");
+                        }}
+                        className="button-hover"
+                        style={{
+                          backgroundColor: S.orange,
+                          border: "none",
+                          color: S.white,
+                          padding: "5px 12px",
+                          fontSize: "11px",
+                          cursor: "pointer",
+                          borderRadius: "2px",
+                          fontWeight: "bold",
+                        }}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* De-OP Player */}
+                  <div
+                    style={{
+                      border: `1px solid ${S.border}`,
+                      backgroundColor: "#242424",
+                      padding: "16px",
+                      borderRadius: "3px",
+                    }}
+                  >
+                    <div style={{ fontSize: "13px", fontWeight: 600, color: S.white, marginBottom: "4px" }}>
+                      Demote Operator (De-OP)
+                    </div>
+                    <div style={{ fontSize: "11px", color: S.muted, marginBottom: "12px" }}>
+                      Revoke full admin/moderator permissions.
+                    </div>
+                    <div style={{ display: "flex", gap: "8px" }}>
+                      <input
+                        type="text"
+                        placeholder="Player username"
+                        value={deopInput}
+                        onChange={(e) => setDeopInput(e.target.value)}
+                        style={{
+                          flex: 1,
+                          backgroundColor: S.input,
+                          border: `1px solid ${S.inputBdr}`,
+                          color: S.white,
+                          padding: "5px 8px",
+                          fontSize: "12px",
+                          outline: "none",
+                        }}
+                      />
+                      <button
+                        onClick={() => {
+                          if (!deopInput.trim()) return;
+                          handleAction(`deop ${deopInput.trim()}`);
+                          setDeopInput("");
+                        }}
+                        className="button-hover"
+                        style={{
+                          backgroundColor: S.orange,
+                          border: "none",
+                          color: S.white,
+                          padding: "5px 12px",
+                          fontSize: "11px",
+                          cursor: "pointer",
+                          borderRadius: "2px",
+                          fontWeight: "bold",
+                        }}
+                      >
+                        De-OP
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Kick Player */}
+                  <div
+                    style={{
+                      border: `1px solid ${S.border}`,
+                      backgroundColor: "#242424",
+                      padding: "16px",
+                      borderRadius: "3px",
+                    }}
+                  >
+                    <div style={{ fontSize: "13px", fontWeight: 600, color: S.white, marginBottom: "4px" }}>
+                      Kick Player
+                    </div>
+                    <div style={{ fontSize: "11px", color: S.muted, marginBottom: "12px" }}>
+                      Disconnect a player immediately from the server.
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                      <input
+                        type="text"
+                        placeholder="Player username"
+                        value={kickPlayerInput}
+                        onChange={(e) => setKickPlayerInput(e.target.value)}
+                        style={{
+                          backgroundColor: S.input,
+                          border: `1px solid ${S.inputBdr}`,
+                          color: S.white,
+                          padding: "5px 8px",
+                          fontSize: "12px",
+                          outline: "none",
+                        }}
+                      />
+                      <div style={{ display: "flex", gap: "8px" }}>
+                        <input
+                          type="text"
+                          placeholder="Reason (optional)"
+                          value={kickReasonInput}
+                          onChange={(e) => setKickReasonInput(e.target.value)}
+                          style={{
+                            flex: 1,
+                            backgroundColor: S.input,
+                            border: `1px solid ${S.inputBdr}`,
+                            color: S.white,
+                            padding: "5px 8px",
+                            fontSize: "12px",
+                            outline: "none",
+                          }}
+                        />
+                        <button
+                          onClick={() => {
+                            if (!kickPlayerInput.trim()) return;
+                            const cmd = kickReasonInput.trim()
+                              ? `kick ${kickPlayerInput.trim()} ${kickReasonInput.trim()}`
+                              : `kick ${kickPlayerInput.trim()}`;
+                            handleAction(cmd);
+                            setKickPlayerInput("");
+                            setKickReasonInput("");
+                          }}
+                          className="button-hover"
+                          style={{
+                            backgroundColor: S.orange,
+                            border: "none",
+                            color: S.white,
+                            padding: "5px 12px",
+                            fontSize: "11px",
+                            cursor: "pointer",
+                            borderRadius: "2px",
+                            fontWeight: "bold",
+                          }}
+                        >
+                          Kick
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Pardon Player */}
+                  <div
+                    style={{
+                      border: `1px solid ${S.border}`,
+                      backgroundColor: "#242424",
+                      padding: "16px",
+                      borderRadius: "3px",
+                    }}
+                  >
+                    <div style={{ fontSize: "13px", fontWeight: 600, color: S.white, marginBottom: "4px" }}>
+                      Pardon Player (Unban)
+                    </div>
+                    <div style={{ fontSize: "11px", color: S.muted, marginBottom: "12px" }}>
+                      Unban a player and allow them to connect again.
+                    </div>
+                    <div style={{ display: "flex", gap: "8px" }}>
+                      <input
+                        type="text"
+                        placeholder="Player username"
+                        value={pardonInput}
+                        onChange={(e) => setPardonInput(e.target.value)}
+                        style={{
+                          flex: 1,
+                          backgroundColor: S.input,
+                          border: `1px solid ${S.inputBdr}`,
+                          color: S.white,
+                          padding: "5px 8px",
+                          fontSize: "12px",
+                          outline: "none",
+                        }}
+                      />
+                      <button
+                        onClick={() => {
+                          if (!pardonInput.trim()) return;
+                          handleAction(`pardon ${pardonInput.trim()}`);
+                          setPardonInput("");
+                        }}
+                        className="button-hover"
+                        style={{
+                          backgroundColor: S.cyan,
+                          border: "none",
+                          color: "#1a1a1a",
+                          padding: "5px 12px",
+                          fontSize: "11px",
+                          cursor: "pointer",
+                          borderRadius: "2px",
+                          fontWeight: "bold",
+                        }}
+                      >
+                        Pardon
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Pardon IP */}
+                  <div
+                    style={{
+                      border: `1px solid ${S.border}`,
+                      backgroundColor: "#242424",
+                      padding: "16px",
+                      borderRadius: "3px",
+                    }}
+                  >
+                    <div style={{ fontSize: "13px", fontWeight: 600, color: S.white, marginBottom: "4px" }}>
+                      Pardon IP Address
+                    </div>
+                    <div style={{ fontSize: "11px", color: S.muted, marginBottom: "12px" }}>
+                      Unban a specific IP address.
+                    </div>
+                    <div style={{ display: "flex", gap: "8px" }}>
+                      <input
+                        type="text"
+                        placeholder="IP Address (e.g. 192.168.1.1)"
+                        value={pardonIpInput}
+                        onChange={(e) => setPardonIpInput(e.target.value)}
+                        style={{
+                          flex: 1,
+                          backgroundColor: S.input,
+                          border: `1px solid ${S.inputBdr}`,
+                          color: S.white,
+                          padding: "5px 8px",
+                          fontSize: "12px",
+                          outline: "none",
+                        }}
+                      />
+                      <button
+                        onClick={() => {
+                          if (!pardonIpInput.trim()) return;
+                          handleAction(`pardon-ip ${pardonIpInput.trim()}`);
+                          setPardonIpInput("");
+                        }}
+                        className="button-hover"
+                        style={{
+                          backgroundColor: S.cyan,
+                          border: "none",
+                          color: "#1a1a1a",
+                          padding: "5px 12px",
+                          fontSize: "11px",
+                          cursor: "pointer",
+                          borderRadius: "2px",
+                          fontWeight: "bold",
+                        }}
+                      >
+                        Pardon
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Send action commands */}
                 <div
                   style={{
@@ -4722,7 +5497,7 @@ export default function Dashboard() {
                     borderRadius: "3px",
                   }}
                 >
-                  <div style={{ fontSize: "13.5px", fontWeight: 600, color: S.white, marginBottom: "10px" }}>
+                  <div style={{ fontSize: "13px", fontWeight: 600, color: S.white, marginBottom: "10px" }}>
                     Quick Management Command
                   </div>
                   <form onSubmit={sendUserCmd} style={{ display: "flex", gap: "10px" }}>
@@ -4770,8 +5545,8 @@ export default function Dashboard() {
                             textAlign: "left",
                           }}
                         >
-                          <th style={{ padding: "8px 12px" }}>UUID</th>
-                          <th style={{ padding: "8px 12px" }}>Username</th>
+                          <th style={{ padding: "8px 12px" }}>{userList === "banned-ips" ? "IP Address" : "UUID"}</th>
+                          <th style={{ padding: "8px 12px" }}>{userList === "banned-ips" ? "Banned On" : "Username"}</th>
                           {userList === "ops" && <th style={{ padding: "8px 12px" }}>OP Level</th>}
                           {userList === "banned-players" && (
                             <>
@@ -4779,7 +5554,13 @@ export default function Dashboard() {
                               <th style={{ padding: "8px 12px" }}>Reason</th>
                             </>
                           )}
-                          <th style={{ padding: "8px 12px", width: "120px", textAlign: "right" }}>
+                          {userList === "banned-ips" && (
+                            <>
+                              <th style={{ padding: "8px 12px" }}>Banned By</th>
+                              <th style={{ padding: "8px 12px" }}>Reason</th>
+                            </>
+                          )}
+                          <th style={{ padding: "8px 12px", width: "180px", textAlign: "right" }}>
                             Quick Revoke
                           </th>
                         </tr>
@@ -4788,7 +5569,7 @@ export default function Dashboard() {
                         {players.length === 0 ? (
                           <tr>
                             <td
-                              colSpan={userList === "banned-players" ? 5 : userList === "ops" ? 4 : 3}
+                              colSpan={userList === "banned-players" || userList === "banned-ips" ? 5 : userList === "ops" ? 4 : 3}
                               style={{
                                 padding: "20px",
                                 textAlign: "center",
@@ -4802,7 +5583,7 @@ export default function Dashboard() {
                         ) : (
                           players.map((p) => (
                             <tr
-                              key={p.uuid || p.name}
+                              key={p.uuid || p.name || p.ip}
                               className="tab-hover"
                               style={{ borderBottom: `1px solid ${S.border}` }}
                             >
@@ -4814,7 +5595,7 @@ export default function Dashboard() {
                                   color: S.muted,
                                 }}
                               >
-                                {p.uuid || "–"}
+                                {userList === "banned-ips" ? (p.ip || "–") : (p.uuid || "–")}
                               </td>
                               <td
                                 style={{
@@ -4823,7 +5604,7 @@ export default function Dashboard() {
                                   color: S.white,
                                 }}
                               >
-                                {p.name}
+                                {userList === "banned-ips" ? (p.created || "–") : p.name}
                               </td>
                               {userList === "ops" && (
                                 <td style={{ padding: "8px 12px", color: S.cyan }}>{p.level || "4"}</td>
@@ -4838,30 +5619,136 @@ export default function Dashboard() {
                                   </td>
                                 </>
                               )}
+                              {userList === "banned-ips" && (
+                                <>
+                                  <td style={{ padding: "8px 12px", color: S.muted }}>
+                                    {p.source || "–"}
+                                  </td>
+                                  <td style={{ padding: "8px 12px", color: "#cc8866" }}>
+                                    {p.reason || "No reason given"}
+                                  </td>
+                                </>
+                              )}
                               <td style={{ padding: "8px 12px", textAlign: "right" }}>
-                                <button
-                                  onClick={() => {
-                                    let cmd = "";
-                                    if (userList === "ops") cmd = `deop ${p.name}`;
-                                    if (userList === "whitelist") cmd = `whitelist remove ${p.name}`;
-                                    if (userList === "banned-players") cmd = `pardon ${p.name}`;
-                                    sendCommandDirect(cmd).then(() =>
-                                      setTimeout(() => loadUsers(userList), 1200)
-                                    );
-                                  }}
-                                  className="button-hover"
-                                  style={{
-                                    backgroundColor: "transparent",
-                                    color: S.orange,
-                                    border: `1px solid ${S.orange}`,
-                                    cursor: "pointer",
-                                    padding: "2px 8px",
-                                    fontSize: "11px",
-                                    borderRadius: "2px",
-                                  }}
-                                >
-                                  Revoke
-                                </button>
+                                <div style={{ display: "flex", gap: "6px", justifyContent: "flex-end" }}>
+                                  {userList === "ops" && (
+                                    <>
+                                      <button
+                                        onClick={() => handleAction(`deop ${p.name}`)}
+                                        className="button-hover"
+                                        style={{
+                                          backgroundColor: "transparent",
+                                          color: S.orange,
+                                          border: `1px solid ${S.orange}`,
+                                          cursor: "pointer",
+                                          padding: "2px 8px",
+                                          fontSize: "11px",
+                                          borderRadius: "2px",
+                                        }}
+                                      >
+                                        De-OP
+                                      </button>
+                                      <button
+                                        onClick={() => handleAction(`ban ${p.name}`)}
+                                        className="button-hover"
+                                        style={{
+                                          backgroundColor: "transparent",
+                                          color: "#ff4d4d",
+                                          border: `1px solid #ff4d4d`,
+                                          cursor: "pointer",
+                                          padding: "2px 8px",
+                                          fontSize: "11px",
+                                          borderRadius: "2px",
+                                        }}
+                                      >
+                                        Ban
+                                      </button>
+                                    </>
+                                  )}
+                                  {userList === "whitelist" && (
+                                    <>
+                                      <button
+                                        onClick={() => handleAction(`whitelist remove ${p.name}`)}
+                                        className="button-hover"
+                                        style={{
+                                          backgroundColor: "transparent",
+                                          color: S.orange,
+                                          border: `1px solid ${S.orange}`,
+                                          cursor: "pointer",
+                                          padding: "2px 8px",
+                                          fontSize: "11px",
+                                          borderRadius: "2px",
+                                        }}
+                                      >
+                                        Remove
+                                      </button>
+                                      <button
+                                        onClick={() => handleAction(`op ${p.name}`)}
+                                        className="button-hover"
+                                        style={{
+                                          backgroundColor: "transparent",
+                                          color: S.cyan,
+                                          border: `1px solid ${S.cyan}`,
+                                          cursor: "pointer",
+                                          padding: "2px 8px",
+                                          fontSize: "11px",
+                                          borderRadius: "2px",
+                                        }}
+                                      >
+                                        OP
+                                      </button>
+                                      <button
+                                        onClick={() => handleAction(`ban ${p.name}`)}
+                                        className="button-hover"
+                                        style={{
+                                          backgroundColor: "transparent",
+                                          color: "#ff4d4d",
+                                          border: `1px solid #ff4d4d`,
+                                          cursor: "pointer",
+                                          padding: "2px 8px",
+                                          fontSize: "11px",
+                                          borderRadius: "2px",
+                                        }}
+                                      >
+                                        Ban
+                                      </button>
+                                    </>
+                                  )}
+                                  {userList === "banned-players" && (
+                                    <button
+                                      onClick={() => handleAction(`pardon ${p.name}`)}
+                                      className="button-hover"
+                                      style={{
+                                        backgroundColor: "transparent",
+                                        color: S.cyan,
+                                        border: `1px solid ${S.cyan}`,
+                                        cursor: "pointer",
+                                        padding: "2px 8px",
+                                        fontSize: "11px",
+                                        borderRadius: "2px",
+                                      }}
+                                    >
+                                      Pardon
+                                    </button>
+                                  )}
+                                  {userList === "banned-ips" && (
+                                    <button
+                                      onClick={() => handleAction(`pardon-ip ${p.ip}`)}
+                                      className="button-hover"
+                                      style={{
+                                        backgroundColor: "transparent",
+                                        color: S.cyan,
+                                        border: `1px solid ${S.cyan}`,
+                                        cursor: "pointer",
+                                        padding: "2px 8px",
+                                        fontSize: "11px",
+                                        borderRadius: "2px",
+                                      }}
+                                    >
+                                      Pardon IP
+                                    </button>
+                                  )}
+                                </div>
                               </td>
                             </tr>
                           ))
@@ -5487,6 +6374,141 @@ export default function Dashboard() {
                 className="button-hover"
               >
                 Confirm Destructive Reset
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {selectedPluginDetails && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.75)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 100000,
+            padding: "20px",
+          }}
+          onClick={() => setSelectedPluginDetails(null)}
+        >
+          <div
+            style={{
+              backgroundColor: "#202020",
+              border: `1px solid ${S.border}`,
+              borderRadius: "4px",
+              maxWidth: "500px",
+              width: "100%",
+              padding: "20px",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
+              display: "flex",
+              flexDirection: "column",
+              gap: "16px",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+              <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+                <PluginIcon url={selectedPluginDetails.iconUrl} size={36} color={selectedPluginDetails.color} />
+                <div>
+                  <div style={{ fontSize: "16px", fontWeight: "bold", color: S.white }}>
+                    {selectedPluginDetails.name}
+                  </div>
+                  <div style={{ fontSize: "11px", color: S.muted, marginTop: "2px" }}>
+                    Provider: {selectedPluginDetails.provider}
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedPluginDetails(null)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: S.muted,
+                  cursor: "pointer",
+                  fontSize: "20px",
+                  lineHeight: "1",
+                  padding: "0",
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            <div style={{ borderTop: `1px solid ${S.border}`, paddingTop: "12px" }}>
+              <div style={{ fontSize: "11px", color: S.muted, fontWeight: "bold", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                Description
+              </div>
+              <div style={{ fontSize: "13px", color: S.white, lineHeight: "1.5", maxHeight: "150px", overflowY: "auto" }}>
+                {selectedPluginDetails.description || selectedPluginDetails.tagline || "No description available."}
+              </div>
+            </div>
+
+            {selectedPluginDetails.downloads !== undefined && selectedPluginDetails.downloads > 0 && (
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", backgroundColor: "#181818", padding: "8px 12px", borderRadius: "3px" }}>
+                <div>
+                  <span style={{ color: S.muted }}>Downloads:</span>{" "}
+                  <span style={{ color: S.white, fontWeight: "bold" }}>{selectedPluginDetails.downloads.toLocaleString()}</span>
+                </div>
+                {selectedPluginDetails.categories && selectedPluginDetails.categories.length > 0 && (
+                  <div>
+                    <span style={{ color: S.muted }}>Tags:</span>{" "}
+                    <span style={{ color: S.cyan }}>{selectedPluginDetails.categories.join(", ")}</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {selectedPluginDetails.versions && selectedPluginDetails.versions.length > 0 && (
+              <div>
+                <div style={{ fontSize: "11px", color: S.muted, fontWeight: "bold", marginBottom: "6px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                  Compatible Versions
+                </div>
+                <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                  {selectedPluginDetails.versions.slice(0, 10).map((v: string) => (
+                    <span
+                      key={v}
+                      style={{
+                        fontSize: "10px",
+                        backgroundColor: "rgba(255, 255, 255, 0.05)",
+                        border: `1px solid ${S.border}`,
+                        color: S.white,
+                        padding: "2px 6px",
+                        borderRadius: "3px",
+                      }}
+                    >
+                      {v}
+                    </span>
+                  ))}
+                  {selectedPluginDetails.versions.length > 10 && (
+                    <span style={{ fontSize: "10px", color: S.muted, alignSelf: "center" }}>
+                      +{selectedPluginDetails.versions.length - 10} more
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <div style={{ display: "flex", justifyContent: "flex-end", borderTop: `1px solid ${S.border}`, paddingTop: "12px" }}>
+              <button
+                onClick={() => setSelectedPluginDetails(null)}
+                style={{
+                  backgroundColor: S.cyan,
+                  border: "none",
+                  color: "#1a1a1a",
+                  padding: "6px 16px",
+                  fontSize: "12px",
+                  cursor: "pointer",
+                  borderRadius: "3px",
+                  fontWeight: "bold",
+                }}
+              >
+                Close
               </button>
             </div>
           </div>

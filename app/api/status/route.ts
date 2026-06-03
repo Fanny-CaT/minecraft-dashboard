@@ -1,5 +1,32 @@
 import { NextResponse } from "next/server";
+import net from "net";
 import { getStatus, getStats, getMaxMemoryBytes, getSftpUsername, getPanelServerInfo, getServerDetails, listFiles, readFile, sendConsoleCommand } from "@/lib/pufferpanel";
+
+function checkTcpPort(port: number, host: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    const socket = new net.Socket();
+    const timeout = 600;
+    
+    socket.setTimeout(timeout);
+    
+    socket.on("connect", () => {
+      socket.destroy();
+      resolve(true);
+    });
+    
+    socket.on("timeout", () => {
+      socket.destroy();
+      resolve(false);
+    });
+    
+    socket.on("error", () => {
+      socket.destroy();
+      resolve(false);
+    });
+    
+    socket.connect(port, host);
+  });
+}
 
 const MAX_CPUS   = 4;
 const SERVER_ID  = process.env.PUFFER_SERVER_ID || "";
@@ -73,7 +100,7 @@ export async function GET() {
     let sftpHost = "meowtopia-panel.duckdns.org";
     let mcVersion = "1.21.1";
     let javaVersion = "21";
-    let motd = "A Minecraft Server";
+    let motd = "🐾 Welcome to MeowTopia! 🐾 Have a purr-fect time! 🐱";
     let port = 25565;
     let bindIp = "0.0.0.0";
     let allocatedMemory = 12288;
@@ -102,7 +129,12 @@ export async function GET() {
       const data = daemonDetails?.data || {};
       mcVersion = data.version?.value || mcVersion;
       javaVersion = String(data.javaversion?.value || javaVersion);
-      motd = data.motd?.value || motd;
+      const rawMotd = data.motd?.value;
+      if (rawMotd && !rawMotd.includes("PufferPanel") && !rawMotd.includes("A Minecraft Server")) {
+        motd = rawMotd;
+      } else {
+        motd = "🐾 Welcome to MeowTopia! 🐾 Have a purr-fect time! 🐱";
+      }
       port = data.port?.value || port;
       bindIp = data.ip?.value || bindIp;
       allocatedMemory = data.memory?.value || allocatedMemory;
@@ -118,20 +150,41 @@ export async function GET() {
     let networkOutgoing = 0;
     let diskUsageBytes = 3.24 * 1024 * 1024 * 1024; // 3.24 GB base install
 
+    let targetHost = "127.0.0.1";
+    if (sftpHost && sftpHost !== "localhost" && sftpHost !== "127.0.0.1") {
+      targetHost = sftpHost;
+    } else if (MC_IP) {
+      const cleanIp = MC_IP.split(":")[0];
+      if (cleanIp && cleanIp !== "localhost" && cleanIp !== "127.0.0.1") {
+        targetHost = cleanIp;
+      }
+    }
+
+    let isPortOpen = false;
     if (running) {
-      // 1. TPS: Max 20.0, drops under high CPU load
-      tps = 20.0 - (cpu > 80 ? (cpu - 80) * 0.06 : 0) - (Math.random() * 0.04);
-      if (tps > 20.0) tps = 20.0;
-      if (tps < 12.0) tps = 12.0;
+      try {
+        isPortOpen = await checkTcpPort(port, targetHost);
+      } catch (err) {
+        console.warn("[status api] TCP check error:", err);
+      }
+    }
 
-      // 2. Chunks and Entities: realistic values based on a standard loaded world
-      const timeFactor = Date.now() / 120000;
-      loadedChunks = 580 + Math.floor(Math.sin(timeFactor) * 45) + Math.floor(Math.random() * 6);
-      loadedEntities = 35 + Math.floor(Math.cos(timeFactor) * 8) + Math.floor(Math.random() * 4);
+    if (running) {
+      if (isPortOpen) {
+        // 1. TPS: Max 20.0, drops under high CPU load
+        tps = 20.0 - (cpu > 80 ? (cpu - 80) * 0.06 : 0) - (Math.random() * 0.04);
+        if (tps > 20.0) tps = 20.0;
+        if (tps < 12.0) tps = 12.0;
 
-      // 3. Network activity: dynamic network packets
-      networkIncoming = 824 + Math.floor(Math.random() * 1250);
-      networkOutgoing = 3520 + Math.floor(Math.random() * 4100);
+        // 2. Chunks and Entities: realistic values based on a standard loaded world
+        const timeFactor = Date.now() / 120000;
+        loadedChunks = 580 + Math.floor(Math.sin(timeFactor) * 45) + Math.floor(Math.random() * 6);
+        loadedEntities = 35 + Math.floor(Math.cos(timeFactor) * 8) + Math.floor(Math.random() * 4);
+
+        // 3. Network activity: dynamic network packets
+        networkIncoming = 824 + Math.floor(Math.random() * 1250);
+        networkOutgoing = 3520 + Math.floor(Math.random() * 4100);
+      }
 
       // 4. Disk Usage: Calculate backups folder size and add it to the base install
       try {
@@ -147,7 +200,7 @@ export async function GET() {
 
     return NextResponse.json({
       running,
-      status:    running ? "online" : "offline",
+      status:    running ? (isPortOpen ? "online" : "starting") : "offline",
       cpu,
       memory,
       maxMemory,
