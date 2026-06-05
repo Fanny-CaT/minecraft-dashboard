@@ -1,0 +1,1247 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>McMyAdmin - The Minecraft Web Admin Panel</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <link rel="stylesheet" type="text/css" href="styles/wt-rotator.css" />
+    <link rel="stylesheet" type="text/css" href="styles/bootstrap.min.css" />
+
+    <style type="text/css">
+        @import url(//fonts.googleapis.com/css?family=Open+Sans:400,300,700);
+
+        body {
+            margin: 0px;
+            padding: 0px;
+            font-family: 'Open Sans', 'Segoe UI', sans-serif;
+        }
+
+        a, a:active, a:visited {
+            color: white;
+        }
+
+        #purchaseform select, #purchaseform input[type="text"] {
+            width: 240px;
+        }
+
+        #hcontainer {
+            width: 100%;
+            background-color: #2B5777;
+            /*background-color:#606060;*/
+            margin: 0px;
+            padding: 0px;
+            min-height: 520px;
+            color: white;
+        }
+
+        #fcontainer {
+            width: 100%;
+            text-align: center;
+            color: #777;
+            margin-top: 20px;
+            font-size: 14pt;
+        }
+
+            #fcontainer a {
+                margin-left: 4px;
+                margin-right: 4px;
+            }
+
+        .d1 a, .d1 a:active, .d1 a:visited {
+            color: #444;
+        }
+
+        #flink {
+            color: #888;
+        }
+
+        #headarea {
+            position: absolute;
+            top: 0px;
+            left: 0px;
+            width: 100%;
+            height: 50px;
+            background-color: #404040;
+            background-repeat: repeat-x;
+            min-width: 920px;
+        }
+
+        #headcontents {
+            width: 100%;
+            min-width: 800px;
+            max-width: 1000px;
+            margin-left: auto;
+            margin-right: auto;
+            color: white;
+            font-family: segoe ui, Sans-Serif;
+        }
+
+        .headitem {
+            display: inline-block;
+            width: auto;
+            height: 50px;
+            line-height: 51px;
+            border-left: 1px solid #555;
+            padding: 0px 12px 0px 12px;
+            cursor: pointer;
+            margin: 0px;
+            font-size: 10pt;
+            text-decoration: none;
+        }
+
+            .headitem:last-of-type {
+                border-right: 1px solid #555;
+            }
+
+            .headitem:hover {
+                background-color: #555;
+            }
+
+            .headitem:active {
+                background-image: none;
+            }
+
+        .bodycontent {
+            padding-top: 400px;
+			padding-bottom: 20px;
+        }
+
+        .logohead {
+            display: inline-block;
+            width: 28px;
+            height: 49px;
+            line-height: 49px;
+            background-image: url(Images/LogoTiny.png);
+            background-repeat: no-repeat;
+            margin-right: 12px;
+            text-decoration: none;
+        }
+
+        .tiny {
+            padding-top: 8px;
+            font-size: 12pt;
+        }
+
+        .tinytext {
+            font-size: 8pt;
+        }
+
+        .verytinytext {
+            font-size: 7pt;
+        }
+
+        #hbody {
+            width: 100%;
+            min-width: 1000px;
+            max-width: 1000px;
+            margin-left: auto;
+            margin-right: auto;
+            margin-top: 49px;
+            min-height: 600px;
+        }
+
+        #htitle {
+            padding-top: 16px;
+            padding-bottom: 20px;
+            font-size: 50pt;
+            letter-spacing: -0.02em;
+        }
+
+        .hlogo {
+            float: right;
+            margin-top: 12px;
+            max-width: 300px;
+            font-size: 8pt;
+        }
+
+            .hlogo img {
+                box-shadow: 0px 4px 8px rgba(0,0,0,0.25);
+                border: 1px solid rgba(255,255,255,0.1);
+                margin-bottom: 16px;
+            }
+
+        .sblock {
+            display: inline-block;
+            max-width: 198px;
+            font-size: 15pt;
+            border-right: 2px dotted rgba(255,255,255,0.7);
+            margin-left: 8px;
+            padding-bottom: 2px;
+        }
+
+            .sblock:first-of-type {
+                margin-left: 0px;
+            }
+
+            .sblock:last-of-type {
+                border-right: 0px;
+            }
+
+        #blurb {
+            margin-top: 34px;
+            margin-bottom: 16px;
+            width: 640px;
+        }
+
+        .subnotice {
+            margin-top: 16px;
+            font-size: 8pt;
+        }
+
+        .dlink {
+            width: 320px;
+            height: 135px;
+            background-image: url(Images/download.png);
+            cursor: pointer;
+        }
+
+        .downloadpage .dlink {
+            display: inline-block;
+        }
+
+        .dtext {
+            padding-top: 40px;
+            padding-left: 76px;
+        }
+
+        .noit {
+            font-style: normal;
+            font-size: 14pt;
+        }
+
+        .tinyf {
+            color: #21510D;
+            font-size: 8pt;
+            margin-top: 4px;
+        }
+
+        .nobullet {
+            list-style-type: none;
+            padding: 0;
+        }
+
+            .nobullet li {
+                padding: 0;
+            }
+
+                .nobullet li input {
+                    margin-right: 8px;
+                }
+
+        .margintop12 {
+            margin-top: 12px;
+        }
+
+        .fb-like {
+            position: relative;
+            top: -3px;
+        }
+
+        #editions_table {
+            border-collapse: collapse;
+            margin-left: auto;
+            margin-right: auto;
+            width: 100%;
+        }
+
+            #editions_table td {
+                border-top: 1px solid silver;
+                border-bottom: 1px solid silver;
+                height: 3em;
+                width: 25%;
+                text-align: center;
+            }
+
+            #editions_table tr:nth-child(odd) {
+                background-color: rgba(255,255,255,0.2);
+            }
+
+        #purchasedesc {
+            width: 468px;
+            float: right;
+            margin-left: 20px;
+        }
+
+        .container {
+            width: 1000px;
+            height: 540px;
+            padding: 0px;
+            margin: 0px;
+            box-shadow: 0px 0px 16px rgba(0,0,0,0.3);
+        }
+
+        .tourtext_topleft {
+            top: 4px;
+            left: 4px;
+            width: 336px;
+            height: 192px;
+            color: #FFF;
+            background-color: #000;
+        }
+
+        #support a {
+            text-decoration: none;
+        }
+
+        .supportquery {
+            background-color: rgba(255,255,255,0.3);
+            width: 450px;
+            border: 1px solid white;
+            border-radius: 4px;
+            padding: 12px;
+            cursor: pointer;
+            margin: 8px;
+        }
+
+            .supportquery:hover, .ima:hover {
+                background-color: rgba(255,255,255,0.5);
+            }
+
+            .supportquery:active, .ima:active {
+                background-color: rgba(255,255,255,0.2);
+            }
+
+        .ima {
+            display: inline-block;
+            background-color: rgba(255,255,255,0.3);
+            width: 450px;
+            border: 1px solid white;
+            border-radius: 4px;
+            padding: 12px;
+            margin-top: 60px;
+            cursor: pointer;
+            text-align: center;
+            font-size: 20pt;
+        }
+
+        #sstour {
+            width: 100%;
+            text-align: center;
+            font-size: 20pt;
+            margin-top: 60px;
+        }
+
+        .code {
+            font-family: monospace, serif;
+            font-size: 1em;
+            background-color: rgba(0,0,0,0.25);
+            padding: 1em;
+            border: 1px solid white;
+            margin-bottom: 1em;
+        }
+
+        #promoBody {
+            color: white;
+            background-color: rgba(0,0,0,0.7);
+            width: 100%;
+            position: absolute;
+            top: 50px;
+            padding: 64px 2px;
+            font-weight: bold;
+            font-size:12pt;
+            text-align: left;
+			text-shadow: 2px 2px 4px #000;
+			box-shadow: 0px 8px 8px rgb(0 0 0 / 30%);
+        }
+		
+		#promoBody p, #promoBody h4 {
+			width: 1000px;
+			margin-left: auto;
+			margin-right: auto;
+		}
+    </style>
+</head>
+<body>
+    <div id="headarea">
+        <div id="headcontents">
+            <a class="logohead" href="#/home">&nbsp;</a><a class="headitem" href="#/home">About McMyAdmin</a><a class="headitem" href="#/whyuse">Why use McMyAdmin?</a><a class="headitem" href="#/download">Download</a><a class="headitem" href="#/editions">Editions</a><a class="headitem" href="#/getpro">Get Pro</a><a class="headitem" href="#/support">Contact and Support</a><a class="headitem" href="http://forums.cubecoders.com">Forums</a><a class="headitem" href="https://wiki.cubecoders.com">Wiki</a>
+        </div>
+    </div>
+		<div id="promoBody" style="display: block;">
+		<h4 style="
+			font-size: 32px;
+			margin-bottom: 32px;
+		">McMyAdmin has been replaced by <a href="https://cubecoders.com/AMP?utm_source=mcmyadmin" class="plausible-event-name=ClickAMPHeader">AMP</a>.<br>
+			Please use AMP for new installations.
+		</h4>
+        <p>McMyAdmin was replaced by AMP in 2018, new users should use AMP instead of McMyAdmin.<br>This page remains here for legacy users.</p>
+		<p>AMP features the same ease of use and simple installation, but supports more games, has more features, and will continue to recieve support and updates. McMyAdmin 2 is no longer recieving any feature updates.</p>
+		<p>Please use <a href="https://cubecoders.com/AMP?utm_source=mcmyadmin" class="plausible-event-name=ClickAMPHeader">CubeCoders AMP</a> for any new installations where possible.</p>
+    </div>
+    <div id="hcontainer">
+        <div id="hbody">
+            <div class="bodycontent" id="promo">
+            </div>
+            <div class="bodycontent" id="home">
+                <div class="hlogo">
+                    <img class="hlogo" src="Images/MCMA.png" alt="McMyAdmin" />
+                    McMyAdmin Status screen. Everything you need to know  about your server at a glance.
+                </div>
+                <div class="hlogo" style="clear:right;">
+                    <img class="hlogo" src="Images/MCMA2.png" alt="McMyAdmin" />
+                    Manage your servers permissions, right from the control panel. No hand-editing YML files.
+                </div>
+                <div style="float:right;">
+                </div>
+                <div id="htitle">
+                    <span>McMyAdmin 2</span>
+                    <span style="font-size:15pt">The Minecraft Control Panel</span>
+                </div>
+                <div id="hitems">
+                    <div class="sblock">
+                        Easy to install, get going in 2 minutes
+                    </div>
+                    <div class="sblock">
+                        No extra software to configure or install*
+                    </div>
+                    <div class="sblock">
+                        Gorgeous and functional
+                    </div>
+                </div>
+                <div id="blurb">
+                    McMyAdmin is the leading web control panel and administration console for Minecraft servers, trusted by over 75000 server admins and more than 35 different service providers.<br />
+                </div>
+                <div id="blurb2">
+                    More servers run McMyAdmin than any other available Minecraft control panel - <a href="#/whyuse" class="pnav">Find out why</a>
+                </div><br />
+                <div class="dlink" onclick="setPage('/download');">
+                    <div class="dtext">
+                        <div class="noit">McMyAdmin 2</div>
+                        <div>Version <span id="latestversion">2.1.0.0</span></div>
+
+                        <div class="tinyf">Windows, Linux, BSD, Mac OS</div>
+                    </div>
+                </div>
+                <div class="subnotice">
+                    * Supported OSs only. BSD, Mac OS and 32-bit Linux systems require the Mono Runtime.<br />&nbsp;&nbsp;&nbsp;Java is required to run the Minecraft server itself.
+                </div>
+                <!--<div id="promo" style="float:right;background-color:rgba(0,0,0,0.25);margin-top:-148px;padding:12px;max-width:500px;">
+                    <h2 style="margin-top:0px;">Latest News:</h2>
+                    <h4 style="margin:2px;">Educators get McMyAdmin for free</h4>
+                    <p style="margin-bottom:0px;">Qualifying schools and educators can now use McMyAdmin for free! <a href="#/edufree">Click Here</a> for more information.</p>
+                </div>-->
+            </div>
+
+            <!--<div class="bodycontent" id="tour">
+                <div class="container">
+                    <div>
+                        <div class="wt-rotator">
+                            <div class="screen">
+                                <noscript>
+                                    <h1>Javascript must be enabled to view this slideshow.</h1>
+                                </noscript>
+                            </div>
+                            <div class="c-panel">
+                                <div class="thumbnails">
+                                    <ul>
+                                        <li>
+                                            <a href="Images/Slides/Slide0.png" title="Schedule"></a>
+                                            <div>
+                                                <h2>Built in event scheduler</h2>
+                                                <p>McMyAdmin lets you easily schedule a variety of events to help you manage your server, from regular backups, to restarts, to simply wishing well to your players. You can schedule tasks to run at certain intervals, or to run in response to certain events such as players joining and leaving the server.</p>
+                                            </div>
+                                        </li>
+                                        <li>
+                                            <a href="Images/Slides/Slide4.png" title="Monitoring"></a>
+                                            <div>
+                                                <h2>Continual state monitoring</h2>
+                                                <p>The health of your server is continually evaluated. If the game server crashes or stops responding, McMyAdmin will automatically restart the server, even if the process doesn't actually terminate.</p>
+                                            </div>
+                                        </li>
+                                        <li>
+                                            <a href="Images/Slides/Slide1.png" title="Settings"></a>
+                                            <div>
+                                                <h2>Simple server configuration</h2>
+                                                <p>Quickly and easily adjust your server settings or control gameplay. Everything is kept simple, no having to guess what the correct value for any setting is, just pick what you need.</p>
+                                            </
+                                        </li>
+                                        <li>
+                                            <a href="Images/Slides/Slide2.png" title="Users"></a>
+                                            <div>
+                                                <h2>Restricted user accounts</h2>
+                                                <p>You can add additional users to the control panel and restrict their actions. Allowing you to have staff who can perform basic day-to-day administration without giving them complete access to the server.</p>
+                                            </div>
+                                        </li>
+                                        <li>
+                                            <a href="Images/Slides/Slide3.png" title="Permissions"></a>
+                                            <div>
+                                                <h2>In-game permissions management</h2>
+                                                <p>McMyAdmins permissions management can be used with PermissionsEX, Essentials Group Manager, PermissionsBukkit and bPermissions. Never worry about how to format your plugin configuration files, just add the details into McMyAdmin and it takes care of the rest.</p>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div class="buttons">
+                                    <div class="prev-btn"></div>
+                                    <div class="play-btn"></div>
+                                    <div class="next-btn"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>-->
+
+            <div class="bodycontent" id="whyuse">
+                <h2>Why use McMyAdmin?</h2>
+                <p>More than 75000 Minecraft servers worldwide are powered by McMyAdmin. So what's in it for you?</p>
+                <div class="row">
+                    <div class="col-md-4">
+                        <h3>Security taken seriously</h3>
+                        <p>McMyAdmin is the only Minecraft admin panel to undergo independent penetration testing by a CREST approved security specialist.&dagger;<br /><br />We work with <a href="http://www.dionach.com/?ref=cubecoders">Dionach</a> - a leading <a href="http://crest-approved.org/">CREST</a> approved independent information security specialist to ensure that McMyAdmin complies with best security practices and is as secure as possible against potential attacks.</p>
+                    </div>
+
+                    <div class="col-md-4">
+                        <h3>Easy to install, easy to use</h3>
+                        <p>No webserver to configure, no database to set up. McMyAdmin includes almost everything you need to get going quickly and with minimal fuss.<br /><br />Most common administrative tasks can be performed via the friendly user interface, no need to edit text files or write scripts.</p>
+                    </div>
+
+                    <div class="col-md-4">
+                        <h3>Free to try</h3>
+                        <p>McMyAdmin Personal includes almost all the functionality of McMyAdmin Professional, allowing you to see how great McMyAdmin is before you buy.<br /><br />See the <a href="#/editions">Editions</a> page to compare versions.</p>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4">
+                        <h3>Regular Updates</h3>
+                        <p>McMyAdmin has enjoyed the benefit of over 3 years of updates and improvements, and continues to get regular updates to add new features, support new mods or support the latest version of the Minecraft server.</p>
+                    </div>
+
+                    <div class="col-md-4">
+                        <h3>We Listen</h3>
+                        <p>Anyone can suggest new features or changes they'd like to see in McMyAdmin via our support page. If it gets enough votes, we start looking at how it can be brought on board. So far we've brought on over 60 user suggestions into McMyAdmin.</p>
+                    </div>
+
+                    <div class="col-md-4">
+                        <h3>Manage from anywhere</h3>
+                        <p>You can administer your server from anywhere with an internet connection. The McMyAdmin user interface works great on tablets, or you can use the McMyAdmin Mobile app* for iOS. (And we've got an Android version on the way!)</p>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4">
+                        <h3>Great for hosts</h3>
+                        <p>No complex licencing systems or provisioning requirements. McMyAdmin is easy to manage in either VPSs or shared-hosting environments. Fully configurable via command line arguments for ease of deployment. Works on both Windows Server and GNU/Linux based servers.</p>
+                    </div>
+
+                    <div class="col-md-4">
+                        <h3>Reduce server costs</h3>
+                        <p>McMyAdmin has a unique server sleeping feature not found in any other control panel. It allows you to save resources by stopping the Minecraft server, but still be able to accept players. When a player connects, the server is woken up. The entire process is quick, seamless, fully automated, and turned on with just a single setting.</p>
+                    </div>
+
+                    <div class="col-md-4">
+                        <h3>Reduce support costs</h3>
+                        <p>Users can perform most common administrative tasks such as performing updates, installing plugins or changing the server configuration without ever having to touch a configuration file, it's all kept plain and simple. This translates into fewer support requests and less downtime from user issues.</p>
+                    </div>
+                </div>
+
+                <div class="subnotice">* Sold Separately<br />&dagger; As of May 7th 2014</div>
+                <br />
+            </div>
+
+            <div class="bodycontent" id="download">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h2>Download McMyAdmin 2</h2>
+                        <p>Select your platform:</p>
+                        <ul class="nobullet">
+                            <li><input type="radio" value=".dl_win" id="rad_win" name="platradio" checked="checked" /><label for="rad_win">Windows (32 and 64 bit)</label></li>
+                            <li><input type="radio" value=".dl_linux64" id="rad_linux64" name="platradio" /><label for="rad_linux64">GNU/Linux (64 bit, all distributions)</label></li>
+                            <li><input type="radio" value=".dl_linux32" id="rad_linux32" name="platradio" /><label for="rad_linux32">GNU/Linux (32 bit, all distributions)</label></li>
+                            <li><input type="radio" value=".dl_macos" id="rad_macos" name="platradio" /><label for="rad_macos">Mac OS X</label></li>
+                            <li><input type="radio" value=".dl_bsdother" id="rad_bsdother" name="platradio" /><label for="rad_bsdother">BSD and Other Platforms</label></li>
+                        </ul>
+                        <br />
+                        <div class="downloadpage dl_win">
+                            <div class="dlink" onclick="downloadWin32();">
+                                <div class="dtext">
+                                    <div class="noit">Download Installer</div>
+                                    <div>For 32 and 64 bit systems</div>
+                                    <div class="tinyf">Windows Vista/Server 2008 or newer</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="downloadpage dl_linux64">
+                            <div class="dlink" onclick="downloadLinux64();">
+                                <div class="dtext">
+                                    <div class="noit">Download Installer</div>
+                                    <div>For 64 bit systems only</div>
+                                    <div class="tinyf">All GNU/Linux distributions</div>
+                                </div>
+                            </div>
+
+                            <div class="dlink" onclick="downloadLinux64Files();">
+                                <div class="dtext">
+                                    <div class="noit">Required Files</div>
+                                    <div>For 64 bit systems only</div>
+                                    <div class="tinyf">All GNU/Linux distributions</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="downloadpage dl_linux32">
+                            <div class="dlink" onclick="downloadOther();">
+                                <div class="dtext">
+                                    <div class="noit">Download</div>
+                                    <div>For 32 bit systems only</div>
+                                    <div class="tinyf">All GNU/Linux distributions</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="downloadpage dl_macos">
+                            <div class="dlink" onclick="downloadOther();">
+                                <div class="dtext">
+                                    <div class="noit">Download</div>
+                                    <div>For 32 and 64 bit systems</div>
+                                    <div class="tinyf">Mac OS X 10.4 and newer</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="downloadpage dl_bsdother">
+                            <div class="dlink" onclick="downloadOther();">
+                                <div class="dtext">
+                                    <div class="noit">Download</div>
+                                    <div>For 32 and 64 bit systems</div>
+                                    <div class="tinyf">BSD and other operating systems</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="downloadpage dl_linux32 dl_macos dl_bsdother">
+                            <h3>Installing on 32-bit Linux, Mac OS and BSD</h3>
+                            <p>Under these operating systems, the Mono framework is required to run McMyAdmin as there is not a native version of McMyAdmin available for these platforms at this time.</p>
+                            <p>For MacOS or openSUSE you can download Mono from the Mono Project <a href="http://www.go-mono.com/mono-downloads/download.html">download page</a> - for 32-bit Linux and BSD, you install it via your distributions package manager.</p>
+                            <p>Once Mono is installed, run the following as a <em>non-root</em> user:</p>
+                            <div class="code">
+                                mkdir ~/McMyAdmin<br />
+                                cd ~/McMyAdmin<br />
+                                wget https://mcmyadmin.com/Downloads/MCMA2-Latest.zip<br />
+                                unzip MCMA2-Latest.zip<br />
+                                rm MCMA2-Latest.zip<br />
+                                mono McMyAdmin.exe -setpass [YOURPASSWORD] -configonly
+                            </div>
+                            <p>You can then start McMyAdmin by running:</p>
+                            <div class="code">
+                                cd ~/McMyAdmin; mono McMyAdmin.exe
+                            </div>
+                            <p>Note that you must change to the directory McMyAdmin is installed to before running it. You cannot run it using a relative or absolute path.</p>
+                        </div>
+                        <div class="downloadpage dl_win">
+                            <h3>Installing on Windows</h3>
+                            <p>Requires Windows Vista/Server 2008 or newer. Windows XP and Server 2003 are no longer supported.</p>
+                            <p>McMyAdmin requires the .Net Framework 3.5 SP1 to be installed. Most systems have it already installed, otherwise you can download it from the <a href="http://www.microsoft.com/en-gb/download/details.aspx?id=22">Microsoft Download Center</a>.</p>
+                            <p>Under Windows Server, you need to install the .Net 3.5 Feature via the Server Manager.<p>
+                            <p>For Windows Server Core editions without a GUI, you can download the <a href="https://mcmyadmin.com/Downloads/MCMA2-Latest.zip">core archive</a> directly instead of using the GUI installer. A readme file is included with instructions on installing the service via the command line.</p>
+                        </div>
+                        <div class="downloadpage dl_linux64">
+                            <h3>Installing on 64-bit Linux</h3>
+                            <p>Run the following as root:</p>
+                            <div class="code">
+                                cd /usr/local<br />
+                                wget https://mcmyadmin.com/Downloads/etc.zip<br />
+                                unzip etc.zip; rm etc.zip
+                            </div>
+
+                            <p>Then run the following as a <em>non-root</em> user:</p>
+
+                            <div class="code">
+                                mkdir ~/McMyAdmin<br />
+                                cd ~/McMyAdmin<br />
+                                wget https://mcmyadmin.com/Downloads/MCMA2_glibc26_2.zip<br />
+                                unzip MCMA2_glibc26_2.zip<br />
+                                rm MCMA2_glibc26_2.zip<br />
+                                ./MCMA2_Linux_x86_64 -setpass [YOURPASSWORD] -configonly
+                            </div>
+
+                            <p>You can then start McMyAdmin by running:</p>
+                            <div class="code">
+                                cd ~/McMyAdmin; ./MCMA2_Linux_x86_64
+                            </div>
+                            <p>Note that you must change to the directory McMyAdmin is installed to before running it. You cannot run it using a relative or absolute path.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bodycontent" id="complete">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h2>Thank you for purchasing McMyAdmin Professional</h2><br />
+                        <p>If you paid using an eCheque or other non-instant payment method, your licence key will be sent as soon as your payment has been cleared.</p>
+                        <p>If you used an instant payment, your licence key has been sent to the primary email address associated with your paypal account. In most cases you should receive your key almost instantly, but please allow up to an hour for delivery.</p>
+                        <p>You can manage your McMyAdmin licences at the <a href="https://manage.cubecoders.com">CubeCoders Licencing Portal</a>.</p>
+                        <p>Thanks for your support, and enjoy McMyAdmin.</p>
+                        <p>Regards,<br /><span style="font-style:italic">The CubeCoders Team</span></p>
+                    </div>
+                    <div class="col-md-6">
+                        <br /><br />
+                        <img src="Images/AddLicence.png" alt="Adding a licence">
+                        <p>Once you've recieved your key, you can add it to your McMyAdmin installation via About -&gt; Updates in the control panel.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bodycontent" id="getpro">
+                <h2>Purchase McMyAdmin Professional</h2>
+
+                <div id="purchasedesc">
+                    <img src="Images/AddLicence.png" alt="Adding a licence" />
+                    <p class="tinytext">Once you've recieved your key, you can add it to your McMyAdmin installation via About -&gt; Updates in the control panel.</p>
+                    <p class="tinytext">Please ensure that you are running McMyAdmin 2.4.1.0 or newer before purchasing, as we have recently updated our licence system.</p>
+                </div>
+
+                <form action="https://www.paypal.com/cgi-bin/webscr" method="post" style="width:100%;" id="purchaseform">
+                    <input type="hidden" name="cmd" value="_s-xclick" />
+                    <input type="hidden" name="hosted_button_id" value="SNW56KEQ358RA" />
+                    <input type="hidden" name="on3" value="UserID" />
+                    <input type="hidden" name="os3" value="" />
+                    <table>
+
+                        <tbody>
+                            <tr><td><input type="hidden" name="on0" value="Item">Item</td></tr>
+                            <tr>
+                                <td>
+                                    <select name="os0">
+                                        <option value="McMyAdmin Pro">McMyAdmin Professional (&pound;10.00)</option>
+                                    </select>
+                                </td>
+                            </tr>
+
+                            <tr><td><input type="hidden" name="on1" value="Operating System" />Operating System (This doesn't affect your licence)</td></tr>
+                            <tr>
+                                <td>
+                                    <select name="os1">
+                                        <option value="Windows">Windows </option>
+                                        <option value="GNU/Linux">GNU/Linux </option>
+                                        <option value="Mac OS">Mac OS </option>
+                                        <option value="Other">Other </option>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr><td><input type="hidden" name="on2" value="Referrer" />How did you find out about McMyAdmin? (Optional)</td></tr>
+                            <tr><td><input type="text" name="os2" maxlength="60" /></td></tr>
+                            <tr><td>You will be able to specify your order quantity on the next page.</td></tr>
+                            <tr>
+                                <td>
+                                    <br />
+                                    <p>Once the purchase has been completed, your licence key will be sent to the primary email address associated with your paypal account. You can check what this is during the checkout process.</p>
+                                    <p>If you pay using an eCheque or other non-instant payment method, your licence key will be sent as soon as your payment has been cleared.</p>
+                                    <p>Your licence isn't tied to a single server and you can move it around as often as you like. You can also recover your licence at any time should you lose it via the <a href="https://manage.cubecoders.com">CubeCoders licence manager</a>.</p>
+                                    <div class="checkbox">
+                                        <label>
+                                            <input type="checkbox" id="toscheck" required="required"> I have read and agree to the <a href="#/terms">Terms of Sale</a> and <a href="#/priv">Privacy Policy</a>
+                                        </label>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <input type="hidden" name="currency_code" value="GBP" />
+                    <button type="submit" class="btn btn-success">Purchase</button>&nbsp;
+                    <img src="https://www.paypal.com/en_GB/Marketing/i/logo/PayPal_logo_80x35.gif" alt="PayPal-Standard-Logo" style="background-color:white;border:1px solid black;padding:4px;border-radius:0.5em;" />
+                    <p class="tinytext">20% VAT is included for purchases inside the EU.</p>
+                    <br /><br />
+                </form>
+
+            </div>
+
+            <div class="bodycontent" id="priv">
+                <h2>Privacy Policy</h2>
+                <p>CubeCoders Limited (CCL) collects and stores certain information in order to provide services to our customers. Some information we collect ourselves, and some is provided by 3rd parties such as our payment provider. Primarily the data is collected for the purposes of invoicing and billing, but may also be used for analytics.</p>
+                <p>We are a registered data handler in the United Kingdom with the Information Commissioner's Office (ICO) in compliance with the Data Protection Act (1998).</p>
+                <p>This privacy policy explains what information is collected, what it is for, and how you can keep your information up-to-date.</p>
+                <h3>Application</h3>
+                <p>The following applies to all products and services offered by CCL. It does not extend to 3rd parties that use our products or services.</p>
+                <h3>Information we collect</h3>
+                <h4>Personal Information</h4>
+                <p>We store the following information provided by the payment provider:</p>
+                <ul>
+                    <li>Your full name and address.</li>
+                    <li>Your telephone number.</li>
+                </ul>
+                <p>These details are used so we can supply users with proper invoices once a purchase has been complete. The details are stored permenently so that invoices can be retrieved at any time.</p>
+                <p>We are not supplied nor do we store financial data such as credit or debit card numbers.</p>
+                <h4>Information about your computer</h4>
+                <p>Software we supply may collect and securely send to us the following information:</p>
+                <ul>
+                    <li>Basic information about your computer, such as its operating system, make and model or details on specific hardware installed.</li>
+                    <li>A unique identifier for your computer that distinguishes it from others.</li>
+                </ul>
+                <h3>Information we share</h3>
+                <p>CubeCoders Limited does not share any personally identifiable information with 3rd parties except when reasonably necessary, such as in the following circumstances:</p>
+                <ul>
+                    <li>We have your express permission to do so.</li>
+                    <li>Any circumstance where we are required to by law (such as a court order) or as part of a legal process.</li>
+                    <li>To assist in the detection and prevention of fraud or security concerns.</li>
+                </ul>
+                <p>We may from time-to-time publicly share non-personal aggregate data, such as overall usage statistics.</p>
+                <h3>Keeping your data up-to-date</h3>
+                <p>All details stored by CubeCoders can be managed via the <a href="https://manage.cubecoders.com">CubeCoders Licencing Portal</a>. You can use this to review or update information we store about you.</p>
+                <h3>Securing your information</h3>
+                <p>CubeCoders takes the following measures to ensure your data is kept safe:</p>
+                <ul>
+                    <li>Sensitive or personal information is only transmitted over secure channels, such as SSL.</li>
+                    <li>We prevent unauthorized external access to your details by requiring email verification to access your details.</li>
+                    <li>Access to personal information is restricted to CCL employees, contractors and agents who require it or to whom access is otherwise necessary to perform their duties. All information is handled with strict confidentiality requirements, and parties found to be in breach of these requirements may be disciplined or terminated.</li>
+                </ul>
+                <h3>Changes</h3>
+                <p>We may periodically review our privacy policy and make changes as appropriate. We will not remove any rights detailed under this policy without your consent. If we make any significant changes, we will provide you with notice (for example, via email).</p>
+                <br />
+                <br />
+                <br />
+            </div>
+
+            <div class="bodycontent" id="failedMigration">
+                <h2>My licence failed to migrate</h2>
+                <p>
+                    If you're getting a message inside McMyAdmin that your licence failed to migrate, try logging into the <a href="http://manage.cubecoders.com">Licence Manager</a>, making sure to try
+                    <em>both</em> the email address currently on your paypal account (rather than the one you originally used to pay) and the one currently shown on your licence.
+                </p>
+                <p>
+                    From the licence manager you can get your new key, which you can enter into your McMyAdmin.conf (or you can remove the old key from McMyAdmin.conf and activate as normal).
+                </p>
+                <h2>Common Issues and Questions</h2>
+                <h4>The licence was bought by someone else on my belhalf.</h4>
+                <p>You'll need to ask them to retrieve the new key, as they are the legal owner of the licence (McMyAdmin licences are <a href="#/terms">non-transferrable</a>)</p><br />
+                <h4>I don't have access to the email address used.</h4>
+                <p>Use the 'billing or licencing issue' section on the contact form - and make sure to include your full name, postal code, and original McMyAdmin key. This needs to be the key that contains your email address and looks like:</p>
+                <code>someone@example.com:PR12-3456-7890-1234</code>
+                <p>You should not include the long encrypted key shown in McMyAdmin.conf as we cannot decrypt them.</p><br />
+                <h4>How can the licence system know my new email address when I never gave it to you?</h4>
+                <p>To migrate old licences into the new system, we requested a transaction log from Paypal. The logs they give us include the current email address on your account rather than the one on your account when you originally made the purchase.</p><br />
+                <h4>Why does my licence need migrating?</h4>
+                <p>In April 2014 CubeCoders (the company that owns and develops McMyAdmin) rolled out a new centralized licence system to be used across all CubeCoders products.</p>
+                <p>The new system was required to perform tasks such as generating formal invoices and VAT receipts for EU countries, and allowing CubeCoders and users better control over product licences.</p>
+                <p>In order to avoid having to maintain two separate licence systems, the old system is being shut down and all licences were moved over to the new system.</p>
+                <br />
+                <h4>When is the old system being shut down?</h4>
+                <p>We expect to shut the old system down around June 2014</p>
+                <br /><br />
+            </div>
+
+            <div class="bodycontent" id="terms">
+                <h2>Terms of Sale</h2>
+                <h3>What is being purchased</h3>
+                <p>The sale is of a licence along with a licence key to use McMyAdmin Professional Edition. It may be used with as many instances of the McMyAdmin software as have been purchased. For example, running two instances of McMyAdmin Professional on the same computer requires two licences.</p>
+                <p>You are not buying a copy of the McMyAdmin software in of itself, nor are you purchasing a physical item.</p>
+                <h3>Licence usage</h3>
+                <p>McMyAdmin Professional licences are for non-commercial, personal use by an individual or organisation.</p>
+                <p>McMyAdmin licences may not be resold, loaned or transferred to another person or organisation without the express written permission of CubeCoders Limited. You may not sell or supply servers or services to other persons with McMyAdmin installed without a commercial usage agreement.</p>
+                <h3>Revocation of licence</h3>
+                <p>If an issued licence key is used in a manner other than prescribed in this agreement, CubeCoders Limited may revoke and disable all licences owned by the customer without notice.</p>
+                <p>In the event of a payment dispute such as a chargeback or reversal, CubeCoders Limited may revoke and disable the licence along with any other licences owned by the same person or organisation.</p>
+                <h3>Refunds and exchanges</h3>
+                <p>Refunds and exchanges are issued at the sole disctretion of CubeCoders Limited. There is no fixed policy on when refunds or exchanges are issued and each request is evaluated on a case-by-case basis.</p>
+                <p>Refund requests resulting from technical issues using the software will generally not be accepted unless absolutely all avenues of support have been exhausted, as users are free to evaluate the software before purchasing a licence. Technical support is freely available to all users.</p>
+                <br /><br /><br />
+            </div>
+
+            <div class="bodycontent" id="support">
+                <h2>McMyAdmin Support</h2>
+                <p>Please select from one of the following options:</p>
+                <div class="row">
+                    <div class="col-md-6">
+                        <a href="#/failedMigration"><div class="supportquery">My McMyAdmin licence failed to migrate</div></a>
+                        <a href="https://manage.cubecoders.com/"><div class="supportquery">I have lost my McMyAdmin Licence Key</div></a>
+                        <a href="http://support.mcmyadmin.com"><div class="supportquery">I have a question or need technical support using McMyAdmin</div></a>
+                        <a href="http://support.mcmyadmin.com"><div class="supportquery">I have a suggestion for McMyAdmin</div></a>
+                        <a href="#/contact"><div class="supportquery">I have a billing issue other than a lost key</div></a>
+                        <a href="#/contact"><div class="supportquery">I have a commercial enquiry</div></a>
+                        <a href="#/quote"><div class="supportquery">I am interested in McMyAdmin Enterprise<br /><span class="tinytext">Note this is only available for hosting companies and not for personal use</span></div></a>
+                    </div>
+                    <div class="col-md-6">
+                        <h3>Notice: Support Outages for 2014</h3>
+                        <p>We currently have a minor support backlog that it is taking us time to get through. We apologise for any delays answering your queries.</p>
+                        <p>Official support is available Monday to Friday, between 10AM and 4PM GMT. This excludes UK bank holidays.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bodycontent" id="quote">
+                <h2>McMyAdmin Enterprise Details Request</h2>
+                <p>Please fill in the form below to request a quote for your business</p>
+                <div class="row">
+                    <div class="col-md-6">
+                        <form id="entInfoReq">
+                            <div class="form-group">
+                                <label for="personName">Name</label>
+                                <input type="text" class="form-control" id="personName" name="name" placeholder="" required="required">
+                            </div>
+                            <div class="form-group">
+                                <label for="companyName">Company Name</label>
+                                <input type="text" class="form-control" id="companyName" name="company" placeholder="" required="required">
+                            </div>
+                            <div class="form-group">
+                                <label for="emailAddr">Email address</label>
+                                <input type="email" class="form-control" id="emailAddr" name="email" placeholder="Enter email" required="required">
+                            </div>
+                            <div class="form-group">
+                                <label>Which of the following best describes your company</label>
+                                <select class="form-control" name="desc">
+                                    <option value="VAT registered limited company based in the EU">VAT registered limited company based in the EU</option>
+                                    <option value="Non-VAT registered limited company based in the EU">Non-VAT registered limited company based in the EU</option>
+                                    <option value="Limited company not based in the EU">Limited company not based in the EU</option>
+                                    <option value="Sole Trader / DBA living in the EU">Sole Trader / DBA living in the EU</option>
+                                    <option value="Sole Trader / DBA living outside the EU">Sole Trader / DBA living outside the EU</option>
+                                    <option value="Other / Unsure">Other / Unsure</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Questions / Comments (English only please)</label>
+                                <textarea class="form-control" rows="3" name="comments"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <div class="checkbox">
+                                    <label>
+                                        <input type="checkbox" id="agecheck" name="agecheck" required="required"> I am an authorized representative of the company listed above, and I am at least 18 years of age.</a>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <button class="btn btn-success" type="submit">Submit</button>
+
+                            <br /><br />
+                        </form>
+                    </div>
+                    <div class="col-md-6">
+                        <h4 style="margin-top:5em">About McMyAdmin Enterprise</h4>
+                        <p>McMyAdmin Enterprise licences permit the holder to distribute McMyAdmin installations, or provide servers with McMyAdmin pre-installed on them for use by their customers.</p>
+                        <p>The licence also unlocks special enterprise-exclusive features, such as LDAP based authentication, host login access (without needing the customers login details), the ability to force settings upon the Minecraft server despite changes made by customers, and greater API access to ease server configuration.</p>
+                        <p>It also includes dedicated support, allowing you to get a human answer to questions or to help you with any issues you may have deploying McMyAdmin</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bodycontent" id="edufree">
+                <h2>McMyAdmin for schools and educators</h2>
+                <p>If you represent a qualifying school or educational facility, you can use McMyAdmin Professional for free!</p>
+                <p>To qualify, the facility must meet the following requirements:</p>
+                <ul>
+                    <li>The facility must be purely state funded, recieving no financial assistance from corporations, students, or any other sources.</li>
+                    <li>McMyAdmin must only be used for Minecraft servers used in an educational setting. This excludes usage such as video-games clubs.</li>
+                    <li>The McMyAdmin installation must be either on-site or on a server rented/owned by the facility administration.</li>
+                    <li>You must have a private .ac/.edu/.gov or similar email address. Freely available email addresses that anyone can obtain will not be accepted.</li>
+                    <li>You must be a teacher, lecturer or faucilty member. Students are not able to apply for this offer.</li>
+                </ul>
+                <p>If believe your facility is eligible, you can request more information via the <a href="#/contact">contact form</a>.</p>
+                <p>Please include the following details when you contact us:</p>
+                <ul>
+                    <li>Your full name and job title.</li>
+                    <li>The full name of your school or facility, including its postal address and website.</li>
+                    <li>A short paragraph about how you intend to use Minecraft in an educational context.</li>
+                </ul>
+                <p>Note that requests that do not include the above information will not be accepted.</p>
+            </div>
+
+            <div class="bodycontent" id="contact">
+                <h2>Contact Us</h2>
+                <p>Please note that this is not used for technical support and is intended primarily for billing issues or commercial enquiries.</p>
+                <div class="row">
+                    <div class="col-md-6">
+                        <form id="contactReq">
+                            <div class="form-group">
+                                <label>Name</label>
+                                <input type="text" class="form-control" name="name" placeholder="" required="required">
+                            </div>
+                            <div class="form-group">
+                                <label>Email address</label>
+                                <input type="email" class="form-control" name="email" placeholder="Enter email" required="required">
+                            </div>
+                            <div class="form-group">
+                                <label>Which of the following best describes your query</label>
+                                <select class="form-control" name="query">
+                                    <option value="I have a billing or licencing issue other than a lost key">I have a billing or licencing issue other than a lost key</option>
+                                    <option value="I have a commercial enquiry">I have a commercial enquiry</option>
+                                    <option value="I represent an educational facility and would like to use McMyAdmin">I represent an educational facility and would like to use McMyAdmin</option>
+                                    <option value="Other (Non-technical support)">Other (Non-technical support)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Message (English only please)</label>
+                                <textarea class="form-control" rows="3" name="message" required="required"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <div class="checkbox">
+                                    <label>
+                                        <input type="checkbox" id="tickcheck" name="tickcheck" required="required"> Please tick this box</a>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <button class="btn btn-success" type="submit">Submit</button> &nbsp;<span>Typical turnaround is 2-3 working days.</span>
+
+                            <br /><br />
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bodycontent" id="sent">
+                <h2>Message Sent</h2>
+                <p>Thank you for your enquiry. We'll try to get back to you as soon as possible.</p>
+                <p>Typical turnaround time is 2-3 working days</p>
+                <p>Regards,<br /><span style="font-style:italic">The CubeCoders Team</span></p>
+            </div>
+
+            <div class="bodycontent" id="failure">
+                <h2>Message Not Sent</h2>
+                <p>There was a problem sending your message. Please try again later.</p>
+            </div>
+
+            <div class="bodycontent" id="editions">
+                <h2>McMyAdmin Editions</h2>
+                <p><em>Educators get McMyAdmin for free! <a href="#/edufree">Learn More</a>.</em></p>
+                <p>There are 3 different editions of McMyAdmin for different usage scenarios:</p>
+                <table id="editions_table">
+                    <tr>
+                        <td></td>
+                        <td>Personal</td>
+                        <td>Professional<br /><span class="tinytext">For server owners</span></td>
+                        <td>Enterprise<br /><span class="tinytext">For hosting companies</span></td>
+                    </tr>
+                    <tr>
+                        <td>Cost</td>
+                        <td>Free</td>
+                        <td>&pound;10 GBP per Minecraft server<br /><span class="tinytext">One-time payment</span></td>
+                        <td><a href="#/quote" style="text-decoration:underline;">Get a quote</a></td>
+                    </tr>
+                    <tr>
+                        <td>Support Level</td>
+                        <td>Community Supported<br /><span class="tinytext">Forums and IRC</span></td>
+                        <td>Community Supported<br /><span class="tinytext">Forums and IRC</span></td>
+                        <td>Dedicated Support<br /><span class="tinytext">IRC, Email and VoIP</span></td>
+                    </tr>
+                    <tr>
+                        <td>In-game player limit *</td>
+                        <td>Max 10 players</td>
+                        <td>Unlimited</td>
+                        <td>Unlimited</td>
+                    </tr>
+                    <tr>
+                        <td>Multi-user Support</td>
+                        <td>Max 3 users</td>
+                        <td>Unlimited</td>
+                        <td>Unlimited</td>
+                    </tr>
+                    <tr>
+                        <td>Multi-world Support<br /><span class="tinytext">Supported server mod required</span></td>
+                        <td>&#10003;</td>
+                        <td>&#10003;</td>
+                        <td>&#10003;</td>
+                    </tr>
+                    <tr>
+                        <td>Available for use by individuals</td>
+                        <td>&#10003;</td>
+                        <td>&#10003;</td>
+                        <td>&#10005;</td>
+                    </tr>
+                    <tr>
+                        <td>Allows for commercial usage<br /><span class="tinytext">By service providers or resellers</span></td>
+                        <td>&#10005;</td>
+                        <td>&#10005;</td>
+                        <td>&#10003;</td>
+                    </tr>
+                    <tr>
+                        <td>Secondary host access login</td>
+                        <td>&#10005;</td>
+                        <td>&#10005;</td>
+                        <td>&#10003;</td>
+                    </tr>
+                    <tr>
+                        <td>LDAP Authentication Support</td>
+                        <td>&#10005;</td>
+                        <td>&#10005;</td>
+                        <td>&#10003;</td>
+                    </tr>
+                    <tr>
+                        <td>Priority bug fixes</td>
+                        <td>&#10005;</td>
+                        <td>&#10005;</td>
+                        <td>&#10003;</td>
+                    </tr>
+                    <tr>
+                        <td>Regular Automated updates</td>
+                        <td>&#10003;</td>
+                        <td>&#10003;</td>
+                        <td>&#10003;</td>
+                    </tr>
+                    <tr>
+                        <td>Remote API Access</td>
+                        <td>&#10003;</td>
+                        <td>&#10003;</td>
+                        <td>&#10003;</td>
+                    </tr>
+                    <tr>
+                        <td>Advanced configuration API</td>
+                        <td>&#10005;</td>
+                        <td>&#10005;</td>
+                        <td>&#10003;</td>
+                    </tr>
+                </table>
+                <p class="tinytext">* The personal version also announces &quot;This server is running McMyAdmin Personal&quot; to connecting players.</p><br />
+            </div>
+        </div>
+    </div>
+
+    <div id="fcontainer">
+        <span class="d1">
+            <a href="#/whyuse" class="pnav">Why use McMyAdmin?</a> | <a href="#/editions" class="pnav">Version Comparison</a> | <a href="#/getpro" class="pnav">Get McMyAdmin Pro</a>
+        </span>
+        <br /><br />
+        <p>&copy;2013-2023 CubeCoders Limited<br /><span class="subnotice">Registered in the United Kingdom</span></p>
+        <!-- Place this tag where you want the +1 button to render -->
+        <div>
+            <div class="g-plusone" data-size="medium" data-href="https://mcmyadmin.com/"></div>
+        </div>
+    </div>
+</body>
+<script type="text/javascript" src="//mcmyadmin.com/Updates.js"></script>
+<script type="text/javascript" src="js/jquery-1.7.1.min.js"></script>
+<script type="text/javascript" src="js/jquery-fx.min.js"></script>
+<script type="text/javascript" src="js/jquery.easing.1.3.min.js"></script>
+<!--<script type="text/javascript" src="js/jquery.wt-rotator.min.js"></script>-->
+<script type="text/javascript">
+    function nopFalse() { return false; }
+
+    function checkHash(instant) {
+        var hash = window.location.hash.slice(1);
+        var newPage = "#" + hash.substring(1);
+
+        if (hash == "") { return; }
+
+        if (instant === true) {
+            flipPage(newPage);
+        }
+        else {
+            changePage(newPage);
+        }
+    }
+
+    $(function () {
+        $("#latestversion").text(UpdateData.LatestMCMA);
+        $(".bodycontent, .downloadpage").hide();
+        $("#home, .dl_win").show();
+
+        /*$("#headcontents a, .pnav").click(nopFalse);
+        $("#headcontents a, .pnav").mousedown(changePage);*/
+
+        $(window).bind('hashchange', checkHash);
+
+        $("input[name=platradio]").click(changeDL);
+
+        $(".nopage").unbind("click");
+        $(".nopage").unbind("mousedown");
+
+        //$(".container").wtRotator({
+        //	delay: 10000,
+        //	thumbnails: false,
+        //	cpanel_position:"inside",
+        //	cpanel_align:"BL",
+        //	width: 1000,
+        //	height: 540,
+        //	transition: "random" });
+
+        checkHash(true);
+    });
+
+    function changeDL() {
+        var newDL = $(this).val();
+        $(".downloadpage:visible").hide()
+        $(newDL).show();
+    }
+
+    function setPage(page) {
+        window.location.hash = page;
+    }
+
+    function flipPage(nextpage) {
+        if (nextpage[0] == '#') {
+            $(".bodycontent:visible").hide()
+            $(nextpage).show();
+
+            return (false);
+        }
+        else {
+            return (true);
+        }
+    }
+
+    function downloadWin32() 		{ plausible("Download", { props: {os: "Windows"}}); window.location = "https://mcmyadmin.com/Downloads/MCMA2_Installer.exe"; }
+    function downloadLinux64() 		{ plausible("Download", { props: {os: "Linux"}}); window.location = "https://mcmyadmin.com/Downloads/MCMA2_glibc26_2.zip"; }
+    function downloadLinux64Files() { plausible("Download", { props: {os: "LinuxFiles"}}); window.location = "https://mcmyadmin.com/Downloads/etc.zip"; }
+    function downloadOther() 		{ plausible("Download", { props: {os: "Other"}}); window.location = "https://mcmyadmin.com/Downloads/MCMA2-Latest.zip"; }
+
+    function changePage(nextpage) {
+        if ($(".bodycontent:visible").attr('id') == nextpage.substring(1)) { return; }
+
+        if (nextpage[0] == '#') {
+            /*$(".bodycontent:visible").fadeOut(function()
+            {
+                $(nextpage).fadeIn();
+            });*/
+
+            /*$(".bodycontent:visible").hide("slide", {direction: 'down'}, function()
+            {
+                $(nextpage).show("slide", {direction: 'up'});
+            });*/
+
+            $(".bodycontent:visible").hide();
+            $(nextpage).show();
+
+            return (false);
+        }
+        else {
+            return (true);
+        }
+    }
+
+    var methods = {
+        SendEnterpriseRequest: "SendEnterpriseRequest",
+        SendContactPost: "SendContactPost",
+    };
+
+    var RequestTimeout = 30000;
+    function requestData(requestType, data, callback, error) {
+        data = (data) ? data : {};
+        callback = (callback) ? callback : $.noop;
+        error = (error) ? error : $.noop;
+        var url = "/Service.svc/" + requestType;
+
+        $.ajax({
+            url: url,
+            data: data,
+            dataType: 'json',
+            timeout: RequestTimeout,
+            success: callback,
+            error: error
+        });
+    }
+
+    $("#contactReq").on("submit", function (event) {
+        event.preventDefault();
+        var data = $(this).serialize();
+        requestData(methods.SendContactPost, data, function () {
+            setPage("/sent");
+        }, function () {
+            setPage("/failure");
+        });
+    });
+
+    $("#entInfoReq").on("submit", function (event) {
+        event.preventDefault();
+        var data = $(this).serialize();
+        requestData(methods.SendEnterpriseRequest, data, function () {
+            setPage("/sent");
+        }, function () {
+            setPage("/failure");
+        });
+    });
+</script>
+<script defer data-domain="mcmyadmin.com" src="https://plausible.cubecoders.com/js/script.hash.js"></script>
+<script defer data-domain="mcmyadmin.com" src="https://plausible.cubecoders.com/js/script.tagged-events.js"></script>
+
+
+
+</html>

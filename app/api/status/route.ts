@@ -95,15 +95,15 @@ export async function GET() {
     const maxMemory = await getMaxMemoryBytes();
 
     // Fetch dynamic SFTP, server, and network information
-    let sftpUsername = `agreeable_guy-${SERVER_ID}`;
+    let sftpUsername = "";
     let sftpPort = 5657;
-    let sftpHost = "meowtopia-panel.duckdns.org";
-    let mcVersion = "1.21.1";
-    let javaVersion = "21";
-    let motd = "🐾 Welcome to MeowTopia! 🐾 Have a purr-fect time! 🐱";
+    let sftpHost = "";
+    let mcVersion = "Unknown";
+    let javaVersion = "Unknown";
+    let motd = "A Minecraft Server";
     let port = 25565;
     let bindIp = "0.0.0.0";
-    let allocatedMemory = 12288;
+    let allocatedMemory = 0;
 
     try {
       sftpUsername = await getSftpUsername();
@@ -130,10 +130,8 @@ export async function GET() {
       mcVersion = data.version?.value || mcVersion;
       javaVersion = String(data.javaversion?.value || javaVersion);
       const rawMotd = data.motd?.value;
-      if (rawMotd && !rawMotd.includes("PufferPanel") && !rawMotd.includes("A Minecraft Server")) {
+      if (rawMotd) {
         motd = rawMotd;
-      } else {
-        motd = "🐾 Welcome to MeowTopia! 🐾 Have a purr-fect time! 🐱";
       }
       port = data.port?.value || port;
       bindIp = data.ip?.value || bindIp;

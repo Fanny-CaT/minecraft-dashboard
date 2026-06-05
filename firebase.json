@@ -1,0 +1,12 @@
+{
+  "auth": {
+    "providers": {
+      "anonymous": false,
+      "emailPassword": true,
+      "googleSignIn": {
+        "oAuthBrandDisplayName": "MeowTopia Panel",
+        "supportEmail": "admin@meowtopia.com"
+      }
+    }
+  }
+}

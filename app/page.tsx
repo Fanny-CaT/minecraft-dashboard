@@ -2,367 +2,35 @@
 
 import React, { useEffect, useState, useRef, useCallback } from "react";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-interface StatusData {
-  running: boolean;
-  status: "online" | "offline";
-  cpu: number;
-  memory: number;
-  maxMemory: number;
-  maxCpus: number;
-  serverId: string;
-  ip: string;
-  sftpUsername?: string;
-  sftpPort?: number;
-  sftpHost?: string;
-  mcVersion?: string;
-  javaVersion?: string;
-  motd?: string;
-  port?: number;
-  bindIp?: string;
-  allocatedMemory?: number;
-  tps?: number;
-  loadedChunks?: number;
-  loadedEntities?: number;
-  networkIncoming?: number;
-  networkOutgoing?: number;
-  diskUsageBytes?: number;
-}
-
-interface FileEntry {
-  name: string;
-  size?: number;
-  isFile: boolean;
-  modifyTime?: number;
-  extension?: string;
-}
-
-interface PlayerEntry {
-  uuid?: string;
-  name?: string;
-  level?: number;
-  bypassesPlayerLimit?: boolean;
-  // banned-players.json fields
-  created?: string;
-  source?: string;
-  expires?: string;
-  reason?: string;
-  // banned-ips.json fields
-  ip?: string;
-}
-
-type Tab =
-  | "status"
-  | "console"
-  | "chat"
-  | "files"
-  | "plugins"
-  | "config"
-  | "users"
-  | "networking"
-  | "logs"
-  | "backups";
-
-interface Toast {
-  id: string;
-  type: "success" | "error" | "info";
-  msg: string;
-}
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-const fmtMb = (b: number) => Math.round(b / (1024 * 1024));
-const fmtFileSize = (b?: number) => {
-  if (b === undefined) return "–";
-  if (b < 1024) return `${b} B`;
-  if (b < 1024 * 1024) return `${(b / 1024).toFixed(1)} KB`;
-  return `${(b / (1024 * 1024)).toFixed(1)} MB`;
-};
-
-const stripAnsi = (s: string) => s.replace(/\u001b\[[0-9;]*[a-zA-Z]/g, "");
-
-// Matches: [10:51:29 INFO]: <PlayerName> Hello world!
-// Or:      [10:51:29 INFO]: [Server] Hello world!
-// Or:      [10:51:29 INFO]: [agreeable_guy] Hello world!
-const CHAT_RE = /\[[\d:]+\s+INFO\]:\s+(?:\<([a-zA-Z0-9_]{2,16})\>|\[(Server|[a-zA-Z0-9_]{2,16})\])(?!:)\s+(.+)/;
-
-// ─── SVG Icons ────────────────────────────────────────────────────────────────
-
-const Ico = {
-  Status: () => (
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-      <rect x="1" y="2" width="14" height="10" fill="none" stroke="currentColor" strokeWidth="1.5" />
-      <rect x="5" y="12" width="6" height="1.5" fill="currentColor" />
-      <rect x="3" y="14" width="10" height="1" fill="currentColor" />
-    </svg>
-  ),
-  Console: () => (
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-      <rect x="1" y="2" width="14" height="12" fill="none" stroke="currentColor" strokeWidth="1.5" />
-      <polyline points="3,6 6,8 3,10" fill="none" stroke="currentColor" strokeWidth="1.5" />
-      <line x1="7" y1="10" x2="13" y2="10" stroke="currentColor" strokeWidth="1.5" />
-    </svg>
-  ),
-  Chat: () => (
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-      <path d="M2 2h12v9H9l-3 3v-3H2z" fill="none" stroke="currentColor" strokeWidth="1.5" />
-    </svg>
-  ),
-  Files: () => (
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-      <path d="M2 2h7l3 3v9H2z" fill="none" stroke="currentColor" strokeWidth="1.5" />
-      <polyline points="9,2 9,5 12,5" fill="none" stroke="currentColor" strokeWidth="1.5" />
-      <line x1="4" y1="8" x2="10" y2="8" stroke="currentColor" strokeWidth="1.2" />
-      <line x1="4" y1="11" x2="8" y2="11" stroke="currentColor" strokeWidth="1.2" />
-    </svg>
-  ),
-  Config: () => (
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-      <circle cx="8" cy="8" r="2.5" fill="none" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.1 3.1l1.4 1.4M11.5 11.5l1.4 1.4M3.1 12.9l1.4-1.4M11.5 4.5l1.4-1.4" stroke="currentColor" strokeWidth="1.3" />
-    </svg>
-  ),
-  Users: () => (
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-      <circle cx="6" cy="5" r="2.5" fill="none" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M1 14c0-3 2.2-5 5-5s5 2 5 5" fill="none" stroke="currentColor" strokeWidth="1.5" />
-      <circle cx="12" cy="5" r="2" fill="none" stroke="currentColor" strokeWidth="1.2" />
-      <path d="M11 14c0-2 1-3 3-3.5" fill="none" stroke="currentColor" strokeWidth="1.2" />
-    </svg>
-  ),
-  Plugins: () => (
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-      <path d="M10 1.5a1.5 1.5 0 0 0-1.5 1.5v0.5H6a1.5 1.5 0 0 0-1.5 1.5v2H3.5a1.5 1.5 0 0 0 0 3h1v2a1.5 1.5 0 0 0 1.5 1.5h2v-0.5a1.5 1.5 0 0 1 3 0v0.5h2a1.5 1.5 0 0 0 1.5-1.5v-2h-0.5a1.5 1.5 0 0 1 0-3h0.5V5a1.5 1.5 0 0 0-1.5-1.5h-2V3a1.5 1.5 0 0 0-1.5-1.5z" fill="none" stroke="currentColor" strokeWidth="1.2" />
-    </svg>
-  ),
-  Logs: () => (
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-      <path d="M2 1v14h12V4.5L10.5 1H2z" fill="none" stroke="currentColor" strokeWidth="1.5" />
-      <line x1="5" y1="5" x2="8" y2="5" stroke="currentColor" strokeWidth="1.3" />
-      <line x1="5" y1="8" x2="11" y2="8" stroke="currentColor" strokeWidth="1.3" />
-      <line x1="5" y1="11" x2="11" y2="11" stroke="currentColor" strokeWidth="1.3" />
-    </svg>
-  ),
-  Networking: () => (
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-      <rect x="2" y="10" width="4" height="4" fill="none" stroke="currentColor" strokeWidth="1.5" />
-      <rect x="10" y="10" width="4" height="4" fill="none" stroke="currentColor" strokeWidth="1.5" />
-      <rect x="6" y="2" width="4" height="4" fill="none" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M8 6v4M4 10V8h8v2" fill="none" stroke="currentColor" strokeWidth="1.5" />
-    </svg>
-  ),
-  Backups: () => (
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-      <path d="M2 8a6 6 0 1 1 2.5 5" fill="none" stroke="currentColor" strokeWidth="1.5" />
-      <polyline points="1.5,10.5 2.5,13.5 5.5,12.5" fill="none" stroke="currentColor" strokeWidth="1.5" />
-      <polyline points="8,4.5 8,8 10.5,9.5" fill="none" stroke="currentColor" strokeWidth="1.5" />
-    </svg>
-  ),
-};
-
-// ─── Bar Chart ────────────────────────────────────────────────────────────────
-
-function BarChart({ values, color }: { values: number[]; color: string }) {
-  const N = 60;
-  const padded = Array(Math.max(0, N - values.length))
-    .fill(0)
-    .concat(values.slice(-N));
-  return (
-    <div
-      style={{
-        width: "100%",
-        height: "100%",
-        backgroundColor: "#111",
-        display: "flex",
-        alignItems: "flex-end",
-        gap: "1px",
-        padding: "3px",
-        boxSizing: "border-box",
-      }}
-    >
-      {padded.map((v, i) => (
-        <div
-          key={i}
-          style={{
-            flex: 1,
-            height: `${Math.max(v > 0 ? 2 : 0, v)}%`,
-            backgroundColor: color,
-            minWidth: 1,
-          }}
-        />
-      ))}
-    </div>
-  );
-}
-
-// ─── Style tokens (McMyAdmin faithful) ───────────────────────────────────────
-
-const S = {
-  bg: "#1e1e1e",
-  sidebar: "#252525",
-  content: "#2a2a2a",
-  topBar: "#1a1a1a",
-  border: "#3a3a3a",
-  rowHover: "#2f2f2f",
-  cyan: "#4ec9e1",
-  white: "#e8e8e8",
-  muted: "#888",
-  red: "#cc3333",
-  green: "#44aa44",
-  orange: "#dd8800",
-  purple: "#8844cc",
-  chartGreen: "#44cc44",
-  chartOrange: "#dd8800",
-  chartBlue: "#4488cc",
-  input: "#1a1a1a",
-  inputBdr: "#444",
-};
-
-// ─── Popular Plugins Catalog ──────────────────────────────────────────────────
-const POPULAR_PLUGINS_META: Record<string, { name: string; tagline: string; iconUrl: string; provider: string; color: string; bg: string; border: string }> = {
-  essentials: {
-    name: "EssentialsX",
-    tagline: "Essential commands, teleports, economy, and moderating tools for Spigot/Paper.",
-    iconUrl: "https://cdn.modrinth.com/user_content/img/V3a1mU1R.png",
-    provider: "Spiget",
-    color: "#0ea5e9", bg: "rgba(14, 165, 233, 0.1)", border: "rgba(14, 165, 233, 0.3)"
-  },
-  vault: {
-    name: "Vault",
-    tagline: "Secure framework connecting chat, economy, and permission systems with major plugins.",
-    iconUrl: "https://cdn.spigotmc.org/image/resources-logos/3431.png",
-    provider: "Spiget",
-    color: "#0ea5e9", bg: "rgba(14, 165, 233, 0.1)", border: "rgba(14, 165, 233, 0.3)"
-  },
-  luckperms: {
-    name: "LuckPerms",
-    tagline: "Advanced permissions system with web GUI editor and database syncing.",
-    iconUrl: "https://avatars.githubusercontent.com/u/23616654?v=4",
-    provider: "Modrinth",
-    color: "#10b981", bg: "rgba(16, 185, 129, 0.1)", border: "rgba(16, 185, 129, 0.3)"
-  },
-  worldedit: {
-    name: "WorldEdit",
-    tagline: "Extremely fast in-game world generation and block manipulation tool.",
-    iconUrl: "https://cdn.modrinth.com/user_content/img/mC7zV2Ua.png",
-    provider: "Modrinth",
-    color: "#10b981", bg: "rgba(16, 185, 129, 0.1)", border: "rgba(16, 185, 129, 0.3)"
-  },
-  dynmap: {
-    name: "Dynmap",
-    tagline: "Google Maps-like browser viewer of your server worlds showing real-time player locations.",
-    iconUrl: "https://cdn.modrinth.com/user_content/img/c1tZ4p1q.png",
-    provider: "Modrinth",
-    color: "#10b981", bg: "rgba(16, 185, 129, 0.1)", border: "rgba(16, 185, 129, 0.3)"
-  },
-  geyser: {
-    name: "GeyserMC",
-    tagline: "Bridge proxy code enabling Bedrock Edition clients (mobile/consoles) to connect directly.",
-    iconUrl: "https://avatars.githubusercontent.com/u/58882583?v=4",
-    provider: "Modrinth",
-    color: "#10b981", bg: "rgba(16, 185, 129, 0.1)", border: "rgba(16, 185, 129, 0.3)"
-  },
-  viabackwards: {
-    name: "ViaBackwards",
-    tagline: "Allows players using older client versions to connect to your newer server version.",
-    iconUrl: "https://cdn.modrinth.com/user_content/img/z7X4y6vR.png",
-    provider: "Modrinth",
-    color: "#10b981", bg: "rgba(16, 185, 129, 0.1)", border: "rgba(16, 185, 129, 0.3)"
-  },
-  viaversion: {
-    name: "ViaVersion",
-    tagline: "Allows players using newer client versions to connect to your older server version.",
-    iconUrl: "https://cdn.modrinth.com/user_content/img/y3T4b6vQ.png",
-    provider: "Modrinth",
-    color: "#10b981", bg: "rgba(16, 185, 129, 0.1)", border: "rgba(16, 185, 129, 0.3)"
-  },
-  placeholderapi: {
-    name: "PlaceholderAPI",
-    tagline: "Dynamic variables replacement engine displaying rich stats in other plugin UI messages.",
-    iconUrl: "https://cdn.spigotmc.org/image/resources-logos/6245.png",
-    provider: "Spiget",
-    color: "#0ea5e9", bg: "rgba(14, 165, 233, 0.1)", border: "rgba(14, 165, 233, 0.3)"
-  },
-  protocollib: {
-    name: "ProtocolLib",
-    tagline: "Lower-level packets manipulation hook library used by advanced server systems.",
-    iconUrl: "https://cdn.spigotmc.org/image/resources-logos/1996.png",
-    provider: "Spiget",
-    color: "#0ea5e9", bg: "rgba(14, 165, 233, 0.1)", border: "rgba(14, 165, 233, 0.3)"
-  },
-  multiverse: {
-    name: "Multiverse-Core",
-    tagline: "Manage separate dimensions and custom worlds on a single server machine.",
-    iconUrl: "https://cdn.spigotmc.org/image/resources-logos/390.png",
-    provider: "Spiget",
-    color: "#0ea5e9", bg: "rgba(14, 165, 233, 0.1)", border: "rgba(14, 165, 233, 0.3)"
-  },
-  chunky: {
-    name: "Chunky",
-    tagline: "Pre-generates server chunks dynamically to completely resolve player exploration lag.",
-    iconUrl: "https://cdn.modrinth.com/user_content/img/lX7y5p1q.png",
-    provider: "Modrinth",
-    color: "#10b981", bg: "rgba(16, 185, 129, 0.1)", border: "rgba(16, 185, 129, 0.3)"
-  }
-};
-
-// ─── PluginIcon Helper Component ──────────────────────────────────────────────
-interface PluginIconProps {
-  url?: string;
-  size?: number;
-  color?: string;
-}
-
-const PluginIcon: React.FC<PluginIconProps> = ({ url, size = 36, color }) => {
-  const [error, setError] = useState(false);
-
-  useEffect(() => {
-    setError(false);
-  }, [url]);
-
-  const fallbackColor = color || S.cyan;
-
-  if (url && !error) {
-    return (
-      <img
-        src={url}
-        alt="Plugin Icon"
-        onError={() => setError(true)}
-        style={{
-          width: `${size}px`,
-          height: `${size}px`,
-          borderRadius: "3px",
-          objectFit: "cover",
-          flexShrink: 0,
-        }}
-      />
-    );
-  }
-
-  return (
-    <div
-      style={{
-        width: `${size}px`,
-        height: `${size}px`,
-        borderRadius: "3px",
-        backgroundColor: "rgba(255, 255, 255, 0.05)",
-        border: `1px solid ${S.border}`,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        color: fallbackColor,
-        flexShrink: 0,
-      }}
-    >
-      <Ico.Plugins />
-    </div>
-  );
-};
+import { StatusData, FileEntry, PlayerEntry, Tab, Toast } from "@/lib/types";
+import { S, POPULAR_PLUGINS_META } from "@/lib/constants";
+import { Ico } from "@/components/icons";
+import { BarChart } from "@/components/BarChart";
+import { FilesTab } from "@/components/tabs/FilesTab";
+import { ChatTab } from "@/components/tabs/ChatTab";
+import { ConsoleTab } from "@/components/tabs/ConsoleTab";
+import { PluginIcon } from "@/components/PluginIcon";
+import { fmtMb, fmtFileSize, stripAnsi, CHAT_RE } from "@/lib/utils";
+import { auth } from "@/lib/firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import { useRouter } from "next/navigation";
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function Dashboard() {
+  const [mounted, setMounted] = useState(false);
+  const router = useRouter();
+  
+  useEffect(() => {
+    setMounted(true);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        router.push("/login");
+      }
+    });
+    return () => unsubscribe();
+  }, [router]);
+
   // ── Toasts state ──
   const [toasts, setToasts] = useState<Toast[]>([]);
 
@@ -2237,7 +1905,7 @@ export default function Dashboard() {
         </span>
         <span style={{ color: S.border }}>|</span>
         <span style={{ color: S.muted, fontFamily: "monospace", fontSize: "11px" }}>
-          {statusData?.ip || "meowtopia-panel.duckdns.org:25565"}
+          {statusData?.ip || "play.meowtopia.mooo.com:25565"}
         </span>
         <span style={{ marginLeft: "auto", color: S.muted, fontFamily: "monospace", fontSize: "11px" }}>
           id:<span style={{ color: S.white }}>{statusData?.serverId || "946f16b4"}</span>
@@ -2377,6 +2045,15 @@ export default function Dashboard() {
             flexDirection: "column",
             minWidth: 0,
             overflow: "auto",
+            margin: "20px",
+            border: "1px solid #111",
+            boxShadow: `
+              inset 0 0 0 1px rgba(255,255,255,0.15),
+              inset 0 0 0 8px #333333,
+              inset 0 0 0 9px #111111,
+              0 10px 30px rgba(0,0,0,0.5)
+            `,
+            borderRadius: "2px",
           }}
         >
           {/* ══ STATUS TAB ══ */}
@@ -2474,7 +2151,7 @@ export default function Dashboard() {
                           <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
                           <path d="M2 12h20" />
                         </svg>
-                        <span style={{ fontFamily: "monospace" }}>{statusData?.ip || "meowtopia-panel.duckdns.org:25565"}</span>
+                        <span style={{ fontFamily: "monospace" }}>{statusData?.ip || "play.meowtopia.mooo.com:25565"}</span>
                       </div>
                     </div>
 
@@ -2585,7 +2262,7 @@ export default function Dashboard() {
 
                       {/* Restart Button */}
                       <button
-                        disabled={!isOnline || !!actionLoading}
+                        disabled={!mounted || !isOnline || !!actionLoading}
                         onClick={() => doPower("restart")}
                         title="Restart Server"
                         className="button-hover"
@@ -2616,7 +2293,7 @@ export default function Dashboard() {
 
                       {/* Stop Button */}
                       <button
-                        disabled={!isOnline || !!actionLoading}
+                        disabled={!mounted || !isOnline || !!actionLoading}
                         onClick={() => doPower("stop")}
                         title="Stop Server"
                         className="button-hover"
@@ -2728,7 +2405,7 @@ export default function Dashboard() {
                             </span>
                             <button
                               onClick={boostRam}
-                              disabled={boostingRam || !isOnline}
+                              disabled={!mounted || boostingRam || !isOnline}
                               className="button-hover"
                               style={{
                                 display: "flex",
@@ -2952,11 +2629,11 @@ export default function Dashboard() {
                           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "#161616", padding: "8px 12px", borderRadius: "3px", border: `1px solid ${S.border}` }}>
                               <span style={{ fontFamily: "monospace", fontSize: "11px", color: S.white }}>
-                                IP: meowtopia-panel.duckdns.org:{statusData?.port || 25565}
+                                IP: play.meowtopia.mooo.com:{statusData?.port || 25565}
                               </span>
                               <button
                                 onClick={() => {
-                                  navigator.clipboard.writeText(`meowtopia-panel.duckdns.org:${statusData?.port || 25565}`);
+                                  navigator.clipboard.writeText(`play.meowtopia.mooo.com:${statusData?.port || 25565}`);
                                   showToast("Game connection IP address copied to clipboard.", "success");
                                 }}
                                 style={{
@@ -2976,13 +2653,13 @@ export default function Dashboard() {
                             </div>
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "#161616", padding: "8px 12px", borderRadius: "3px", border: `1px solid ${S.border}` }}>
                               <span style={{ fontFamily: "monospace", fontSize: "11px", color: S.white, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "80%" }}>
-                                SFTP: sftp://{statusData?.sftpUsername || "agreeable_guy-946f16b4"}@{statusData?.sftpHost || "meowtopia-panel.duckdns.org"}:{statusData?.sftpPort || 5657}
+                                SFTP: sftp://{statusData?.sftpUsername || "agreeable_guy-946f16b4"}@{statusData?.sftpHost || "play.meowtopia.mooo.com"}:{statusData?.sftpPort || 5657}
                               </span>
                               <button
                                 onClick={() => {
                                   navigator.clipboard.writeText(
                                     `sftp://${statusData?.sftpUsername || "agreeable_guy-946f16b4"}@${
-                                      statusData?.sftpHost || "meowtopia-panel.duckdns.org"
+                                      statusData?.sftpHost || "play.meowtopia.mooo.com"
                                     }:${statusData?.sftpPort || 5657}`
                                   );
                                   showToast("SFTP connection URI copied to clipboard.", "success");
@@ -3052,859 +2729,84 @@ export default function Dashboard() {
 
           {/* ══ CONSOLE ══ */}
           {activeTab === "console" && (
-            <div style={{ display: "flex", flexDirection: "column", flex: 1, height: "100%" }}>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: "13px 20px 11px",
-                  borderBottom: `1px solid ${S.border}`,
-                  flexShrink: 0,
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                  <Ico.Console />
-                  <span style={{ fontSize: "18px", fontWeight: 300 }}>Console Logs</span>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "11px" }}>
-                  <span
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "5px",
-                      color: wsStatus === "connected" ? S.green : S.muted,
-                    }}
-                  >
-                    <span
-                      style={{
-                        width: "6px",
-                        height: "6px",
-                        borderRadius: "50%",
-                        display: "inline-block",
-                        backgroundColor: wsStatus === "connected" ? S.green : S.muted,
-                      }}
-                    />
-                    {wsMode === "live" ? "Live WebSocket" : "HTTP Polling"}
-                  </span>
-                  <OutlineBtn label="Clear Screen" onClick={() => setLogs([])} />
-                  {wsStatus !== "connected" && (
-                    <OutlineBtn
-                      label="Reconnect"
-                      onClick={() => {
-                        wsAttempts.current = 0;
-                        connectWs();
-                      }}
-                    />
-                  )}
-                </div>
-              </div>
-
-              {/* Console live metrics bar */}
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "18px",
-                  padding: "8px 20px",
-                  borderBottom: `1px solid ${S.border}`,
-                  backgroundColor: "#1f1f1f",
-                  flexWrap: "wrap",
-                  flexShrink: 0,
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                  <span
-                    style={{
-                      width: "8px",
-                      height: "8px",
-                      borderRadius: "50%",
-                      backgroundColor: isOnline ? S.green : S.red,
-                    }}
-                  />
-                  <span
-                    style={{
-                      fontSize: "11px",
-                      fontWeight: "bold",
-                      color: isOnline ? S.green : S.red,
-                    }}
-                  >
-                    {isOnline ? "ONLINE" : "OFFLINE"}
-                  </span>
-                </div>
-                <span style={{ width: "1px", height: "12px", backgroundColor: S.border }} />
-                <div style={{ fontSize: "11.5px", color: S.muted }}>
-                  CPU:{" "}
-                  <span style={{ color: S.white, fontWeight: "bold" }}>
-                    {statusData?.cpu.toFixed(1) || "0.0"}%
-                  </span>
-                </div>
-                <span style={{ width: "1px", height: "12px", backgroundColor: S.border }} />
-                <div style={{ fontSize: "11.5px", color: S.muted }}>
-                  RAM:{" "}
-                  <span style={{ color: S.white, fontWeight: "bold" }}>
-                    {ramMb} / {maxRamMb} MB
-                  </span>
-                </div>
-                <span style={{ width: "1px", height: "12px", backgroundColor: S.border }} />
-                <div style={{ fontSize: "11.5px", color: S.muted }}>
-                  Version:{" "}
-                  <span style={{ color: S.white, fontWeight: "bold" }}>
-                    {statusData?.mcVersion || "1.21.1"}
-                  </span>
-                </div>
-                <div style={{ marginLeft: "auto" }}>
-                  <PowerDropdown />
-                </div>
-              </div>
-
-              {/* Logs terminal box */}
-              <div
-                style={{
-                  flex: 1,
-                  backgroundColor: "#111",
-                  overflowY: "auto",
-                  padding: "12px 16px",
-                  fontFamily: "'Consolas','Courier New',monospace",
-                  fontSize: "12px",
-                  lineHeight: "1.6",
-                  minHeight: 0,
-                }}
-              >
-                {logs.length === 0 ? (
-                  <span style={{ color: "#555" }}>[No console output yet]</span>
-                ) : (
-                  logs.map((line, i) => {
-                    let color = "#bbb";
-                    if (line.startsWith("> ")) color = S.cyan;
-                    else if (line.startsWith("[Dashboard]")) color = "#667788";
-                    else if (/ERROR|Exception/.test(line)) color = "#dd6666";
-                    else if (/WARN/.test(line)) color = S.orange;
-                    return (
-                      <div key={i} style={{ color, wordBreak: "break-all" }}>
-                        {line}
-                      </div>
-                    );
-                  })
-                )}
-                <div ref={consoleEndRef} />
-              </div>
-
-              {/* Console Quick commands actions */}
-              <div
-                style={{
-                  display: "flex",
-                  gap: "6px",
-                  padding: "8px 12px",
-                  borderTop: `1px solid ${S.border}`,
-                  backgroundColor: "#1c1c1c",
-                  flexWrap: "wrap",
-                  alignItems: "center",
-                  flexShrink: 0,
-                  opacity: isOnline ? 1 : 0.5,
-                  pointerEvents: isOnline ? "auto" : "none",
-                }}
-              >
-                <span style={{ color: S.muted, fontSize: "11px", marginRight: "6px" }}>
-                  Quick Commands:
-                </span>
-                <button
-                  onClick={() => sendCommandDirect("gc")}
-                  className="button-hover"
-                  style={{
-                    backgroundColor: "#2e2e2e",
-                    border: `1px solid ${S.border}`,
-                    color: S.white,
-                    padding: "3px 8px",
-                    fontSize: "11px",
-                    cursor: "pointer",
-                    borderRadius: "3px",
-                  }}
-                  title="Force Java garbage collection"
-                >
-                  GC
-                </button>
-                <button
-                  onClick={() => sendCommandDirect("tps")}
-                  className="button-hover"
-                  style={{
-                    backgroundColor: "#2e2e2e",
-                    border: `1px solid ${S.border}`,
-                    color: S.white,
-                    padding: "3px 8px",
-                    fontSize: "11px",
-                    cursor: "pointer",
-                    borderRadius: "3px",
-                  }}
-                  title="Check Server tick performance"
-                >
-                  TPS
-                </button>
-                <button
-                  onClick={() => sendCommandDirect("save-all")}
-                  className="button-hover"
-                  style={{
-                    backgroundColor: "#2e2e2e",
-                    border: `1px solid ${S.border}`,
-                    color: S.white,
-                    padding: "3px 8px",
-                    fontSize: "11px",
-                    cursor: "pointer",
-                    borderRadius: "3px",
-                  }}
-                  title="Force world data save"
-                >
-                  Save
-                </button>
-                <button
-                  onClick={() => sendCommandDirect("reload confirm")}
-                  className="button-hover"
-                  style={{
-                    backgroundColor: "#2e2e2e",
-                    border: `1px solid ${S.border}`,
-                    color: S.white,
-                    padding: "3px 8px",
-                    fontSize: "11px",
-                    cursor: "pointer",
-                    borderRadius: "3px",
-                  }}
-                  title="Reload plugins configuration"
-                >
-                  Reload
-                </button>
-              </div>
-
-              {/* Command input form */}
-              <form
-                onSubmit={sendCmd}
-                style={{ display: "flex", borderTop: `1px solid ${S.border}`, flexShrink: 0 }}
-              >
-                {!isOnline ? (
-                  <div
-                    style={{
-                      flex: 1,
-                      backgroundColor: "#161616",
-                      color: S.muted,
-                      padding: "10px 14px",
-                      fontSize: "12px",
-                      fontStyle: "italic",
-                      userSelect: "none",
-                    }}
-                  >
-                    Console command input is disabled because the server process is offline.
-                  </div>
-                ) : (
-                  <>
-                    <span
-                      style={{
-                        padding: "10px 12px",
-                        backgroundColor: "#161616",
-                        color: S.cyan,
-                        fontFamily: "monospace",
-                        fontWeight: "bold",
-                        borderRight: `1px solid ${S.border}`,
-                        userSelect: "none",
-                      }}
-                    >
-                      &gt;
-                    </span>
-                    <input
-                      type="text"
-                      value={command}
-                      onChange={(e) => setCommand(e.target.value)}
-                      placeholder="Enter server command..."
-                      style={{
-                        flex: 1,
-                        backgroundColor: S.input,
-                        color: S.white,
-                        border: "none",
-                        padding: "10px 12px",
-                        fontFamily: "monospace",
-                        fontSize: "12.5px",
-                        outline: "none",
-                      }}
-                    />
-                    <button
-                      type="submit"
-                      disabled={!command.trim()}
-                      className="button-hover"
-                      style={{
-                        padding: "10px 18px",
-                        backgroundColor: "transparent",
-                        color: S.cyan,
-                        border: "none",
-                        borderLeft: `1px solid ${S.border}`,
-                        cursor: "pointer",
-                        fontSize: "12px",
-                        opacity: !command.trim() ? 0.4 : 1,
-                        outline: "none",
-                      }}
-                    >
-                      Send
-                    </button>
-                  </>
-                )}
-              </form>
-            </div>
+            <ConsoleTab
+              wsStatus={wsStatus}
+              wsMode={wsMode}
+              setLogs={setLogs}
+              connectWs={connectWs}
+              wsAttempts={wsAttempts}
+              isOnline={isOnline}
+              statusData={statusData}
+              ramMb={ramMb}
+              maxRamMb={maxRamMb}
+              PowerDropdown={PowerDropdown}
+              logs={logs}
+              consoleEndRef={consoleEndRef}
+              sendCommandDirect={sendCommandDirect}
+              sendCmd={sendCmd}
+              command={command}
+              setCommand={setCommand}
+              OutlineBtn={OutlineBtn}
+            />
           )}
 
           {/* ══ CHAT ══ */}
           {activeTab === "chat" && (
-            <div style={{ display: "flex", flexDirection: "column", flex: 1, height: "100%" }}>
-              <TabHeader label="In-Game Chat Log" icon={<Ico.Chat />} />
-
-              <div
-                style={{
-                  flex: 1,
-                  backgroundColor: "#141414",
-                  overflowY: "auto",
-                  padding: "16px 20px",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "10px",
-                  minHeight: 0,
-                }}
-              >
-                {chatMessages.length === 0 ? (
-                  <div style={{ color: "#555", fontStyle: "italic", textAlign: "center", marginTop: "20px" }}>
-                    No chat messages caught in console yet.
-                  </div>
-                ) : (
-                  chatMessages.map((m, i) => {
-                    const isYou = m.player === "You";
-                    const isServer = m.player === "Server";
-                    let senderColor = S.cyan;
-                    if (isYou) senderColor = S.orange;
-                    if (isServer) senderColor = S.red;
-
-                    return (
-                      <div
-                        key={i}
-                        style={{
-                          display: "flex",
-                          gap: "8px",
-                          fontSize: "12.5px",
-                          alignItems: "flex-start",
-                        }}
-                      >
-                        <span style={{ color: S.muted, fontSize: "10px", fontFamily: "monospace", marginTop: "2px" }}>
-                          [{m.ts}]
-                        </span>
-                        <span style={{ color: senderColor, fontWeight: "bold" }}>
-                          {isYou || isServer ? `[${m.player}]` : `<${m.player}>`}:
-                        </span>
-                        <span style={{ color: "#ccc", flex: 1, wordBreak: "break-all" }}>{m.msg}</span>
-                      </div>
-                    );
-                  })
-                )}
-                <div ref={chatEndRef} />
-              </div>
-
-              <form
-                onSubmit={sendChat}
-                style={{ display: "flex", borderTop: `1px solid ${S.border}`, flexShrink: 0 }}
-              >
-                {!isOnline ? (
-                  <div
-                    style={{
-                      flex: 1,
-                      backgroundColor: "#161616",
-                      color: S.muted,
-                      padding: "10px 14px",
-                      fontSize: "12px",
-                      fontStyle: "italic",
-                      textAlign: "center",
-                      userSelect: "none",
-                    }}
-                  >
-                    In-game chat broadcast is disabled while the server is offline.
-                  </div>
-                ) : (
-                  <>
-                    <input
-                      type="text"
-                      placeholder="Broadcast message to server chat..."
-                      value={chatInput}
-                      onChange={(e) => setChatInput(e.target.value)}
-                      style={{
-                        flex: 1,
-                        backgroundColor: S.input,
-                        color: S.white,
-                        border: "none",
-                        padding: "10px 14px",
-                        fontSize: "13px",
-                        outline: "none",
-                      }}
-                    />
-                    <button
-                      type="submit"
-                      disabled={!chatInput.trim()}
-                      className="button-hover"
-                      style={{
-                        padding: "10px 20px",
-                        backgroundColor: "transparent",
-                        color: S.orange,
-                        border: "none",
-                        borderLeft: `1px solid ${S.border}`,
-                        cursor: "pointer",
-                        fontSize: "12px",
-                        opacity: !chatInput.trim() ? 0.4 : 1,
-                        outline: "none",
-                      }}
-                    >
-                      Broadcast
-                    </button>
-                  </>
-                )}
-              </form>
-            </div>
+            <ChatTab
+              chatMessages={chatMessages}
+              chatEndRef={chatEndRef}
+              sendChat={sendChat}
+              isOnline={isOnline}
+              chatInput={chatInput}
+              setChatInput={setChatInput}
+              TabHeader={TabHeader}
+            />
           )}
 
           {/* ══ FILES ══ */}
           {activeTab === "files" && (
-            <div style={{ display: "flex", flexDirection: "column", flex: 1, height: "100%" }}>
-              {/* ── Header bar ── */}
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: "13px 20px 11px",
-                  borderBottom: `1px solid ${S.border}`,
-                  flexShrink: 0,
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                  <Ico.Files />
-                  <span style={{ fontSize: "18px", fontWeight: 300 }}>Files Manager</span>
-                </div>
-                <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-                  {selectedFile ? (
-                    <>
-                      <Btn
-                        label={savingFile ? "Saving..." : "Save File"}
-                        color={S.orange}
-                        onClick={saveFileContent}
-                        disabled={savingFile}
-                      />
-                      <OutlineBtn label="Close Editor" onClick={() => setSelectedFile(null)} />
-                    </>
-                  ) : (
-                    <>
-                      <Btn
-                        label="New File"
-                        color={S.cyan}
-                        onClick={() => {
-                          setShowNewFile(true);
-                          setShowNewFolder(false);
-                        }}
-                      />
-                      <Btn
-                        label="New Folder"
-                        color={S.purple}
-                        onClick={() => {
-                          setShowNewFolder(true);
-                          setShowNewFile(false);
-                        }}
-                      />
-                      <Btn
-                        label="Upload File"
-                        color={S.green}
-                        onClick={() => uploadInputRef.current?.click()}
-                      />
-                      <input
-                        type="file"
-                        ref={uploadInputRef}
-                        onChange={handleUpload}
-                        style={{ display: "none" }}
-                      />
-                      <OutlineBtn label="Refresh" onClick={() => loadDir(currentPath)} />
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {fileError && (
-                <div
-                  style={{
-                    padding: "7px 18px",
-                    backgroundColor: "#2a1111",
-                    borderBottom: `1px solid #553333`,
-                    color: "#cc6666",
-                    fontSize: "12px",
-                    display: "flex",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <span>{fileError}</span>
-                  <button
-                    onClick={() => setFileError("")}
-                    style={{ background: "none", border: "none", color: "#cc6666", cursor: "pointer" }}
-                  >
-                    ×
-                  </button>
-                </div>
-              )}
-
-              {/* ── SFTP Credentials Bar ── */}
-              {!selectedFile && (
-                <div
-                  style={{
-                    margin: "14px 18px 0",
-                    backgroundColor: "#242424",
-                    border: `1px solid ${S.border}`,
-                    padding: "10px 14px",
-                    fontSize: "12.5px",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    flexWrap: "wrap",
-                    gap: "10px",
-                    borderRadius: "3px",
-                  }}
-                >
-                  <div>
-                    <span style={{ color: S.muted, marginRight: "4px" }}>SFTP Host:</span>
-                    <span style={{ fontFamily: "monospace", color: S.cyan, marginRight: "16px" }}>
-                      {statusData?.sftpHost || "meowtopia-panel.duckdns.org"}:
-                      {statusData?.sftpPort || 5657}
-                    </span>
-                    <span style={{ color: S.muted, marginRight: "4px" }}>SFTP User:</span>
-                    <span style={{ fontFamily: "monospace", color: S.white }}>
-                      {statusData?.sftpUsername || `agreeable_guy-946f16b4`}
-                    </span>
-                  </div>
-                  <div style={{ color: S.muted, fontSize: "11.5px" }}>
-                    Password: <span style={{ color: S.white }}>Use your PufferPanel password</span>
-                  </div>
-                </div>
-              )}
-
-              {/* ── Editor ── */}
-              {selectedFile && !loadingFile && (
-                <div
-                  style={{
-                    flex: 1,
-                    display: "flex",
-                    flexDirection: "column",
-                    padding: "14px 18px",
-                    gap: "10px",
-                  }}
-                >
-                  <div style={{ fontSize: "12px", color: S.muted }}>
-                    Editing: <span style={{ color: S.white }}>{selectedFile.name}</span>
-                    {selectedFile.size !== undefined && (
-                      <span style={{ marginLeft: "8px" }}>({fmtFileSize(selectedFile.size)})</span>
-                    )}
-                  </div>
-                  <textarea
-                    value={fileContent}
-                    onChange={(e) => setFileContent(e.target.value)}
-                    style={{
-                      flex: 1,
-                      minHeight: "400px",
-                      backgroundColor: "#111",
-                      color: "#ccc",
-                      border: `1px solid ${S.border}`,
-                      padding: "10px",
-                      fontFamily: "'Consolas','Courier New',monospace",
-                      fontSize: "12.5px",
-                      lineHeight: "1.6",
-                      resize: "none",
-                      outline: "none",
-                    }}
-                  />
-                </div>
-              )}
-
-              {/* ── New file / folder inline form ── */}
-              {!selectedFile && (showNewFile || showNewFolder) && (
-                <form
-                  onSubmit={showNewFile ? doNewFile : doNewFolder}
-                  style={{
-                    padding: "14px 18px 0",
-                    display: "flex",
-                    gap: "10px",
-                    alignItems: "center",
-                  }}
-                >
-                  <span style={{ color: S.white, fontSize: "12px" }}>
-                    Create {showNewFile ? "File" : "Folder"}:
-                  </span>
-                  <input
-                    type="text"
-                    placeholder="Enter name..."
-                    value={newName}
-                    onChange={(e) => setNewName(e.target.value)}
-                    style={{
-                      backgroundColor: S.input,
-                      border: `1px solid ${S.inputBdr}`,
-                      color: S.white,
-                      padding: "5px 10px",
-                      fontSize: "12.5px",
-                      outline: "none",
-                    }}
-                  />
-                  <Btn label="Create" color={S.orange} onClick={() => {}} />
-                  <OutlineBtn
-                    label="Cancel"
-                    onClick={() => {
-                      setShowNewFile(false);
-                      setShowNewFolder(false);
-                      setNewName("");
-                    }}
-                  />
-                </form>
-              )}
-
-              {/* ── Directory listing ── */}
-              {!selectedFile && (
-                <div style={{ flex: 1, padding: "14px 18px", overflow: "auto", display: "flex", flexDirection: "column", gap: "10px" }}>
-
-                  {/* Breadcrumbs */}
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: S.cyan }}>
-                    <span onClick={() => loadDir("")} style={{ cursor: "pointer", textDecoration: "underline" }}>root</span>
-                    {pathParts.map((part, index) => {
-                      const partialPath = pathParts.slice(0, index + 1).join("/");
-                      return (
-                        <React.Fragment key={index}>
-                          <span style={{ color: S.muted }}>/</span>
-                          <span onClick={() => loadDir(partialPath)} style={{ cursor: "pointer", textDecoration: "underline" }}>{part}</span>
-                        </React.Fragment>
-                      );
-                    })}
-                  </div>
-
-                  {/* ── Search + Filter toolbar ── */}
-                  <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
-                    <input
-                      type="text"
-                      placeholder="🔍 Filter files..."
-                      value={fileSearchQuery}
-                      onChange={(e) => { setFileSearchQuery(e.target.value); setSelectedFileNames(new Set()); }}
-                      style={{
-                        flex: 1,
-                        minWidth: "160px",
-                        backgroundColor: S.input,
-                        border: `1px solid ${S.inputBdr}`,
-                        color: S.white,
-                        padding: "5px 10px",
-                        fontSize: "12.5px",
-                        outline: "none",
-                        borderRadius: "3px",
-                      }}
-                    />
-                    {(["all", "files", "folders"] as const).map((t) => (
-                      <button
-                        key={t}
-                        onClick={() => { setFileTypeFilter(t); setSelectedFileNames(new Set()); }}
-                        style={{
-                          padding: "5px 12px",
-                          fontSize: "11.5px",
-                          border: `1px solid ${fileTypeFilter === t ? S.cyan : S.border}`,
-                          backgroundColor: fileTypeFilter === t ? "rgba(0,200,220,0.12)" : "transparent",
-                          color: fileTypeFilter === t ? S.cyan : S.muted,
-                          cursor: "pointer",
-                          borderRadius: "3px",
-                          transition: "all 0.15s",
-                        }}
-                      >
-                        {t.charAt(0).toUpperCase() + t.slice(1)}
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* ── Bulk-selection toolbar (shown when ≥1 selected) ── */}
-                  {selectedFileNames.size > 0 && (
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "12px",
-                        padding: "7px 12px",
-                        backgroundColor: "rgba(200,80,80,0.08)",
-                        border: `1px solid rgba(200,80,80,0.3)`,
-                        borderRadius: "3px",
-                        fontSize: "12.5px",
-                      }}
-                    >
-                      <span style={{ color: S.white }}>
-                        <strong style={{ color: "#e07070" }}>{selectedFileNames.size}</strong> item{selectedFileNames.size !== 1 ? "s" : ""} selected
-                      </span>
-                      <button
-                        onClick={doBulkDelete}
-                        disabled={bulkDeleting}
-                        style={{
-                          backgroundColor: "#7a2020",
-                          border: "1px solid #aa3333",
-                          color: "#ffaaaa",
-                          padding: "4px 12px",
-                          fontSize: "11.5px",
-                          cursor: bulkDeleting ? "not-allowed" : "pointer",
-                          borderRadius: "3px",
-                          opacity: bulkDeleting ? 0.6 : 1,
-                        }}
-                      >
-                        {bulkDeleting ? "Deleting..." : "🗑 Delete Selected"}
-                      </button>
-                      <button
-                        onClick={() => setSelectedFileNames(new Set())}
-                        style={{
-                          backgroundColor: "transparent",
-                          border: "none",
-                          color: S.muted,
-                          cursor: "pointer",
-                          fontSize: "11.5px",
-                          textDecoration: "underline",
-                        }}
-                      >
-                        Clear selection
-                      </button>
-                    </div>
-                  )}
-
-                  {loadingFiles ? (
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "50px", gap: "12px", color: S.muted }}>
-                      <div className="spinner" />
-                      <span>Loading directory contents...</span>
-                    </div>
-                  ) : (() => {
-                    // Apply search + type filter
-                    const q = fileSearchQuery.trim().toLowerCase();
-                    const filtered = files.filter((f) => {
-                      if (fileTypeFilter === "files" && !f.isFile) return false;
-                      if (fileTypeFilter === "folders" && f.isFile) return false;
-                      if (q && !f.name.toLowerCase().includes(q)) return false;
-                      return true;
-                    });
-                    const allNames = filtered.map((f) => f.name);
-                    const allSelected = allNames.length > 0 && allNames.every((n) => selectedFileNames.has(n));
-                    const someSelected = !allSelected && allNames.some((n) => selectedFileNames.has(n));
-
-                    return (
-                      <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "12.5px" }}>
-                        <thead>
-                          <tr style={{ borderBottom: `1px solid ${S.border}`, color: S.muted }}>
-                            <th style={{ padding: "8px 6px", width: "32px" }}>
-                              <input
-                                type="checkbox"
-                                checked={allSelected}
-                                ref={(el) => { if (el) el.indeterminate = someSelected; }}
-                                onChange={() => {
-                                  if (allSelected) {
-                                    setSelectedFileNames((prev) => {
-                                      const next = new Set(prev);
-                                      allNames.forEach((n) => next.delete(n));
-                                      return next;
-                                    });
-                                  } else {
-                                    setSelectedFileNames((prev) => new Set([...prev, ...allNames]));
-                                  }
-                                }}
-                                style={{ cursor: "pointer", accentColor: S.cyan }}
-                              />
-                            </th>
-                            <th style={{ padding: "8px 6px" }}>File Name</th>
-                            <th style={{ padding: "8px 6px", width: "100px" }}>Size</th>
-                            <th style={{ padding: "8px 6px", width: "160px" }}>Modified</th>
-                            <th style={{ padding: "8px 6px", width: "150px", textAlign: "right" }}>Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {currentPath && (
-                            <tr
-                              className="tab-hover"
-                              onClick={() => { const up = currentPath.split("/").slice(0, -1).join("/"); loadDir(up); }}
-                              style={{ borderBottom: `1px solid ${S.border}`, cursor: "pointer", color: S.cyan }}
-                            >
-                              <td style={{ padding: "9px 6px" }} />
-                              <td style={{ padding: "9px 6px" }} colSpan={3}>📁 .. (Go up)</td>
-                              <td style={{ padding: "9px 6px" }}>–</td>
-                            </tr>
-                          )}
-                          {filtered.length === 0 ? (
-                            <tr>
-                              <td colSpan={5} style={{ color: S.muted, fontStyle: "italic", padding: "16px 6px", textAlign: "center" }}>
-                                {files.length === 0 ? "This directory is empty." : "No files match your filter."}
-                              </td>
-                            </tr>
-                          ) : (
-                            filtered.map((file) => {
-                              const isChecked = selectedFileNames.has(file.name);
-                              return (
-                                <tr
-                                  key={file.name}
-                                  className="tab-hover"
-                                  style={{
-                                    borderBottom: `1px solid ${S.border}`,
-                                    backgroundColor: isChecked ? "rgba(0,200,220,0.05)" : undefined,
-                                  }}
-                                >
-                                  {/* Checkbox */}
-                                  <td style={{ padding: "9px 6px" }}>
-                                    <input
-                                      type="checkbox"
-                                      checked={isChecked}
-                                      onChange={(e) => {
-                                        e.stopPropagation();
-                                        setSelectedFileNames((prev) => {
-                                          const next = new Set(prev);
-                                          if (isChecked) next.delete(file.name); else next.add(file.name);
-                                          return next;
-                                        });
-                                      }}
-                                      style={{ cursor: "pointer", accentColor: S.cyan }}
-                                    />
-                                  </td>
-                                  {/* Name */}
-                                  <td
-                                    style={{ padding: "9px 6px", cursor: "pointer", fontWeight: file.isFile ? "normal" : "bold" }}
-                                    onClick={() => {
-                                      if (file.isFile) openFile(file);
-                                      else loadDir(currentPath ? `${currentPath}/${file.name}` : file.name);
-                                    }}
-                                  >
-                                    {file.isFile ? "📄" : "📁"} {file.name}
-                                  </td>
-                                  {/* Size */}
-                                  <td style={{ padding: "9px 6px", color: S.muted }}>
-                                    {file.isFile ? fmtFileSize(file.size) : "DIR"}
-                                  </td>
-                                  {/* Modified */}
-                                  <td style={{ padding: "9px 6px", color: S.muted }}>
-                                    {file.modifyTime ? new Date(file.modifyTime * 1000).toLocaleString() : "–"}
-                                  </td>
-                                  {/* Actions */}
-                                  <td style={{ padding: "9px 6px", textAlign: "right", display: "flex", gap: "6px", justifyContent: "flex-end" }}>
-                                    {file.isFile && (
-                                      <button
-                                        onClick={() => downloadFile(file)}
-                                        className="button-hover"
-                                        style={{ backgroundColor: "transparent", color: S.cyan, border: "none", cursor: "pointer", fontSize: "11px", textDecoration: "underline" }}
-                                      >
-                                        Download
-                                      </button>
-                                    )}
-                                    <button
-                                      onClick={() => doDelete(file)}
-                                      className="button-hover"
-                                      style={{ backgroundColor: "transparent", color: "#aa4444", border: "none", cursor: "pointer", fontSize: "11px", textDecoration: "underline" }}
-                                    >
-                                      Delete
-                                    </button>
-                                  </td>
-                                </tr>
-                              );
-                            })
-                          )}
-                        </tbody>
-                      </table>
-                    );
-                  })()}
-                </div>
-              )}
-            </div>
+            <FilesTab
+              TabHeader={TabHeader}
+              loadDir={loadDir}
+              fileContent={fileContent}
+              setFileContent={setFileContent}
+              OutlineBtn={OutlineBtn}
+              selectedFile={selectedFile}
+                            saveFileContent={saveFileContent}
+              savingFile={savingFile}
+              setSelectedFile={setSelectedFile}
+              uploadInputRef={uploadInputRef}
+              handleUpload={handleUpload}
+              fileError={fileError}
+              setFileError={setFileError}
+              statusData={statusData}
+              loadingFile={loadingFile}
+              openFile={openFile}
+              showNewFile={showNewFile}
+              showNewFolder={showNewFolder}
+              doNewFile={doNewFile}
+              doNewFolder={doNewFolder}
+              newName={newName}
+              setNewName={setNewName}
+              Btn={Btn}
+              setShowNewFile={setShowNewFile}
+              setShowNewFolder={setShowNewFolder}
+              pathParts={pathParts}
+              fileSearchQuery={fileSearchQuery}
+              setFileSearchQuery={setFileSearchQuery}
+              setSelectedFileNames={setSelectedFileNames}
+              setFileTypeFilter={setFileTypeFilter}
+              fileTypeFilter={fileTypeFilter}
+              selectedFileNames={selectedFileNames}
+              doBulkDelete={doBulkDelete}
+              bulkDeleting={bulkDeleting}
+              loadingFiles={loadingFiles}
+              files={files}
+              currentPath={currentPath}
+              fmtFileSize={fmtFileSize}
+              downloadFile={downloadFile}
+              doDelete={doDelete}
+            />
           )}
 
           {/* ══ PLUGINS ══ */}
@@ -5924,12 +4826,12 @@ export default function Dashboard() {
                       <div>
                         <div style={{ fontSize: "11px", color: S.muted }}>MINECRAFT GAME IP</div>
                         <div style={{ fontSize: "14px", fontFamily: "monospace", color: S.white, fontWeight: "bold" }}>
-                          meowtopia-panel.duckdns.org:{statusData?.port || 25565}
+                          play.meowtopia.mooo.com:{statusData?.port || 25565}
                         </div>
                       </div>
                       <button
                         onClick={() => {
-                          navigator.clipboard.writeText(`meowtopia-panel.duckdns.org:${statusData?.port || 25565}`);
+                          navigator.clipboard.writeText(`play.meowtopia.mooo.com:${statusData?.port || 25565}`);
                           showToast("Game connection IP address copied to clipboard.", "success");
                         }}
                         className="button-hover"
@@ -5952,7 +4854,7 @@ export default function Dashboard() {
                         <div style={{ fontSize: "11px", color: S.muted }}>SFTP URI</div>
                         <div style={{ fontSize: "14px", fontFamily: "monospace", color: S.white, fontWeight: "bold" }}>
                           sftp://{statusData?.sftpUsername || "agreeable_guy-946f16b4"}@
-                          {statusData?.sftpHost || "meowtopia-panel.duckdns.org"}:
+                          {statusData?.sftpHost || "play.meowtopia.mooo.com"}:
                           {statusData?.sftpPort || 5657}
                         </div>
                       </div>
@@ -5960,7 +4862,7 @@ export default function Dashboard() {
                         onClick={() => {
                           navigator.clipboard.writeText(
                             `sftp://${statusData?.sftpUsername || "agreeable_guy-946f16b4"}@${
-                              statusData?.sftpHost || "meowtopia-panel.duckdns.org"
+                              statusData?.sftpHost || "play.meowtopia.mooo.com"
                             }:${statusData?.sftpPort || 5657}`
                           );
                           showToast("SFTP connection URI copied to clipboard.", "success");
