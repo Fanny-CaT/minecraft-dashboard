@@ -4,7 +4,20 @@ import React, { useEffect, useState, useRef, useCallback } from "react";
 
 import { StatusData, FileEntry, PlayerEntry, Tab, Toast } from "@/lib/types";
 import { S, POPULAR_PLUGINS_META } from "@/lib/constants";
-import { Ico } from "@/components/icons";
+import {
+  LayoutDashboard,
+  Terminal,
+  Users,
+  FolderOpen,
+  Cpu,
+  Puzzle,
+  Settings,
+  FileCog,
+  Network,
+  ScrollText,
+  Archive,
+  ShieldAlert
+} from "lucide-react";
 import { BarChart } from "@/components/BarChart";
 import { SparklineChart } from "@/components/SparklineChart";
 import { FilesTab } from "@/components/tabs/FilesTab";
@@ -1295,18 +1308,18 @@ export default function Dashboard() {
   // ─────────────────────────────────────────────────────────────────────────────
 
   const navItems: { id: Tab; label: string; icon: React.ReactNode }[] = [
-    { id: "status", label: "Dashboard", icon: <Ico.Status /> },
-    { id: "console", label: "Console", icon: <Ico.Console /> },
-    { id: "users", label: "Players", icon: <Ico.Users /> },
-    { id: "files", label: "Files", icon: <Ico.Files /> },
-    { id: "software", label: "Software", icon: <Ico.Config /> },
-    { id: "plugins", label: "Plugins", icon: <Ico.Plugins /> },
-    { id: "settings", label: "Settings", icon: <Ico.Config /> },
-    { id: "config", label: "Files: Config", icon: <Ico.Config /> },
-    { id: "networking", label: "Network", icon: <Ico.Networking /> },
-    { id: "logs", label: "Logs", icon: <Ico.Logs /> },
-    { id: "backups", label: "Backups", icon: <Ico.Backups /> },
-    ...(role === "admin" ? [{ id: "panel-users" as Tab, label: "Panel Access", icon: <Ico.Users /> }] : []),
+    { id: "status", label: "Dashboard", icon: <LayoutDashboard size={18} /> },
+    { id: "console", label: "Console", icon: <Terminal size={18} /> },
+    { id: "users", label: "Players", icon: <Users size={18} /> },
+    { id: "files", label: "Files", icon: <FolderOpen size={18} /> },
+    { id: "software", label: "Software", icon: <Cpu size={18} /> },
+    { id: "plugins", label: "Plugins", icon: <Puzzle size={18} /> },
+    { id: "settings", label: "Settings", icon: <Settings size={18} /> },
+    { id: "config", label: "Files: Config", icon: <FileCog size={18} /> },
+    { id: "networking", label: "Network", icon: <Network size={18} /> },
+    { id: "logs", label: "Logs", icon: <ScrollText size={18} /> },
+    { id: "backups", label: "Backups", icon: <Archive size={18} /> },
+    ...(role === "admin" ? [{ id: "panel-users" as Tab, label: "Panel Access", icon: <ShieldAlert size={18} /> }] : []),
   ];
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -2000,18 +2013,33 @@ export default function Dashboard() {
                     alignItems: "center",
                     gap: "12px",
                     width: "100%",
-                    padding: sidebarCollapsed ? "12px 0" : "12px 18px",
+                    padding: sidebarCollapsed ? "14px 0" : "14px 18px",
                     justifyContent: sidebarCollapsed ? "center" : "flex-start",
-                    backgroundColor: active ? "rgba(221,136,0,0.10)" : "transparent",
-                    color: active ? S.orange : S.cyan,
+                    backgroundColor: active ? "rgba(255,255,255,0.08)" : "transparent",
+                    color: active ? S.white : S.muted,
                     border: "none",
                     borderLeft: active ? `3px solid ${S.orange}` : "3px solid transparent",
                     cursor: "pointer",
-                    fontSize: "12.5px",
+                    fontSize: "13px",
+                    fontWeight: active ? 600 : 500,
                     textAlign: "left",
-                    opacity: active ? 1 : 0.85,
+                    opacity: active ? 1 : 0.7,
                     outline: "none",
-                    transition: "background-color 0.1s ease",
+                    transition: "all 0.15s ease",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!active) {
+                      e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.03)";
+                      e.currentTarget.style.color = S.white;
+                      e.currentTarget.style.opacity = "1";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!active) {
+                      e.currentTarget.style.backgroundColor = "transparent";
+                      e.currentTarget.style.color = S.muted;
+                      e.currentTarget.style.opacity = "0.7";
+                    }
                   }}
                 >
                   <span style={{ opacity: 0.9, flexShrink: 0, display: "flex", alignItems: "center" }}>{item.icon}</span>
@@ -2150,7 +2178,7 @@ export default function Dashboard() {
 
             return (
               <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
-                <TabHeader label="Status & Control" icon={<Ico.Status />} />
+                <TabHeader label="Status & Control" icon={<LayoutDashboard size={20} />} />
 
                 <div style={{ padding: "20px", display: "flex", flexDirection: "column", gap: "20px" }}>
 
@@ -2726,7 +2754,7 @@ export default function Dashboard() {
           {/* ══ PLUGINS ══ */}
           {activeTab === "plugins" && (
             <div style={{ display: "flex", flexDirection: "column", flex: 1, height: "100%" }}>
-              <TabHeader label="Plugin Search & Manager" icon={<Ico.Plugins />} />
+              <TabHeader label="Plugin Search & Manager" icon={<Puzzle size={20} />} />
 
               {pluginError && (
                 <div
@@ -3207,7 +3235,7 @@ export default function Dashboard() {
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                  <Ico.Config />
+                  <FileCog size={24} />
                   <span style={{ fontSize: "18px", fontWeight: 300 }}>
                     {configSubTab === "properties" ? "Server Properties" : "Startup Variables"}
                   </span>
@@ -3635,7 +3663,7 @@ export default function Dashboard() {
           {/* ══ NETWORKING ══ */}
           {activeTab === "networking" && (
             <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
-              <TabHeader label="Networking & Port Allocation" icon={<Ico.Networking />} />
+              <TabHeader label="Networking & Port Allocation" icon={<Network size={20} />} />
 
               <div style={{ padding: "20px", display: "flex", flexDirection: "column", gap: "20px" }}>
                 {/* Active ports card */}
@@ -3888,7 +3916,7 @@ export default function Dashboard() {
               {/* Header */}
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "13px 20px 11px", borderBottom: `1px solid ${S.border}`, flexShrink: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                  <Ico.Logs />
+                  <ScrollText size={24} />
                   <span style={{ fontSize: "18px", fontWeight: 300 }}>
                     Server Logs
                   </span>
@@ -4049,7 +4077,7 @@ export default function Dashboard() {
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                  <Ico.Backups />
+                  <Archive size={24} />
                   <span style={{ fontSize: "18px", fontWeight: 300 }}>Backup Manager</span>
                 </div>
                 <div>
