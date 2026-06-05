@@ -1,3 +1,4 @@
+import { verifyAdmin } from "@/lib/authGuard";
 import { NextRequest, NextResponse } from "next/server";
 import { pufferFetch } from "@/lib/pufferpanel";
 
@@ -10,6 +11,9 @@ import { pufferFetch } from "@/lib/pufferpanel";
  * Proxies the binary to PufferPanel's file PUT endpoint.
  */
 export async function POST(request: NextRequest) {
+  const authResult = await verifyAdmin(request);
+  if (authResult instanceof Response) return authResult;
+
   try {
     const form = await request.formData();
     const path    = form.get("path") as string | null;

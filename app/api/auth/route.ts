@@ -1,3 +1,4 @@
+import { verifyAdmin } from "@/lib/authGuard";
 import { NextResponse } from "next/server";
 import { getToken, daemon } from "@/lib/pufferpanel";
 

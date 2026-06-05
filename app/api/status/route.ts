@@ -1,3 +1,4 @@
+import { verifyAdmin } from "@/lib/authGuard";
 import { NextResponse } from "next/server";
 import net from "net";
 import { getStatus, getStats, getMaxMemoryBytes, getSftpUsername, getPanelServerInfo, getServerDetails, listFiles, readFile, sendConsoleCommand } from "@/lib/pufferpanel";

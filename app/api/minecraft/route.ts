@@ -1,3 +1,4 @@
+import { verifyAdmin } from "@/lib/authGuard";
 /**
  * app/api/minecraft/route.ts — Legacy compatibility shim.
  * The new routes are:
@@ -14,6 +15,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { getToken, getStatus, getStats, powerAction, sendConsoleCommand, listFiles, readFile, writeFile, createFolder, deleteFile } from "@/lib/pufferpanel";
 
 export async function GET(request: NextRequest) {
+  const authResult = await verifyAdmin(request);
+  if (authResult instanceof Response) return authResult;
+
   try {
     const { searchParams } = new URL(request.url);
     const action = searchParams.get("action");
@@ -61,6 +65,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const authResult = await verifyAdmin(request);
+  if (authResult instanceof Response) return authResult;
+
   try {
     const body = await request.json();
     const { action, command, path, content } = body;

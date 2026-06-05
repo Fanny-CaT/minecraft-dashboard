@@ -1,3 +1,4 @@
+import { verifyAdmin } from "@/lib/authGuard";
 import { NextRequest, NextResponse } from "next/server";
 import { pufferFetch, listFiles, createFolder, getStatus, powerAction, deleteFile } from "@/lib/pufferpanel";
 
@@ -68,6 +69,9 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const authResult = await verifyAdmin(request);
+  if (authResult instanceof Response) return authResult;
+
   try {
     const { action, filename } = await request.json();
 

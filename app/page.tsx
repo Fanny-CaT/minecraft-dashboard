@@ -2619,8 +2619,6 @@ export default function Dashboard() {
             <div style={{ display: "flex", flexDirection: "column", flex: 1, padding: "20px" }}>
               <SoftwareTab
                 currentVersion={statusData?.mcVersion}
-                selectedVersion={selectedVersion}
-                setSelectedVersion={setSelectedVersion}
                 reinstalling={reinstallingVersion}
                 onInstallClick={(provider, version) => {
                   setSelectedVersion(version);

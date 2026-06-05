@@ -1,3 +1,4 @@
+import { verifyAdmin } from "@/lib/authGuard";
 import { NextRequest, NextResponse } from "next/server";
 import { listFiles, readFile, writeFile, createFolder, deleteFile } from "@/lib/pufferpanel";
 
@@ -12,6 +13,9 @@ import { listFiles, readFile, writeFile, createFolder, deleteFile } from "@/lib/
  */
 
 export async function GET(request: NextRequest) {
+  const authResult = await verifyAdmin(request);
+  if (authResult instanceof Response) return authResult;
+
   try {
     const { searchParams } = new URL(request.url);
     const path  = searchParams.get("path") || "";
@@ -37,6 +41,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const authResult = await verifyAdmin(request);
+  if (authResult instanceof Response) return authResult;
+
   try {
     const { action, path, content } = await request.json();
 

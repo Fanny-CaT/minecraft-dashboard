@@ -1,3 +1,4 @@
+import { verifyAdmin } from "@/lib/authGuard";
 import { NextRequest, NextResponse } from "next/server";
 import { readFile, writeFile, sendConsoleCommand } from "@/lib/pufferpanel";
 
@@ -21,6 +22,9 @@ const FILE_MAP: Record<ListType, string> = {
  */
 
 export async function GET(request: NextRequest) {
+  const authResult = await verifyAdmin(request);
+  if (authResult instanceof Response) return authResult;
+
   try {
     const { searchParams } = new URL(request.url);
     const list = (searchParams.get("list") || "ops") as ListType;
@@ -41,6 +45,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const authResult = await verifyAdmin(request);
+  if (authResult instanceof Response) return authResult;
+
   try {
     const body = await request.json();
     const { action } = body;

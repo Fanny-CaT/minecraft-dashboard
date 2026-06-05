@@ -1,3 +1,4 @@
+import { verifyAdmin } from "@/lib/authGuard";
 import { NextRequest, NextResponse } from "next/server";
 import { pufferFetch } from "@/lib/pufferpanel";
 
@@ -9,6 +10,9 @@ import { pufferFetch } from "@/lib/pufferpanel";
  * Proxies to PufferPanel daemon logs endpoint.
  */
 export async function GET(request: NextRequest) {
+  const authResult = await verifyAdmin(request);
+  if (authResult instanceof Response) return authResult;
+
   try {
     const { searchParams } = new URL(request.url);
     const time = searchParams.get("time") || "0";

@@ -1,3 +1,4 @@
+import { verifyAdmin } from "@/lib/authGuard";
 import { NextRequest, NextResponse } from "next/server";
 import { readFile, writeFile, parseServerProperties, serializeServerProperties } from "@/lib/pufferpanel";
 
@@ -24,6 +25,9 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const authResult = await verifyAdmin(request);
+  if (authResult instanceof Response) return authResult;
+
   try {
     const { props } = await request.json();
     if (!props || typeof props !== "object") {

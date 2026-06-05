@@ -1,3 +1,4 @@
+import { verifyAdmin } from "@/lib/authGuard";
 import { NextRequest, NextResponse } from "next/server";
 import { getServerDetails, pufferFetch } from "@/lib/pufferpanel";
 
@@ -23,6 +24,9 @@ export async function GET() {
  * Updates the bind IP and port variables inside PufferPanel.
  */
 export async function POST(request: NextRequest) {
+  const authResult = await verifyAdmin(request);
+  if (authResult instanceof Response) return authResult;
+
   try {
     const body = await request.json();
     const { ip, port } = body;

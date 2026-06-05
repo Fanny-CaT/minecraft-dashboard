@@ -1,3 +1,4 @@
+import { verifyAdmin } from "@/lib/authGuard";
 import { NextRequest, NextResponse } from "next/server";
 import { pufferFetch } from "@/lib/pufferpanel";
 
@@ -9,6 +10,9 @@ import { pufferFetch } from "@/lib/pufferpanel";
  * Serves the file with Content-Disposition: attachment header for download.
  */
 export async function GET(request: NextRequest) {
+  const authResult = await verifyAdmin(request);
+  if (authResult instanceof Response) return authResult;
+
   try {
     const { searchParams } = new URL(request.url);
     const path = searchParams.get("path");

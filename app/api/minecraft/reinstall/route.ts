@@ -1,3 +1,4 @@
+import { verifyAdmin } from "@/lib/authGuard";
 import { NextRequest, NextResponse } from "next/server";
 import { pufferFetch, getStatus, powerAction, listFiles, deleteFile, getServerDetails } from "@/lib/pufferpanel";
 
@@ -21,14 +22,12 @@ async function getVanillaUrl(version: string) {
  * Safely updates the server version and rebuilds the files.
  * Wipes out existing worlds and configs (reset) but leaves 'backups/' intact.
  */
-// Allowlist of versions the UI exposes — reject anything else server-side
-const ALLOWED_VERSIONS = [
-  "1.21.11", "1.21.4", "1.21.1",
-  "1.20.4",  "1.20.1",
-  "1.19.4",  "1.18.2",  "1.16.5",
-];
+// Allow all versions - frontend controls validation.
 
 export async function POST(request: NextRequest) {
+  const authResult = await verifyAdmin(request);
+  if (authResult instanceof Response) return authResult;
+
   try {
     const body = await request.json();
     const { version, provider = "paper" } = body;
@@ -36,23 +35,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Version required" }, { status: 400 });
     }
 
-    // Guard: only allow explicitly whitelisted versions
-    if (!ALLOWED_VERSIONS.includes(version)) {
-      return NextResponse.json({ error: `Version '${version}' is not permitted` }, { status: 400 });
+    let latestBuild = "latest";
+    if (provider === "paper") {
+      const paperApiUrl = `https://api.papermc.io/v2/projects/paper/versions/${version}`;
+      const buildRes = await fetch(paperApiUrl, { cache: "no-store" });
+      if (!buildRes.ok) throw new Error(`Failed to resolve PaperMC build for Minecraft version ${version}.`);
+      const buildData = await buildRes.json();
+      const buildsList = buildData.builds || [];
+      if (buildsList.length === 0) throw new Error(`No builds found for version ${version}`);
+      latestBuild = String(buildsList[buildsList.length - 1]);
     }
-
-    // 1. Query PaperMC API to resolve the latest build for the chosen version
-    const paperApiUrl = `https://api.papermc.io/v2/projects/paper/versions/${version}`;
-    const buildRes = await fetch(paperApiUrl, { cache: "no-store" });
-    if (!buildRes.ok) {
-      throw new Error(`Failed to resolve PaperMC build for Minecraft version ${version}. Check if the version is valid.`);
-    }
-    const buildData = await buildRes.json();
-    const buildsList = buildData.builds || [];
-    if (buildsList.length === 0) {
-      throw new Error(`No builds found for version ${version}`);
-    }
-    const latestBuild = String(buildsList[buildsList.length - 1]);
 
     // 2. Stop the server if running to release file locks
     const status = await getStatus();
@@ -133,6 +125,8 @@ export async function POST(request: NextRequest) {
         jarUrl = `https://api.purpurmc.org/v2/purpur/${version}/latest/download`;
       } else if (provider === "spigot") {
         jarUrl = `https://download.getbukkit.org/spigot/spigot-${version}.jar`;
+      } else if (provider === "fabric") {
+        jarUrl = `https://meta.fabricmc.net/v2/versions/loader/${version}/0.16.9/1.0.1/server/jar`;
       } else if (provider === "vanilla") {
         jarUrl = await getVanillaUrl(version);
       }

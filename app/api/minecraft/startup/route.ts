@@ -1,3 +1,4 @@
+import { verifyAdmin } from "@/lib/authGuard";
 import { NextRequest, NextResponse } from "next/server";
 import { readFile, writeFile } from "@/lib/pufferpanel";
 
@@ -37,6 +38,9 @@ export async function GET() {
  * Saves the startup variables and runs symlinking/renaming on JAR files.
  */
 export async function POST(request: NextRequest) {
+  const authResult = await verifyAdmin(request);
+  if (authResult instanceof Response) return authResult;
+
   try {
     const body = await request.json();
     const { jvmArgsStart, jvmArgsEnd, serverJarFile, enableAikarsFlags, autosaveInterval, enableAutosaveLoop } = body;

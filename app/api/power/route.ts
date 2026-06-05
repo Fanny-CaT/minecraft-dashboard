@@ -1,3 +1,4 @@
+import { verifyAdmin } from "@/lib/authGuard";
 import { NextRequest, NextResponse } from "next/server";
 import { powerAction, sendConsoleCommand } from "@/lib/pufferpanel";
 
@@ -9,6 +10,9 @@ import { powerAction, sendConsoleCommand } from "@/lib/pufferpanel";
  * Sends a raw command to the console.
  */
 export async function POST(request: NextRequest) {
+  const authResult = await verifyAdmin(request);
+  if (authResult instanceof Response) return authResult;
+
   try {
     const body = await request.json();
     const { action, command } = body;

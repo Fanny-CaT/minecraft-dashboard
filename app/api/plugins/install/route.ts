@@ -1,3 +1,4 @@
+import { verifyAdmin } from "@/lib/authGuard";
 import { NextRequest, NextResponse } from "next/server";
 import { pufferFetch } from "@/lib/pufferpanel";
 
@@ -9,6 +10,9 @@ import { pufferFetch } from "@/lib/pufferpanel";
  * Supports direct Spiget download URLs, Modrinth version lookup, and Hangar version lookup.
  */
 export async function POST(request: NextRequest) {
+  const authResult = await verifyAdmin(request);
+  if (authResult instanceof Response) return authResult;
+
   try {
     const body = await request.json();
     const { provider, downloadUrl, filename, versionId, projectId } = body;

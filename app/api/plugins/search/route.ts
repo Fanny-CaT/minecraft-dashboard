@@ -1,3 +1,4 @@
+import { verifyAdmin } from "@/lib/authGuard";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -10,6 +11,9 @@ import { NextRequest, NextResponse } from "next/server";
  * Returns a unified, merged, and sorted array of plugins from Modrinth, Spiget, and Hangar.
  */
 export async function GET(request: NextRequest) {
+  const authResult = await verifyAdmin(request);
+  if (authResult instanceof Response) return authResult;
+
   try {
     const { searchParams } = new URL(request.url);
     const query = searchParams.get("q") || "";
