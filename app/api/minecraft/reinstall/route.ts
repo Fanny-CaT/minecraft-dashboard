@@ -1,6 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pufferFetch, getStatus, powerAction, listFiles, deleteFile, getServerDetails } from "@/lib/pufferpanel";
 
+export const maxDuration = 60;
+export const dynamic = 'force-dynamic';
+
+async function getVanillaUrl(version: string) {
+  const res = await fetch("https://launchermeta.mojang.com/mc/game/version_manifest.json");
+  const manifest = await res.json();
+  const v = manifest.versions.find((v: any) => v.id === version);
+  if (!v) throw new Error("Vanilla version not found");
+  const pkgRes = await fetch(v.url);
+  const pkg = await pkgRes.json();
+  return pkg.downloads.server.url;
+}
+
 /**
  * POST /api/minecraft/reinstall
  * Body: { version: string }
@@ -8,12 +21,24 @@ import { pufferFetch, getStatus, powerAction, listFiles, deleteFile, getServerDe
  * Safely updates the server version and rebuilds the files.
  * Wipes out existing worlds and configs (reset) but leaves 'backups/' intact.
  */
+// Allowlist of versions the UI exposes — reject anything else server-side
+const ALLOWED_VERSIONS = [
+  "1.21.11", "1.21.4", "1.21.1",
+  "1.20.4",  "1.20.1",
+  "1.19.4",  "1.18.2",  "1.16.5",
+];
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { version } = body;
+    const { version, provider = "paper" } = body;
     if (!version) {
       return NextResponse.json({ error: "Version required" }, { status: 400 });
+    }
+
+    // Guard: only allow explicitly whitelisted versions
+    if (!ALLOWED_VERSIONS.includes(version)) {
+      return NextResponse.json({ error: `Version '${version}' is not permitted` }, { status: 400 });
     }
 
     // 1. Query PaperMC API to resolve the latest build for the chosen version
@@ -51,8 +76,8 @@ export async function POST(request: NextRequest) {
 
     for (const f of files) {
       const name = f.name;
-      // Skip the backups directory and its variants to prevent deleting user backups
-      if (name === "backups" || name === "./backups" || name === "/backups") {
+      // Skip the backups and logs directory to prevent deleting user backups and historical logs
+      if (name === "backups" || name === "./backups" || name === "/backups" || name === "logs" || name === "./logs" || name === "/logs") {
         continue;
       }
       try {
@@ -94,10 +119,51 @@ export async function POST(request: NextRequest) {
     }
 
     // 5. Trigger PufferPanel native daemon re-installation script
-    const installRes = await pufferFetch("/install", { method: "POST" });
-    if (!installRes.ok) {
-      const text = await installRes.text();
-      throw new Error(`Failed to trigger installation task on daemon: ${installRes.status} — ${text}`);
+    // We only trigger /install for 'paper' since the template is hardcoded to PaperMC.
+    if (provider === "paper") {
+      const installRes = await pufferFetch("/install", { method: "POST" });
+      if (!installRes.ok) {
+        const text = await installRes.text();
+        throw new Error(`Failed to trigger installation task on daemon: ${installRes.status} — ${text}`);
+      }
+    } else {
+      // For non-paper, we must manually write the JAR file and eula/server.properties
+      let jarUrl = "";
+      if (provider === "purpur") {
+        jarUrl = `https://api.purpurmc.org/v2/purpur/${version}/latest/download`;
+      } else if (provider === "spigot") {
+        jarUrl = `https://download.getbukkit.org/spigot/spigot-${version}.jar`;
+      } else if (provider === "vanilla") {
+        jarUrl = await getVanillaUrl(version);
+      }
+
+      if (jarUrl) {
+        // Stream the JAR directly from the source to PufferPanel
+        const jarRes = await fetch(jarUrl);
+        if (!jarRes.ok) throw new Error(`Failed to fetch ${provider} jar from ${jarUrl}`);
+        
+        const jarBuffer = await jarRes.arrayBuffer();
+        const putJarRes = await pufferFetch("/file/paper.jar", {
+          method: "PUT",
+          headers: { "Content-Type": "application/java-archive" },
+          body: jarBuffer,
+        });
+        if (!putJarRes.ok) throw new Error(`Failed to upload ${provider} jar to panel: ${await putJarRes.text()}`);
+
+        // Write eula.txt
+        await pufferFetch("/file/eula.txt", {
+          method: "PUT",
+          headers: { "Content-Type": "text/plain" },
+          body: "eula=true",
+        });
+
+        // Write server.properties basic defaults (IP and port come from PufferPanel template normally, but we can't reliably resolve them without panel API. We'll let user set them or rely on PufferPanel's start args overriding them.)
+        await pufferFetch("/file/server.properties", {
+          method: "PUT",
+          headers: { "Content-Type": "text/plain" },
+          body: `server-ip=0.0.0.0\nserver-port=${dataObj.port?.value || 25565}\nmotd=${dataObj.motd?.value || "A Minecraft Server"}\n`,
+        });
+      }
     }
 
     return NextResponse.json({ success: true, version, build: latestBuild });

@@ -15,6 +15,8 @@
  *            DELETE {ROOT}/proxy/daemon/server/{ID}/file/{path}
  */
 
+import zlib from "zlib";
+
 const ROOT   = (process.env.PUFFER_URL        || "").replace(/\/$/, "");
 const ID     = process.env.PUFFER_SERVER_ID   || "";
 const CID    = process.env.PUFFER_CLIENT_ID   || "";
@@ -206,10 +208,15 @@ export async function listFiles(path = ""): Promise<unknown[]> {
   return res.json();
 }
 
-export async function readFile(path: string): Promise<string> {
+export async function readFile(path: string, unzip = false): Promise<string> {
   const clean = path.replace(/^\//, "");
   const res = await pufferFetch(`/file/${clean}`);
   if (!res.ok) throw new Error(`File read failed: ${res.status}`);
+  if (unzip) {
+    const arrayBuffer = await res.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    return zlib.gunzipSync(buffer).toString("utf-8");
+  }
   return res.text();
 }
 

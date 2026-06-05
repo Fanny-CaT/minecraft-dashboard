@@ -6,30 +6,32 @@ import { StatusData, FileEntry, PlayerEntry, Tab, Toast } from "@/lib/types";
 import { S, POPULAR_PLUGINS_META } from "@/lib/constants";
 import { Ico } from "@/components/icons";
 import { BarChart } from "@/components/BarChart";
+import { SparklineChart } from "@/components/SparklineChart";
 import { FilesTab } from "@/components/tabs/FilesTab";
 import { ChatTab } from "@/components/tabs/ChatTab";
 import { ConsoleTab } from "@/components/tabs/ConsoleTab";
+import { PanelUsersTab } from "@/components/tabs/PanelUsersTab";
+import { StatusTab } from "@/components/tabs/StatusTab";
+import { SoftwareTab } from "@/components/tabs/SoftwareTab";
+import { SettingsTab } from "@/components/tabs/SettingsTab";
+import UsersTab from "@/components/tabs/UsersTab";
 import { PluginIcon } from "@/components/PluginIcon";
 import { fmtMb, fmtFileSize, stripAnsi, CHAT_RE } from "@/lib/utils";
-import { auth } from "@/lib/firebase";
-import { onAuthStateChanged } from "firebase/auth";
-import { useRouter } from "next/navigation";
+import { auth, db } from "@/lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
+import { useAuth } from "@/components/AuthProvider";
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function Dashboard() {
   const [mounted, setMounted] = useState(false);
-  const router = useRouter();
+  const { user, role, permissions } = useAuth();
   
   useEffect(() => {
     setMounted(true);
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (!user) {
-        router.push("/login");
-      }
-    });
-    return () => unsubscribe();
-  }, [router]);
+  }, []);
+  
+
 
   // ── Toasts state ──
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -46,6 +48,7 @@ export default function Dashboard() {
   const [statusData, setStatusData] = useState<StatusData | null>(null);
   const [cpuHistory, setCpuHistory] = useState<number[]>([]);
   const [ramHistory, setRamHistory] = useState<number[]>([]);
+  const [tpsHistory, setTpsHistory] = useState<number[]>([]);
   const [uptimeStart, setUptimeStart] = useState<number | null>(null);
   const [uptimeDisplay, setUptimeDisplay] = useState("–");
   const [lastUpdate, setLastUpdate] = useState("–");
@@ -113,6 +116,7 @@ export default function Dashboard() {
   const [ramBoostOffset, setRamBoostOffset] = useState(0);
   const [boostingRam, setBoostingRam] = useState(false);
   const [selectedVersion, setSelectedVersion] = useState("1.21.1");
+  const [selectedProvider, setSelectedProvider] = useState("paper");
   const [reinstallingVersion, setReinstallingVersion] = useState(false);
   const [confirmReinstallOpen, setConfirmReinstallOpen] = useState(false);
   const [jvmArgsStart, setJvmArgsStart] = useState("");
@@ -134,7 +138,7 @@ export default function Dashboard() {
   const [configSearch, setConfigSearch] = useState("");
 
   // ── Users ──
-  const [userList, setUserList] = useState<"ops" | "banned-players" | "whitelist" | "banned-ips">("ops");
+  const [userList, setUserList] = useState<"ops" | "banned-players" | "whitelist" | "banned-ips" | "all-players">("all-players");
   const [players, setPlayers] = useState<PlayerEntry[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [userError, setUserError] = useState("");
@@ -164,6 +168,9 @@ export default function Dashboard() {
   const [logsContent, setLogsContent] = useState("");
   const [loadingLogs, setLoadingLogs] = useState(false);
   const [logsSearch, setLogsSearch] = useState("");
+  const [logFiles, setLogFiles] = useState<{ name: string; size: number; modifyTime: number }[]>([]);
+  const [selectedLogFile, setSelectedLogFile] = useState("logs/latest.log");
+  const [loadingLogFiles, setLoadingLogFiles] = useState(false);
 
   // ── Network bindings ──
   const [bindIp, setBindIp] = useState("0.0.0.0");
@@ -188,8 +195,10 @@ export default function Dashboard() {
 
       const cpuPct = Math.min(data.cpu, 100);
       const ramPct = data.maxMemory > 0 ? (data.memory / data.maxMemory) * 100 : 0;
-      setCpuHistory((h) => [...h.slice(-120), cpuPct]);
-      setRamHistory((h) => [...h.slice(-120), ramPct]);
+      const tpsVal = data.tps ?? 20;
+      setCpuHistory((h) => [...h.slice(-119), cpuPct]);
+      setRamHistory((h) => [...h.slice(-119), ramPct]);
+      setTpsHistory((h) => [...h.slice(-119), tpsVal]);
 
       if (data.running && !uptimeStart) setUptimeStart(Date.now());
       if (!data.running) setUptimeStart(null);
@@ -863,6 +872,11 @@ export default function Dashboard() {
   };
 
   const triggerVersionChange = async () => {
+    // Guard: never reinstall the version already running
+    if (selectedVersion === statusData?.mcVersion) {
+      showToast("Server is already running this version.", "info");
+      return;
+    }
     setConfirmReinstallOpen(false);
     setReinstallingVersion(true);
     showToast(`Initiating server reinstall to Minecraft ${selectedVersion}...`, "info");
@@ -871,7 +885,7 @@ export default function Dashboard() {
       const res = await fetch("/api/minecraft/reinstall", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ version: selectedVersion }),
+        body: JSON.stringify({ version: selectedVersion, provider: selectedProvider }),
       });
       
       if (!res.ok) {
@@ -1117,15 +1131,36 @@ export default function Dashboard() {
   // Logs File Viewer
   // ─────────────────────────────────────────────────────────────────────────────
 
-  const loadLogsContent = async () => {
-    setLoadingLogs(true);
+  const loadLogFiles = async () => {
+    setLoadingLogFiles(true);
     try {
-      const res = await fetch("/api/files?path=logs/latest.log&read=1", { cache: "no-store" });
+      const res = await fetch("/api/files?path=logs", { cache: "no-store" });
+      if (res.ok) {
+        const files: { name: string; size: number; isFile: boolean; modifyTime: number }[] = await res.json();
+        const sorted = files
+          .filter((f) => f.isFile)
+          .sort((a, b) => (b.modifyTime || 0) - (a.modifyTime || 0));
+        setLogFiles(sorted);
+      }
+    } catch (err: any) {
+      console.error("Failed to list log files:", err.message);
+    } finally {
+      setLoadingLogFiles(false);
+    }
+  };
+
+  const loadLogsContent = async (path = selectedLogFile) => {
+    setLoadingLogs(true);
+    setLogsContent("");
+    try {
+      const isGz = path.endsWith(".gz");
+      const url = `/api/files?path=${encodeURIComponent(path)}&read=1${isGz ? "&unzip=1" : ""}`;
+      const res = await fetch(url, { cache: "no-store" });
       if (res.ok) {
         const text = await res.text();
         setLogsContent(text);
       } else {
-        setLogsContent("[Failed to read logs/latest.log — log file is empty or does not exist]");
+        setLogsContent(`[Failed to read ${path} — file is empty or does not exist]`);
       }
     } catch (err: any) {
       setLogsContent(`[Error reading logs: ${err.message}]`);
@@ -1223,7 +1258,8 @@ export default function Dashboard() {
       loadBackups();
     }
     if (activeTab === "logs") {
-      loadLogsContent();
+      loadLogFiles();
+      loadLogsContent("logs/latest.log");
     }
     if (activeTab === "networking") {
       loadNetworkSettings();
@@ -1259,16 +1295,18 @@ export default function Dashboard() {
   // ─────────────────────────────────────────────────────────────────────────────
 
   const navItems: { id: Tab; label: string; icon: React.ReactNode }[] = [
-    { id: "status", label: "Status", icon: <Ico.Status /> },
+    { id: "status", label: "Dashboard", icon: <Ico.Status /> },
     { id: "console", label: "Console", icon: <Ico.Console /> },
-    { id: "chat", label: "Chat", icon: <Ico.Chat /> },
-    { id: "files", label: "Files", icon: <Ico.Files /> },
-    { id: "plugins", label: "Plugins", icon: <Ico.Plugins /> },
-    { id: "config", label: "Config", icon: <Ico.Config /> },
     { id: "users", label: "Players", icon: <Ico.Users /> },
+    { id: "files", label: "Files", icon: <Ico.Files /> },
+    { id: "software", label: "Software", icon: <Ico.Config /> },
+    { id: "plugins", label: "Plugins", icon: <Ico.Plugins /> },
+    { id: "settings", label: "Settings", icon: <Ico.Config /> },
+    { id: "config", label: "Files: Config", icon: <Ico.Config /> },
     { id: "networking", label: "Network", icon: <Ico.Networking /> },
     { id: "logs", label: "Logs", icon: <Ico.Logs /> },
     { id: "backups", label: "Backups", icon: <Ico.Backups /> },
+    ...(role === "admin" ? [{ id: "panel-users" as Tab, label: "Panel Access", icon: <Ico.Users /> }] : []),
   ];
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -2139,7 +2177,7 @@ export default function Dashboard() {
                           Server Instance
                         </span>
                         <span style={{ fontSize: "10px", color: S.muted, fontFamily: "monospace", background: "rgba(255,255,255,0.05)", padding: "1px 6px", borderRadius: "3px" }}>
-                          ID: {statusData?.serverId || "946f16b4"}
+                          {statusData?.serverId ? `ID: ${statusData.serverId}` : "ID: ········"}
                         </span>
                       </div>
                       <h1 style={{ fontSize: "22px", fontWeight: 700, color: S.white, letterSpacing: "-0.5px", margin: 0 }}>
@@ -2484,248 +2522,126 @@ export default function Dashboard() {
 
                   </div>
 
-                  {/* SPECIFICATIONS & VERSION CONTROL SPLIT */}
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))", gap: "20px" }}>
+                  {/* PERFORMANCE HISTORY — 10-minute sparklines */}
+                  {(() => {
+                    const currentTps = tpsHistory.length ? tpsHistory[tpsHistory.length - 1] : 20;
+                    const currentCpu = cpuHistory.length ? cpuHistory[cpuHistory.length - 1] : 0;
+                    const currentRam = ramHistory.length ? ramHistory[ramHistory.length - 1] : 0;
+                    const tpsColor = !isOnline ? S.muted : currentTps < 15 ? S.red : currentTps < 19 ? S.orange : "#66cc66";
+                    const tpsLabel = !isOnline ? "OFFLINE" : currentTps < 15 ? "CRITICAL" : currentTps < 19 ? "DEGRADED" : "HEALTHY";
 
-                    {/* VERSION MANAGER CARD */}
-                    <div style={{
-                      backgroundColor: "#1c1c1c",
-                      border: `1px solid ${S.border}`,
-                      padding: "20px",
-                      borderRadius: "4px",
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "16px"
-                    }}>
-                      <div>
-                        <h2 style={{ fontSize: "14px", fontWeight: "bold", color: S.white, margin: 0 }}>Version Manager</h2>
-                        <p style={{ fontSize: "11px", color: S.muted, margin: "2px 0 0" }}>Update or install server software</p>
+                    const sparkCard = (
+                      title: string,
+                      value: string,
+                      sub: string,
+                      valueColor: string,
+                      data: number[],
+                      sparkColor: string,
+                      gradId: string,
+                      max: number,
+                      badge?: { label: string; color: string },
+                    ) => (
+                      <div style={{ backgroundColor: "#161616", border: `1px solid ${S.border}`, borderRadius: "3px", padding: "14px 16px", display: "flex", flexDirection: "column", gap: "10px" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <div>
+                            <div style={{ fontSize: "10px", color: S.muted, textTransform: "uppercase", letterSpacing: "0.8px" }}>{title}</div>
+                            <div style={{ fontSize: "22px", fontWeight: 700, color: valueColor, fontFamily: "monospace", marginTop: "2px" }}>{value}</div>
+                            <div style={{ fontSize: "10px", color: S.muted, marginTop: "1px" }}>{sub}</div>
+                          </div>
+                          {badge && (
+                            <div style={{ fontSize: "9px", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "1px", color: badge.color, border: `1px solid ${badge.color}`, borderRadius: "2px", padding: "2px 7px", opacity: 0.85 }}>
+                              {badge.label}
+                            </div>
+                          )}
+                        </div>
+                        <div style={{ height: "52px", borderRadius: "2px", overflow: "hidden" }}>
+                          <SparklineChart data={data} color={sparkColor} gradientId={gradId} max={max} height={52} />
+                        </div>
                       </div>
+                    );
 
-                      <div style={{ display: "flex", gap: "12px", alignItems: "flex-end", flexWrap: "wrap" }}>
-                        <div style={{ flex: 1, minWidth: "200px" }}>
-                          <label style={{ display: "block", fontSize: "11px", color: S.muted, marginBottom: "6px" }}>Select Software Version</label>
-                          <select
-                            value={selectedVersion}
-                            onChange={(e) => setSelectedVersion(e.target.value)}
-                            style={{
-                              width: "100%",
-                              backgroundColor: S.input,
-                              border: `1px solid ${S.inputBdr}`,
-                              color: S.white,
-                              padding: "10px",
-                              fontSize: "12px",
-                              outline: "none",
-                              borderRadius: "3px"
-                            }}
-                          >
-                            <option value="1.21.11">1.21.11 {statusData?.mcVersion === "1.21.11" ? "(Current Version)" : "(Latest Release)"}</option>
-                            <option value="1.21.4">1.21.4 {statusData?.mcVersion === "1.21.4" ? "(Current Version)" : "(Stable Release)"}</option>
-                            <option value="1.21.1">1.21.1 {statusData?.mcVersion === "1.21.1" ? "(Current Version)" : ""}</option>
-                            <option value="1.20.4">1.20.4 {statusData?.mcVersion === "1.20.4" ? "(Current Version)" : "(Recommended Stable)"}</option>
-                            <option value="1.20.1">1.20.1 {statusData?.mcVersion === "1.20.1" ? "(Current Version)" : "(Popular Modded/Plugin)"}</option>
-                            <option value="1.19.4">1.19.4 {statusData?.mcVersion === "1.19.4" ? "(Current Version)" : ""}</option>
-                            <option value="1.18.2">1.18.2 {statusData?.mcVersion === "1.18.2" ? "(Current Version)" : ""}</option>
-                            <option value="1.16.5">1.16.5 {statusData?.mcVersion === "1.16.5" ? "(Current Version)" : "(Classic Legacy)"}</option>
-                          </select>
-                        </div>
-
-                        <button
-                          onClick={() => setConfirmReinstallOpen(true)}
-                          disabled={reinstallingVersion}
-                          style={{
-                            padding: "10px 16px",
-                            backgroundColor: reinstallingVersion ? "rgba(255,255,255,0.02)" : S.red,
-                            border: `1px solid ${reinstallingVersion ? S.border : S.red}`,
-                            color: S.white,
-                            fontWeight: "bold",
-                            fontSize: "12px",
-                            borderRadius: "3px",
-                            cursor: reinstallingVersion ? "not-allowed" : "pointer"
-                          }}
-                          className="button-hover"
-                        >
-                          {reinstallingVersion ? "Reinstalling..." : "Install & Reset"}
-                        </button>
-                      </div>
-
-                      <div
-                        style={{
-                          backgroundColor: "rgba(204, 51, 51, 0.05)",
-                          border: "1px dashed rgba(204, 51, 51, 0.25)",
-                          padding: "12px",
-                          borderRadius: "3px",
-                          fontSize: "11px",
-                          color: "#ff6666",
-                          display: "flex",
-                          gap: "8px",
-                          alignItems: "flex-start",
-                          lineHeight: "1.5"
-                        }}
-                      >
-                        <span style={{ fontWeight: "bold" }}>WARNING:</span>
-                        <span>
-                          Installing a new version completely wipes out your current server files, plugins, and worlds to install a fresh JAR. Only archives in the <strong>backups/</strong> folder are preserved. Ensure you have backed up your server first.
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* SERVER SPECIFICATIONS & METADATA */}
-                    <div style={{
-                      backgroundColor: "#1c1c1c",
-                      border: `1px solid ${S.border}`,
-                      padding: "20px",
-                      borderRadius: "4px",
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "16px"
-                    }}>
-                      <div>
-                        <h2 style={{ fontSize: "14px", fontWeight: "bold", color: S.white, margin: 0 }}>Server Specifications</h2>
-                        <p style={{ fontSize: "11px", color: S.muted, margin: "2px 0 0" }}>Host environment and network parameters</p>
-                      </div>
-
-                      <div style={{
-                        display: "grid",
-                        gridTemplateColumns: "repeat(2, 1fr)",
-                        gap: "12px 24px",
-                        fontSize: "12px",
-                        lineHeight: "1.6"
-                      }}>
-                        <div>
-                          <span style={{ color: S.muted, display: "block", fontSize: "10.5px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Minecraft Software</span>
-                          <span style={{ color: S.white, fontWeight: 500 }}>{statusData?.mcVersion || "1.21.1"} (Paper)</span>
-                        </div>
-                        <div>
-                          <span style={{ color: S.muted, display: "block", fontSize: "10.5px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Java Environment</span>
-                          <span style={{ color: S.white, fontWeight: 500 }}>Java {statusData?.javaVersion || "21"} (64-Bit)</span>
-                        </div>
-                        <div>
-                          <span style={{ color: S.muted, display: "block", fontSize: "10.5px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Allocated Memory</span>
-                          <span style={{ color: S.white, fontWeight: 500 }}>{statusData?.allocatedMemory || 12288} MB</span>
-                        </div>
-                        <div>
-                          <span style={{ color: S.muted, display: "block", fontSize: "10.5px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Network Interface</span>
-                          <span style={{ color: S.white, fontWeight: 500 }}>{statusData?.bindIp || "0.0.0.0"}:{statusData?.port || 25565}</span>
-                        </div>
-
-                        <div style={{ gridColumn: "1 / -1" }}>
-                          <span style={{ color: S.muted, display: "block", fontSize: "10.5px", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "4px" }}>Message of the Day (MOTD)</span>
-                          <div style={{
-                            color: S.orange,
-                            fontFamily: "monospace",
-                            fontSize: "11px",
-                            backgroundColor: "#161616",
-                            padding: "8px 12px",
-                            borderRadius: "3px",
-                            border: `1px solid ${S.border}`
-                          }}>
-                            {statusData?.motd?.replace(/\\u00A7[0-9a-fk-or]/g, "") || "🐾 Welcome to MeowTopia! 🐾 Have a purr-fect time! 🐱"}
+                    return (
+                      <div style={{ backgroundColor: "#1c1c1c", border: `1px solid ${S.border}`, borderRadius: "4px", padding: "20px" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+                          <div>
+                            <h2 style={{ fontSize: "14px", fontWeight: "bold", color: S.white, margin: 0 }}>Performance History</h2>
+                            <p style={{ fontSize: "11px", color: S.muted, margin: "2px 0 0" }}>Live metrics — last {Math.round((tpsHistory.length * 5) / 60)} min of data ({tpsHistory.length} samples @ 5s)</p>
+                          </div>
+                          <div style={{ fontSize: "10px", color: S.muted, textAlign: "right" }}>
+                            <div>Polling every 5s</div>
+                            <div style={{ color: isOnline ? S.green : S.red, fontWeight: "bold", marginTop: "2px" }}>{isOnline ? "● LIVE" : "○ OFFLINE"}</div>
                           </div>
                         </div>
-
-                        <div style={{ gridColumn: "1 / -1", borderTop: `1px solid ${S.border}`, paddingTop: "12px", marginTop: "4px" }}>
-                          <span style={{ color: S.muted, display: "block", fontSize: "10.5px", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "6px" }}>Quick Connect Info</span>
-                          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "#161616", padding: "8px 12px", borderRadius: "3px", border: `1px solid ${S.border}` }}>
-                              <span style={{ fontFamily: "monospace", fontSize: "11px", color: S.white }}>
-                                IP: play.meowtopia.mooo.com:{statusData?.port || 25565}
-                              </span>
-                              <button
-                                onClick={() => {
-                                  navigator.clipboard.writeText(`play.meowtopia.mooo.com:${statusData?.port || 25565}`);
-                                  showToast("Game connection IP address copied to clipboard.", "success");
-                                }}
-                                style={{
-                                  backgroundColor: "rgba(78, 201, 225, 0.08)",
-                                  border: `1px solid rgba(78, 201, 225, 0.25)`,
-                                  color: S.cyan,
-                                  padding: "2px 8px",
-                                  fontSize: "10px",
-                                  fontWeight: "bold",
-                                  cursor: "pointer",
-                                  borderRadius: "3px"
-                                }}
-                                className="button-hover"
-                              >
-                                Copy IP
-                              </button>
-                            </div>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "#161616", padding: "8px 12px", borderRadius: "3px", border: `1px solid ${S.border}` }}>
-                              <span style={{ fontFamily: "monospace", fontSize: "11px", color: S.white, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "80%" }}>
-                                SFTP: sftp://{statusData?.sftpUsername || "agreeable_guy-946f16b4"}@{statusData?.sftpHost || "play.meowtopia.mooo.com"}:{statusData?.sftpPort || 5657}
-                              </span>
-                              <button
-                                onClick={() => {
-                                  navigator.clipboard.writeText(
-                                    `sftp://${statusData?.sftpUsername || "agreeable_guy-946f16b4"}@${
-                                      statusData?.sftpHost || "play.meowtopia.mooo.com"
-                                    }:${statusData?.sftpPort || 5657}`
-                                  );
-                                  showToast("SFTP connection URI copied to clipboard.", "success");
-                                }}
-                                style={{
-                                  backgroundColor: "rgba(78, 201, 225, 0.08)",
-                                  border: `1px solid rgba(78, 201, 225, 0.25)`,
-                                  color: S.cyan,
-                                  padding: "2px 8px",
-                                  fontSize: "10px",
-                                  fontWeight: "bold",
-                                  cursor: "pointer",
-                                  borderRadius: "3px"
-                                }}
-                                className="button-hover"
-                              >
-                                Copy SFTP
-                              </button>
-                            </div>
-                          </div>
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "12px" }}>
+                          {sparkCard(
+                            "Ticks Per Second (TPS)",
+                            !isOnline ? "–" : currentTps.toFixed(1),
+                            "Target: 20.0 • Below 15 = unplayable",
+                            tpsColor,
+                            tpsHistory,
+                            tpsColor,
+                            "spark-tps",
+                            20,
+                            isOnline ? { label: tpsLabel, color: tpsColor } : undefined,
+                          )}
+                          {sparkCard(
+                            "CPU Usage",
+                            !isOnline ? "–" : `${currentCpu.toFixed(1)}%`,
+                            `${statusData?.maxCpus ? statusData.maxCpus + " cores allocated" : "No core limit"}`,
+                            currentCpu > 90 ? S.red : currentCpu > 70 ? S.orange : S.orange,
+                            cpuHistory,
+                            S.orange,
+                            "spark-cpu",
+                            100,
+                          )}
+                          {sparkCard(
+                            "Memory Usage",
+                            !isOnline ? "–" : `${currentRam.toFixed(1)}%`,
+                            `${Math.max(0, Math.round((statusData?.memory || 0) / 1024 / 1024))} MB / ${Math.round((statusData?.maxMemory || 0) / 1024 / 1024)} MB`,
+                            currentRam > 90 ? S.red : S.cyan,
+                            ramHistory,
+                            S.cyan,
+                            "spark-ram",
+                            100,
+                          )}
                         </div>
-
                       </div>
-                    </div>
-
-                  </div>
-
-                  {/* STARTUP VARIABLES CARD */}
-                  <div style={{
-                    backgroundColor: "#1c1c1c",
-                    border: `1px solid ${S.border}`,
-                    padding: "20px",
-                    borderRadius: "4px",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "16px"
-                  }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                      <div>
-                        <h2 style={{ fontSize: "14px", fontWeight: "bold", color: S.white, margin: 0 }}>Startup Configuration</h2>
-                        <p style={{ fontSize: "11px", color: S.muted, margin: "2px 0 0" }}>Configure JVM parameters and server JAR targets</p>
-                      </div>
-                      <div style={{ fontSize: "11px", display: "flex", alignItems: "center", gap: "6px" }}>
-                        {savingStartup ? (
-                          <span style={{ color: S.cyan, display: "flex", alignItems: "center", gap: "4px" }}>
-                            <span className="spinner-mini" style={{ width: "10px", height: "10px" }} /> Saving...
-                          </span>
-                        ) : startupSavedTime ? (
-                          <span style={{ color: S.green }}>
-                            ✓ Saved at {startupSavedTime}
-                          </span>
-                        ) : (
-                          <span style={{ color: S.muted }}>
-                            ✓ Saved
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {renderStartupVariablesForm(true)}
-                  </div>
+                    );
+                  })()}
 
                 </div>
               </div>
             );
           })()}
+
+          {/* ══ SOFTWARE ══ */}
+          {activeTab === "software" && (
+            <div style={{ display: "flex", flexDirection: "column", flex: 1, padding: "20px" }}>
+              <SoftwareTab
+                currentVersion={statusData?.mcVersion}
+                selectedVersion={selectedVersion}
+                setSelectedVersion={setSelectedVersion}
+                reinstalling={reinstallingVersion}
+                onInstallClick={(provider, version) => {
+                  setSelectedVersion(version);
+                  setSelectedProvider(provider);
+                  setConfirmReinstallOpen(true);
+                }}
+              />
+            </div>
+          )}
+
+          {/* ══ SETTINGS ══ */}
+          {activeTab === "settings" && (
+            <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
+              <SettingsTab
+                statusData={statusData}
+                showToast={showToast}
+                startupForm={renderStartupVariablesForm(true)}
+              />
+            </div>
+          )}
+
 
           {/* ══ CONSOLE ══ */}
           {activeTab === "console" && (
@@ -2772,7 +2688,7 @@ export default function Dashboard() {
               setFileContent={setFileContent}
               OutlineBtn={OutlineBtn}
               selectedFile={selectedFile}
-                            saveFileContent={saveFileContent}
+              saveFileContent={saveFileContent}
               savingFile={savingFile}
               setSelectedFile={setSelectedFile}
               uploadInputRef={uploadInputRef}
@@ -3704,963 +3620,18 @@ export default function Dashboard() {
 
           {/* ══ USERS ══ */}
           {activeTab === "users" && (
-            <div style={{ display: "flex", flexDirection: "column", flex: 1, height: "100%" }}>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: "13px 20px 11px",
-                  borderBottom: `1px solid ${S.border}`,
-                  flexShrink: 0,
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                  <Ico.Users />
-                  <span style={{ fontSize: "18px", fontWeight: 300 }}>Players & Permissions</span>
-                </div>
-                <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-                  <div
-                    style={{
-                      display: "flex",
-                      border: `1px solid ${S.border}`,
-                      borderRadius: "3px",
-                      overflow: "hidden",
-                    }}
-                  >
-                    {(["ops", "whitelist", "banned-players", "banned-ips"] as const).map((l) => (
-                      <button
-                        key={l}
-                        onClick={() => setUserList(l)}
-                        style={{
-                          padding: "4px 10px",
-                          backgroundColor: userList === l ? S.orange : "transparent",
-                          color: S.white,
-                          border: "none",
-                          fontSize: "11px",
-                          cursor: "pointer",
-                          fontWeight: "bold",
-                        }}
-                      >
-                        {l === "banned-players" ? "BANNED PLAYERS" : l === "banned-ips" ? "BANNED IPS" : l.toUpperCase()}
-                      </button>
-                    ))}
-                  </div>
-                  <OutlineBtn
-                    label="Refresh"
-                    onClick={() => loadUsers(userList)}
-                    disabled={loadingUsers}
-                  />
-                </div>
-              </div>
-
-              {userError && (
-                <div
-                  style={{
-                    padding: "7px 18px",
-                    backgroundColor: "#2a1111",
-                    borderBottom: `1px solid #553333`,
-                    color: "#cc6666",
-                    fontSize: "12px",
-                  }}
-                >
-                  {userError}
-                </div>
-              )}
-
-              <div style={{ flex: 1, padding: "18px", overflow: "auto", display: "flex", flexDirection: "column", gap: "18px" }}>
-                {/* Whitelist Switch Card & Action Forms Grid */}
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "16px" }}>
-                  {/* Whitelist Controls */}
-                  <div
-                    style={{
-                      border: `1px solid ${S.border}`,
-                      backgroundColor: "#242424",
-                      padding: "16px",
-                      borderRadius: "3px",
-                      display: "flex",
-                      flexDirection: "column",
-                      justifyContent: "space-between",
-                    }}
-                  >
-                    <div>
-                      <div style={{ fontSize: "13px", fontWeight: 600, color: S.white, marginBottom: "4px" }}>
-                        Global Whitelist Control
-                      </div>
-                      <div style={{ fontSize: "11px", color: S.muted, marginBottom: "12px" }}>
-                        Toggle enforce whitelist on this server.
-                      </div>
-                    </div>
-                    <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-                      <button
-                        onClick={() => handleAction("whitelist on")}
-                        className="button-hover"
-                        style={{
-                          backgroundColor: "#2e2e2e",
-                          border: `1px solid ${S.border}`,
-                          color: S.cyan,
-                          padding: "5px 10px",
-                          fontSize: "11px",
-                          cursor: "pointer",
-                          borderRadius: "3px",
-                          fontWeight: "bold",
-                        }}
-                      >
-                        Enable
-                      </button>
-                      <button
-                        onClick={() => handleAction("whitelist off")}
-                        className="button-hover"
-                        style={{
-                          backgroundColor: "#2e2e2e",
-                          border: `1px solid ${S.border}`,
-                          color: "#ff4d4d",
-                          padding: "5px 10px",
-                          fontSize: "11px",
-                          cursor: "pointer",
-                          borderRadius: "3px",
-                          fontWeight: "bold",
-                        }}
-                      >
-                        Disable
-                      </button>
-                      <button
-                        onClick={() => handleAction("whitelist reload")}
-                        className="button-hover"
-                        style={{
-                          backgroundColor: "#2e2e2e",
-                          border: `1px solid ${S.border}`,
-                          color: S.orange,
-                          padding: "5px 10px",
-                          fontSize: "11px",
-                          cursor: "pointer",
-                          borderRadius: "3px",
-                          fontWeight: "bold",
-                        }}
-                      >
-                        Reload
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Whitelist Add */}
-                  <div
-                    style={{
-                      border: `1px solid ${S.border}`,
-                      backgroundColor: "#242424",
-                      padding: "16px",
-                      borderRadius: "3px",
-                    }}
-                  >
-                    <div style={{ fontSize: "13px", fontWeight: 600, color: S.white, marginBottom: "4px" }}>
-                      Add to Whitelist
-                    </div>
-                    <div style={{ fontSize: "11px", color: S.muted, marginBottom: "12px" }}>
-                      Allow a player to join when whitelist is enabled.
-                    </div>
-                    <div style={{ display: "flex", gap: "8px" }}>
-                      <input
-                        type="text"
-                        placeholder="Player username"
-                        value={whitelistInput}
-                        onChange={(e) => setWhitelistInput(e.target.value)}
-                        style={{
-                          flex: 1,
-                          backgroundColor: S.input,
-                          border: `1px solid ${S.inputBdr}`,
-                          color: S.white,
-                          padding: "5px 8px",
-                          fontSize: "12px",
-                          outline: "none",
-                        }}
-                      />
-                      <button
-                        onClick={() => {
-                          if (!whitelistInput.trim()) return;
-                          handleAction(`whitelist add ${whitelistInput.trim()}`);
-                          setWhitelistInput("");
-                        }}
-                        className="button-hover"
-                        style={{
-                          backgroundColor: S.cyan,
-                          border: "none",
-                          color: "#1a1a1a",
-                          padding: "5px 12px",
-                          fontSize: "11px",
-                          cursor: "pointer",
-                          borderRadius: "2px",
-                          fontWeight: "bold",
-                        }}
-                      >
-                        Add
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* OP Player */}
-                  <div
-                    style={{
-                      border: `1px solid ${S.border}`,
-                      backgroundColor: "#242424",
-                      padding: "16px",
-                      borderRadius: "3px",
-                    }}
-                  >
-                    <div style={{ fontSize: "13px", fontWeight: 600, color: S.white, marginBottom: "4px" }}>
-                      Promote to Operator (OP)
-                    </div>
-                    <div style={{ fontSize: "11px", color: S.muted, marginBottom: "12px" }}>
-                      Grant full admin/moderator permissions.
-                    </div>
-                    <div style={{ display: "flex", gap: "8px" }}>
-                      <input
-                        type="text"
-                        placeholder="Player username"
-                        value={opInput}
-                        onChange={(e) => setOpInput(e.target.value)}
-                        style={{
-                          flex: 1,
-                          backgroundColor: S.input,
-                          border: `1px solid ${S.inputBdr}`,
-                          color: S.white,
-                          padding: "5px 8px",
-                          fontSize: "12px",
-                          outline: "none",
-                        }}
-                      />
-                      <button
-                        onClick={() => {
-                          if (!opInput.trim()) return;
-                          handleAction(`op ${opInput.trim()}`);
-                          setOpInput("");
-                        }}
-                        className="button-hover"
-                        style={{
-                          backgroundColor: S.cyan,
-                          border: "none",
-                          color: "#1a1a1a",
-                          padding: "5px 12px",
-                          fontSize: "11px",
-                          cursor: "pointer",
-                          borderRadius: "2px",
-                          fontWeight: "bold",
-                        }}
-                      >
-                        OP
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Ban Player */}
-                  <div
-                    style={{
-                      border: `1px solid ${S.border}`,
-                      backgroundColor: "#242424",
-                      padding: "16px",
-                      borderRadius: "3px",
-                    }}
-                  >
-                    <div style={{ fontSize: "13px", fontWeight: 600, color: S.white, marginBottom: "4px" }}>
-                      Ban Player
-                    </div>
-                    <div style={{ fontSize: "11px", color: S.muted, marginBottom: "12px" }}>
-                      Prevent player from connecting to the server.
-                    </div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                      <input
-                        type="text"
-                        placeholder="Player username"
-                        value={banPlayerInput}
-                        onChange={(e) => setBanPlayerInput(e.target.value)}
-                        style={{
-                          backgroundColor: S.input,
-                          border: `1px solid ${S.inputBdr}`,
-                          color: S.white,
-                          padding: "5px 8px",
-                          fontSize: "12px",
-                          outline: "none",
-                        }}
-                      />
-                      <div style={{ display: "flex", gap: "8px" }}>
-                        <input
-                          type="text"
-                          placeholder="Reason (optional)"
-                          value={banReasonInput}
-                          onChange={(e) => setBanReasonInput(e.target.value)}
-                          style={{
-                            flex: 1,
-                            backgroundColor: S.input,
-                            border: `1px solid ${S.inputBdr}`,
-                            color: S.white,
-                            padding: "5px 8px",
-                            fontSize: "12px",
-                            outline: "none",
-                          }}
-                        />
-                        <button
-                          onClick={() => {
-                            if (!banPlayerInput.trim()) return;
-                            const cmd = banReasonInput.trim()
-                              ? `ban ${banPlayerInput.trim()} ${banReasonInput.trim()}`
-                              : `ban ${banPlayerInput.trim()}`;
-                            handleAction(cmd);
-                            setBanPlayerInput("");
-                            setBanReasonInput("");
-                          }}
-                          className="button-hover"
-                          style={{
-                            backgroundColor: "#ff4d4d",
-                            border: "none",
-                            color: S.white,
-                            padding: "5px 12px",
-                            fontSize: "11px",
-                            cursor: "pointer",
-                            borderRadius: "2px",
-                            fontWeight: "bold",
-                          }}
-                        >
-                          Ban
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Ban IP */}
-                  <div
-                    style={{
-                      border: `1px solid ${S.border}`,
-                      backgroundColor: "#242424",
-                      padding: "16px",
-                      borderRadius: "3px",
-                    }}
-                  >
-                    <div style={{ fontSize: "13px", fontWeight: 600, color: S.white, marginBottom: "4px" }}>
-                      Ban IP Address
-                    </div>
-                    <div style={{ fontSize: "11px", color: S.muted, marginBottom: "12px" }}>
-                      Ban a specific IP address from accessing the server.
-                    </div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                      <input
-                        type="text"
-                        placeholder="IP Address (e.g. 192.168.1.1)"
-                        value={banIpInput}
-                        onChange={(e) => setBanIpInput(e.target.value)}
-                        style={{
-                          backgroundColor: S.input,
-                          border: `1px solid ${S.inputBdr}`,
-                          color: S.white,
-                          padding: "5px 8px",
-                          fontSize: "12px",
-                          outline: "none",
-                        }}
-                      />
-                      <div style={{ display: "flex", gap: "8px" }}>
-                        <input
-                          type="text"
-                          placeholder="Reason (optional)"
-                          value={banIpReasonInput}
-                          onChange={(e) => setBanIpReasonInput(e.target.value)}
-                          style={{
-                            flex: 1,
-                            backgroundColor: S.input,
-                            border: `1px solid ${S.inputBdr}`,
-                            color: S.white,
-                            padding: "5px 8px",
-                            fontSize: "12px",
-                            outline: "none",
-                          }}
-                        />
-                        <button
-                          onClick={() => {
-                            if (!banIpInput.trim()) return;
-                            const cmd = banIpReasonInput.trim()
-                              ? `ban-ip ${banIpInput.trim()} ${banIpReasonInput.trim()}`
-                              : `ban-ip ${banIpInput.trim()}`;
-                            handleAction(cmd);
-                            setBanIpInput("");
-                            setBanIpReasonInput("");
-                          }}
-                          className="button-hover"
-                          style={{
-                            backgroundColor: "#ff4d4d",
-                            border: "none",
-                            color: S.white,
-                            padding: "5px 12px",
-                            fontSize: "11px",
-                            cursor: "pointer",
-                            borderRadius: "2px",
-                            fontWeight: "bold",
-                          }}
-                        >
-                          Ban IP
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Whitelist Remove */}
-                  <div
-                    style={{
-                      border: `1px solid ${S.border}`,
-                      backgroundColor: "#242424",
-                      padding: "16px",
-                      borderRadius: "3px",
-                    }}
-                  >
-                    <div style={{ fontSize: "13px", fontWeight: 600, color: S.white, marginBottom: "4px" }}>
-                      Remove from Whitelist
-                    </div>
-                    <div style={{ fontSize: "11px", color: S.muted, marginBottom: "12px" }}>
-                      Remove a player's access when whitelist is enabled.
-                    </div>
-                    <div style={{ display: "flex", gap: "8px" }}>
-                      <input
-                        type="text"
-                        placeholder="Player username"
-                        value={whitelistRemoveInput}
-                        onChange={(e) => setWhitelistRemoveInput(e.target.value)}
-                        style={{
-                          flex: 1,
-                          backgroundColor: S.input,
-                          border: `1px solid ${S.inputBdr}`,
-                          color: S.white,
-                          padding: "5px 8px",
-                          fontSize: "12px",
-                          outline: "none",
-                        }}
-                      />
-                      <button
-                        onClick={() => {
-                          if (!whitelistRemoveInput.trim()) return;
-                          handleAction(`whitelist remove ${whitelistRemoveInput.trim()}`);
-                          setWhitelistRemoveInput("");
-                        }}
-                        className="button-hover"
-                        style={{
-                          backgroundColor: S.orange,
-                          border: "none",
-                          color: S.white,
-                          padding: "5px 12px",
-                          fontSize: "11px",
-                          cursor: "pointer",
-                          borderRadius: "2px",
-                          fontWeight: "bold",
-                        }}
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* De-OP Player */}
-                  <div
-                    style={{
-                      border: `1px solid ${S.border}`,
-                      backgroundColor: "#242424",
-                      padding: "16px",
-                      borderRadius: "3px",
-                    }}
-                  >
-                    <div style={{ fontSize: "13px", fontWeight: 600, color: S.white, marginBottom: "4px" }}>
-                      Demote Operator (De-OP)
-                    </div>
-                    <div style={{ fontSize: "11px", color: S.muted, marginBottom: "12px" }}>
-                      Revoke full admin/moderator permissions.
-                    </div>
-                    <div style={{ display: "flex", gap: "8px" }}>
-                      <input
-                        type="text"
-                        placeholder="Player username"
-                        value={deopInput}
-                        onChange={(e) => setDeopInput(e.target.value)}
-                        style={{
-                          flex: 1,
-                          backgroundColor: S.input,
-                          border: `1px solid ${S.inputBdr}`,
-                          color: S.white,
-                          padding: "5px 8px",
-                          fontSize: "12px",
-                          outline: "none",
-                        }}
-                      />
-                      <button
-                        onClick={() => {
-                          if (!deopInput.trim()) return;
-                          handleAction(`deop ${deopInput.trim()}`);
-                          setDeopInput("");
-                        }}
-                        className="button-hover"
-                        style={{
-                          backgroundColor: S.orange,
-                          border: "none",
-                          color: S.white,
-                          padding: "5px 12px",
-                          fontSize: "11px",
-                          cursor: "pointer",
-                          borderRadius: "2px",
-                          fontWeight: "bold",
-                        }}
-                      >
-                        De-OP
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Kick Player */}
-                  <div
-                    style={{
-                      border: `1px solid ${S.border}`,
-                      backgroundColor: "#242424",
-                      padding: "16px",
-                      borderRadius: "3px",
-                    }}
-                  >
-                    <div style={{ fontSize: "13px", fontWeight: 600, color: S.white, marginBottom: "4px" }}>
-                      Kick Player
-                    </div>
-                    <div style={{ fontSize: "11px", color: S.muted, marginBottom: "12px" }}>
-                      Disconnect a player immediately from the server.
-                    </div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                      <input
-                        type="text"
-                        placeholder="Player username"
-                        value={kickPlayerInput}
-                        onChange={(e) => setKickPlayerInput(e.target.value)}
-                        style={{
-                          backgroundColor: S.input,
-                          border: `1px solid ${S.inputBdr}`,
-                          color: S.white,
-                          padding: "5px 8px",
-                          fontSize: "12px",
-                          outline: "none",
-                        }}
-                      />
-                      <div style={{ display: "flex", gap: "8px" }}>
-                        <input
-                          type="text"
-                          placeholder="Reason (optional)"
-                          value={kickReasonInput}
-                          onChange={(e) => setKickReasonInput(e.target.value)}
-                          style={{
-                            flex: 1,
-                            backgroundColor: S.input,
-                            border: `1px solid ${S.inputBdr}`,
-                            color: S.white,
-                            padding: "5px 8px",
-                            fontSize: "12px",
-                            outline: "none",
-                          }}
-                        />
-                        <button
-                          onClick={() => {
-                            if (!kickPlayerInput.trim()) return;
-                            const cmd = kickReasonInput.trim()
-                              ? `kick ${kickPlayerInput.trim()} ${kickReasonInput.trim()}`
-                              : `kick ${kickPlayerInput.trim()}`;
-                            handleAction(cmd);
-                            setKickPlayerInput("");
-                            setKickReasonInput("");
-                          }}
-                          className="button-hover"
-                          style={{
-                            backgroundColor: S.orange,
-                            border: "none",
-                            color: S.white,
-                            padding: "5px 12px",
-                            fontSize: "11px",
-                            cursor: "pointer",
-                            borderRadius: "2px",
-                            fontWeight: "bold",
-                          }}
-                        >
-                          Kick
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Pardon Player */}
-                  <div
-                    style={{
-                      border: `1px solid ${S.border}`,
-                      backgroundColor: "#242424",
-                      padding: "16px",
-                      borderRadius: "3px",
-                    }}
-                  >
-                    <div style={{ fontSize: "13px", fontWeight: 600, color: S.white, marginBottom: "4px" }}>
-                      Pardon Player (Unban)
-                    </div>
-                    <div style={{ fontSize: "11px", color: S.muted, marginBottom: "12px" }}>
-                      Unban a player and allow them to connect again.
-                    </div>
-                    <div style={{ display: "flex", gap: "8px" }}>
-                      <input
-                        type="text"
-                        placeholder="Player username"
-                        value={pardonInput}
-                        onChange={(e) => setPardonInput(e.target.value)}
-                        style={{
-                          flex: 1,
-                          backgroundColor: S.input,
-                          border: `1px solid ${S.inputBdr}`,
-                          color: S.white,
-                          padding: "5px 8px",
-                          fontSize: "12px",
-                          outline: "none",
-                        }}
-                      />
-                      <button
-                        onClick={() => {
-                          if (!pardonInput.trim()) return;
-                          handleAction(`pardon ${pardonInput.trim()}`);
-                          setPardonInput("");
-                        }}
-                        className="button-hover"
-                        style={{
-                          backgroundColor: S.cyan,
-                          border: "none",
-                          color: "#1a1a1a",
-                          padding: "5px 12px",
-                          fontSize: "11px",
-                          cursor: "pointer",
-                          borderRadius: "2px",
-                          fontWeight: "bold",
-                        }}
-                      >
-                        Pardon
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Pardon IP */}
-                  <div
-                    style={{
-                      border: `1px solid ${S.border}`,
-                      backgroundColor: "#242424",
-                      padding: "16px",
-                      borderRadius: "3px",
-                    }}
-                  >
-                    <div style={{ fontSize: "13px", fontWeight: 600, color: S.white, marginBottom: "4px" }}>
-                      Pardon IP Address
-                    </div>
-                    <div style={{ fontSize: "11px", color: S.muted, marginBottom: "12px" }}>
-                      Unban a specific IP address.
-                    </div>
-                    <div style={{ display: "flex", gap: "8px" }}>
-                      <input
-                        type="text"
-                        placeholder="IP Address (e.g. 192.168.1.1)"
-                        value={pardonIpInput}
-                        onChange={(e) => setPardonIpInput(e.target.value)}
-                        style={{
-                          flex: 1,
-                          backgroundColor: S.input,
-                          border: `1px solid ${S.inputBdr}`,
-                          color: S.white,
-                          padding: "5px 8px",
-                          fontSize: "12px",
-                          outline: "none",
-                        }}
-                      />
-                      <button
-                        onClick={() => {
-                          if (!pardonIpInput.trim()) return;
-                          handleAction(`pardon-ip ${pardonIpInput.trim()}`);
-                          setPardonIpInput("");
-                        }}
-                        className="button-hover"
-                        style={{
-                          backgroundColor: S.cyan,
-                          border: "none",
-                          color: "#1a1a1a",
-                          padding: "5px 12px",
-                          fontSize: "11px",
-                          cursor: "pointer",
-                          borderRadius: "2px",
-                          fontWeight: "bold",
-                        }}
-                      >
-                        Pardon
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Send action commands */}
-                <div
-                  style={{
-                    border: `1px solid ${S.border}`,
-                    backgroundColor: "#242424",
-                    padding: "16px",
-                    borderRadius: "3px",
-                  }}
-                >
-                  <div style={{ fontSize: "13px", fontWeight: 600, color: S.white, marginBottom: "10px" }}>
-                    Quick Management Command
-                  </div>
-                  <form onSubmit={sendUserCmd} style={{ display: "flex", gap: "10px" }}>
-                    <input
-                      type="text"
-                      placeholder="e.g. whitelist add Notch, op agreeable_guy, ban Herobrine..."
-                      value={userCmd}
-                      onChange={(e) => setUserCmd(e.target.value)}
-                      style={{
-                        flex: 1,
-                        backgroundColor: S.input,
-                        border: `1px solid ${S.inputBdr}`,
-                        color: S.white,
-                        padding: "8px 12px",
-                        fontSize: "13px",
-                        outline: "none",
-                      }}
-                    />
-                    <Btn label="Run Command" color={S.cyan} onClick={() => {}} />
-                  </form>
-                </div>
-
-                {/* Players Listing Table */}
-                <div
-                  style={{
-                    border: `1px solid ${S.border}`,
-                    backgroundColor: "#1e1e1e",
-                    borderRadius: "3px",
-                    overflow: "hidden",
-                  }}
-                >
-                  {loadingUsers ? (
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px", gap: "10px", color: S.muted }}>
-                      <div className="spinner" />
-                      <span>Loading player files...</span>
-                    </div>
-                  ) : (
-                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12.5px" }}>
-                      <thead>
-                        <tr
-                          style={{
-                            borderBottom: `1px solid ${S.border}`,
-                            backgroundColor: "#161616",
-                            color: S.muted,
-                            textAlign: "left",
-                          }}
-                        >
-                          <th style={{ padding: "8px 12px" }}>{userList === "banned-ips" ? "IP Address" : "UUID"}</th>
-                          <th style={{ padding: "8px 12px" }}>{userList === "banned-ips" ? "Banned On" : "Username"}</th>
-                          {userList === "ops" && <th style={{ padding: "8px 12px" }}>OP Level</th>}
-                          {userList === "banned-players" && (
-                            <>
-                              <th style={{ padding: "8px 12px" }}>Banned On</th>
-                              <th style={{ padding: "8px 12px" }}>Reason</th>
-                            </>
-                          )}
-                          {userList === "banned-ips" && (
-                            <>
-                              <th style={{ padding: "8px 12px" }}>Banned By</th>
-                              <th style={{ padding: "8px 12px" }}>Reason</th>
-                            </>
-                          )}
-                          <th style={{ padding: "8px 12px", width: "180px", textAlign: "right" }}>
-                            Quick Revoke
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {players.length === 0 ? (
-                          <tr>
-                            <td
-                              colSpan={userList === "banned-players" || userList === "banned-ips" ? 5 : userList === "ops" ? 4 : 3}
-                              style={{
-                                padding: "20px",
-                                textAlign: "center",
-                                color: S.muted,
-                                fontStyle: "italic",
-                              }}
-                            >
-                              This list is empty. No players found.
-                            </td>
-                          </tr>
-                        ) : (
-                          players.map((p) => (
-                            <tr
-                              key={p.uuid || p.name || p.ip}
-                              className="tab-hover"
-                              style={{ borderBottom: `1px solid ${S.border}` }}
-                            >
-                              <td
-                                style={{
-                                  padding: "8px 12px",
-                                  fontFamily: "monospace",
-                                  fontSize: "11.5px",
-                                  color: S.muted,
-                                }}
-                              >
-                                {userList === "banned-ips" ? (p.ip || "–") : (p.uuid || "–")}
-                              </td>
-                              <td
-                                style={{
-                                  padding: "8px 12px",
-                                  fontWeight: "bold",
-                                  color: S.white,
-                                }}
-                              >
-                                {userList === "banned-ips" ? (p.created || "–") : p.name}
-                              </td>
-                              {userList === "ops" && (
-                                <td style={{ padding: "8px 12px", color: S.cyan }}>{p.level || "4"}</td>
-                              )}
-                              {userList === "banned-players" && (
-                                <>
-                                  <td style={{ padding: "8px 12px", color: S.muted }}>
-                                    {p.created || "–"}
-                                  </td>
-                                  <td style={{ padding: "8px 12px", color: "#cc8866" }}>
-                                    {p.reason || "No reason given"}
-                                  </td>
-                                </>
-                              )}
-                              {userList === "banned-ips" && (
-                                <>
-                                  <td style={{ padding: "8px 12px", color: S.muted }}>
-                                    {p.source || "–"}
-                                  </td>
-                                  <td style={{ padding: "8px 12px", color: "#cc8866" }}>
-                                    {p.reason || "No reason given"}
-                                  </td>
-                                </>
-                              )}
-                              <td style={{ padding: "8px 12px", textAlign: "right" }}>
-                                <div style={{ display: "flex", gap: "6px", justifyContent: "flex-end" }}>
-                                  {userList === "ops" && (
-                                    <>
-                                      <button
-                                        onClick={() => handleAction(`deop ${p.name}`)}
-                                        className="button-hover"
-                                        style={{
-                                          backgroundColor: "transparent",
-                                          color: S.orange,
-                                          border: `1px solid ${S.orange}`,
-                                          cursor: "pointer",
-                                          padding: "2px 8px",
-                                          fontSize: "11px",
-                                          borderRadius: "2px",
-                                        }}
-                                      >
-                                        De-OP
-                                      </button>
-                                      <button
-                                        onClick={() => handleAction(`ban ${p.name}`)}
-                                        className="button-hover"
-                                        style={{
-                                          backgroundColor: "transparent",
-                                          color: "#ff4d4d",
-                                          border: `1px solid #ff4d4d`,
-                                          cursor: "pointer",
-                                          padding: "2px 8px",
-                                          fontSize: "11px",
-                                          borderRadius: "2px",
-                                        }}
-                                      >
-                                        Ban
-                                      </button>
-                                    </>
-                                  )}
-                                  {userList === "whitelist" && (
-                                    <>
-                                      <button
-                                        onClick={() => handleAction(`whitelist remove ${p.name}`)}
-                                        className="button-hover"
-                                        style={{
-                                          backgroundColor: "transparent",
-                                          color: S.orange,
-                                          border: `1px solid ${S.orange}`,
-                                          cursor: "pointer",
-                                          padding: "2px 8px",
-                                          fontSize: "11px",
-                                          borderRadius: "2px",
-                                        }}
-                                      >
-                                        Remove
-                                      </button>
-                                      <button
-                                        onClick={() => handleAction(`op ${p.name}`)}
-                                        className="button-hover"
-                                        style={{
-                                          backgroundColor: "transparent",
-                                          color: S.cyan,
-                                          border: `1px solid ${S.cyan}`,
-                                          cursor: "pointer",
-                                          padding: "2px 8px",
-                                          fontSize: "11px",
-                                          borderRadius: "2px",
-                                        }}
-                                      >
-                                        OP
-                                      </button>
-                                      <button
-                                        onClick={() => handleAction(`ban ${p.name}`)}
-                                        className="button-hover"
-                                        style={{
-                                          backgroundColor: "transparent",
-                                          color: "#ff4d4d",
-                                          border: `1px solid #ff4d4d`,
-                                          cursor: "pointer",
-                                          padding: "2px 8px",
-                                          fontSize: "11px",
-                                          borderRadius: "2px",
-                                        }}
-                                      >
-                                        Ban
-                                      </button>
-                                    </>
-                                  )}
-                                  {userList === "banned-players" && (
-                                    <button
-                                      onClick={() => handleAction(`pardon ${p.name}`)}
-                                      className="button-hover"
-                                      style={{
-                                        backgroundColor: "transparent",
-                                        color: S.cyan,
-                                        border: `1px solid ${S.cyan}`,
-                                        cursor: "pointer",
-                                        padding: "2px 8px",
-                                        fontSize: "11px",
-                                        borderRadius: "2px",
-                                      }}
-                                    >
-                                      Pardon
-                                    </button>
-                                  )}
-                                  {userList === "banned-ips" && (
-                                    <button
-                                      onClick={() => handleAction(`pardon-ip ${p.ip}`)}
-                                      className="button-hover"
-                                      style={{
-                                        backgroundColor: "transparent",
-                                        color: S.cyan,
-                                        border: `1px solid ${S.cyan}`,
-                                        cursor: "pointer",
-                                        padding: "2px 8px",
-                                        fontSize: "11px",
-                                        borderRadius: "2px",
-                                      }}
-                                    >
-                                      Pardon IP
-                                    </button>
-                                  )}
-                                </div>
-                              </td>
-                            </tr>
-                          ))
-                        )}
-                      </tbody>
-                    </table>
-                  )}
-                </div>
-              </div>
-            </div>
+            <UsersTab
+              userList={userList}
+              setUserList={setUserList}
+              loadUsers={loadUsers}
+              loadingUsers={loadingUsers}
+              userError={userError}
+              handleAction={handleAction}
+              players={players}
+              userCmd={userCmd}
+              setUserCmd={setUserCmd}
+              sendUserCmd={sendUserCmd}
+            />
           )}
 
           {/* ══ NETWORKING ══ */}
@@ -4915,110 +3886,154 @@ export default function Dashboard() {
 
           {/* ══ LOGS FILE VIEW ══ */}
           {activeTab === "logs" && (
-            <div style={{ display: "flex", flexDirection: "column", flex: 1, height: "100%" }}>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: "13px 20px 11px",
-                  borderBottom: `1px solid ${S.border}`,
-                  flexShrink: 0,
-                }}
-              >
+            <div style={{ display: "flex", flexDirection: "column", flex: 1, height: "100%", overflow: "hidden" }}>
+              {/* Header */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "13px 20px 11px", borderBottom: `1px solid ${S.border}`, flexShrink: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                   <Ico.Logs />
-                  <span style={{ fontSize: "18px", fontWeight: 300 }}>Full Server logs/latest.log</span>
+                  <span style={{ fontSize: "18px", fontWeight: 300 }}>
+                    Server Logs
+                  </span>
+                  <span style={{ fontSize: "12px", color: S.muted, fontFamily: "monospace", background: "rgba(255,255,255,0.05)", padding: "1px 8px", borderRadius: "3px" }}>
+                    {selectedLogFile.replace("logs/", "")}
+                  </span>
                 </div>
-                <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
                   <input
                     type="text"
-                    placeholder="Search logs lines..."
+                    placeholder="Filter log lines..."
                     value={logsSearch}
                     onChange={(e) => setLogsSearch(e.target.value)}
-                    style={{
-                      backgroundColor: S.input,
-                      border: `1px solid ${S.inputBdr}`,
-                      color: S.white,
-                      padding: "4px 8px",
-                      fontSize: "12px",
-                      outline: "none",
-                      width: "180px",
-                    }}
-                  />
-                  <Btn label="Refresh Logs" color={S.cyan} onClick={loadLogsContent} />
-                  <Btn
-                    label="Download logs"
-                    color={S.green}
-                    onClick={() =>
-                      window.open("/api/files/download?path=logs/latest.log", "_blank")
-                    }
+                    style={{ backgroundColor: S.input, border: `1px solid ${S.inputBdr}`, color: S.white, padding: "4px 8px", fontSize: "12px", outline: "none", width: "180px", borderRadius: "2px" }}
                   />
                   <button
-                    onClick={clearLogFile}
+                    onClick={() => loadLogsContent(selectedLogFile)}
+                    disabled={loadingLogs}
                     className="button-hover"
-                    style={{
-                      backgroundColor: "transparent",
-                      border: `1px solid ${S.red}`,
-                      color: S.red,
-                      cursor: "pointer",
-                      padding: "5px 12px",
-                      fontSize: "12px",
-                      borderRadius: "3px",
-                    }}
+                    style={{ backgroundColor: "transparent", border: `1px solid ${S.cyan}`, color: S.cyan, cursor: "pointer", padding: "4px 10px", fontSize: "12px", borderRadius: "2px" }}
                   >
-                    Clear File
+                    ↻ Refresh
                   </button>
+                  <button
+                    onClick={() => window.open(`/api/files/download?path=${encodeURIComponent(selectedLogFile)}`, "_blank")}
+                    className="button-hover"
+                    style={{ backgroundColor: "transparent", border: `1px solid ${S.green}`, color: S.green, cursor: "pointer", padding: "4px 10px", fontSize: "12px", borderRadius: "2px" }}
+                  >
+                    ↓ Download
+                  </button>
+                  {selectedLogFile === "logs/latest.log" && (
+                    <button
+                      onClick={clearLogFile}
+                      className="button-hover"
+                      style={{ backgroundColor: "transparent", border: `1px solid ${S.red}`, color: S.red, cursor: "pointer", padding: "4px 10px", fontSize: "12px", borderRadius: "2px" }}
+                    >
+                      Clear
+                    </button>
+                  )}
                 </div>
               </div>
 
-              {loadingLogs ? (
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "50px", gap: "12px", color: S.muted }}>
-                  <div className="spinner" />
-                  <span>Reading server log file...</span>
+              {/* Body: sidebar + viewer */}
+              <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
+                {/* File list sidebar */}
+                <div style={{ width: "210px", flexShrink: 0, borderRight: `1px solid ${S.border}`, overflowY: "auto", backgroundColor: "#171717" }}>
+                  <div style={{ padding: "8px 12px 4px", fontSize: "10px", color: S.muted, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                    Log Files
+                  </div>
+                  {loadingLogFiles ? (
+                    <div style={{ padding: "12px", color: S.muted, fontSize: "12px" }}>Loading...</div>
+                  ) : (
+                    <>
+                      {/* latest.log always pinned top */}
+                      {[{ name: "latest.log", size: 0, modifyTime: 0 }, ...logFiles.filter(f => f.name !== "latest.log")].map((f) => {
+                        const fullPath = `logs/${f.name}`;
+                        const isSelected = selectedLogFile === fullPath;
+                        const isLatest = f.name === "latest.log";
+                        return (
+                          <button
+                            key={f.name}
+                            onClick={() => {
+                              setSelectedLogFile(fullPath);
+                              setLogsSearch("");
+                              loadLogsContent(fullPath);
+                            }}
+                            style={{
+                              display: "block",
+                              width: "100%",
+                              textAlign: "left",
+                              padding: "7px 12px",
+                              backgroundColor: isSelected ? "rgba(0,220,200,0.08)" : "transparent",
+                              borderLeft: isSelected ? `2px solid ${S.cyan}` : "2px solid transparent",
+                              color: isSelected ? S.cyan : isLatest ? S.white : S.muted,
+                              fontSize: "11.5px",
+                              fontFamily: "monospace",
+                              border: "none",
+                              borderBottom: `1px solid ${S.border}`,
+                              cursor: "pointer",
+                              wordBreak: "break-all",
+                            }}
+                          >
+                            {isLatest ? "📄 " : f.name.endsWith(".gz") ? "🗜 " : "📋 "}
+                            {f.name}
+                          </button>
+                        );
+                      })}
+                    </>
+                  )}
                 </div>
-              ) : (
-                <div
-                  style={{
-                    flex: 1,
-                    backgroundColor: "#111",
-                    margin: "18px",
-                    border: `1px solid ${S.border}`,
-                    padding: "12px 14px",
-                    fontFamily: "'Consolas','Courier New',monospace",
-                    fontSize: "12px",
-                    lineHeight: "1.6",
-                    color: "#bbb",
-                    overflowY: "auto",
-                    whiteSpace: "pre-wrap",
-                    borderRadius: "3px",
-                  }}
-                >
-                  {(() => {
-                    const lines = logsContent.split("\n");
-                    const filtered = lines.filter((l) =>
-                      l.toLowerCase().includes(logsSearch.toLowerCase())
-                    );
 
-                    if (filtered.length === 0 || (filtered.length === 1 && !filtered[0])) {
-                      return <span style={{ color: "#555" }}>[No logs matching filters found]</span>;
-                    }
+                {/* Log content viewer */}
+                <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+                  {loadingLogs ? (
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", flex: 1, gap: "12px", color: S.muted }}>
+                      <div className="spinner" />
+                      <span>Reading {selectedLogFile.replace("logs/", "")}...</span>
+                    </div>
+                  ) : (
+                    <div
+                      style={{
+                        flex: 1,
+                        backgroundColor: "#111",
+                        margin: "12px",
+                        border: `1px solid ${S.border}`,
+                        padding: "12px 14px",
+                        fontFamily: "'Consolas','Courier New',monospace",
+                        fontSize: "12px",
+                        lineHeight: "1.65",
+                        color: "#bbb",
+                        overflowY: "auto",
+                        whiteSpace: "pre-wrap",
+                        borderRadius: "3px",
+                      }}
+                    >
+                      {(() => {
+                        const lines = logsContent.split("\n");
+                        const filtered = logsSearch
+                          ? lines.filter((l) => l.toLowerCase().includes(logsSearch.toLowerCase()))
+                          : lines;
 
-                    return filtered.map((line, idx) => {
-                      let color = "#bbb";
-                      if (/ERROR|Exception/.test(line)) color = "#dd6666";
-                      else if (/WARN/.test(line)) color = S.orange;
-                      else if (/INFO/.test(line)) color = "#ccc";
+                        if (filtered.length === 0 || (filtered.length === 1 && !filtered[0])) {
+                          return <span style={{ color: "#555" }}>[No log entries found — the file may be empty]</span>;
+                        }
 
-                      return (
-                        <div key={idx} style={{ color }}>
-                          {line}
-                        </div>
-                      );
-                    });
-                  })()}
+                        return filtered.map((line, idx) => {
+                          let color = "#bbb";
+                          if (/ERROR|Exception|SEVERE/.test(line)) color = "#dd6666";
+                          else if (/WARN/.test(line)) color = S.orange;
+                          else if (/INFO/.test(line)) color = "#ccc";
+                          else if (/\[Server\]|\[Rcon\]/.test(line)) color = S.cyan;
+
+                          return (
+                            <div key={idx} style={{ color }}>
+                              {line}
+                            </div>
+                          );
+                        });
+                      })()}
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
           )}
 
@@ -5180,6 +4195,9 @@ export default function Dashboard() {
               </div>
             </div>
           )}
+          
+          {/* ══ PANEL USERS (RBAC) ══ */}
+          {activeTab === "panel-users" && <PanelUsersTab />}
         </div>
       </div>
 

@@ -50,6 +50,8 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
+import { AuthProvider } from "@/components/AuthProvider";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -58,7 +60,9 @@ export default function RootLayout({
   return (
     <html lang="en" style={{ height: "100%", backgroundColor: "#1a1a1a" }}>
       <body style={{ margin: 0, padding: 0, height: "100%", backgroundColor: "#1a1a1a" }}>
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );

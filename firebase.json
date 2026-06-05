@@ -8,5 +8,8 @@
         "supportEmail": "admin@meowtopia.com"
       }
     }
+  },
+  "firestore": {
+    "rules": "firestore.rules"
   }
 }

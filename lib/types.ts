@@ -54,9 +54,13 @@ export type Tab =
   | "plugins"
   | "config"
   | "users"
+  | "panel-users"
   | "networking"
   | "logs"
-  | "backups";
+  | "backups"
+  | "software"
+  | "settings";
+
 
 export interface Toast {
   id: string;

@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { auth } from "@/lib/firebase";
-import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+import { auth, db } from "@/lib/firebase";
+import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, User } from "firebase/auth";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { S } from "@/lib/constants";
 
 export default function LoginPage() {
@@ -13,15 +14,34 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
+  const handlePostLogin = async (user: User) => {
+    try {
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
+      if (!userSnap.exists()) {
+        const isAdmin = user.uid === "AGGukM4aXuYsURCTX5eA2SAtwVF3";
+        await setDoc(userRef, {
+          email: user.email,
+          role: isAdmin ? "admin" : "pending",
+          permissions: isAdmin ? ["all"] : [],
+          createdAt: new Date().toISOString()
+        });
+      }
+      router.push("/");
+    } catch (e) {
+      console.error("Failed to setup user profile", e);
+      router.push("/");
+    }
+  };
+
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      // Wait for AuthState to settle or push right away
-      router.push("/");
+      const cred = await signInWithEmailAndPassword(auth, email, password);
+      await handlePostLogin(cred.user);
     } catch (err: any) {
       setError(err.message || "Failed to login");
     } finally {
@@ -34,8 +54,8 @@ export default function LoginPage() {
     setError("");
     try {
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
-      router.push("/");
+      const cred = await signInWithPopup(auth, provider);
+      await handlePostLogin(cred.user);
     } catch (err: any) {
       setError(err.message || "Failed to login with Google");
     } finally {

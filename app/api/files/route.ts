@@ -16,9 +16,15 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const path  = searchParams.get("path") || "";
     const read  = searchParams.get("read") === "1";
+    const unzip = searchParams.get("unzip") === "1";
+
+    // Guard against path traversal attacks
+    if (path.includes("..") || /[<>:"\\|?*]/.test(path)) {
+      return NextResponse.json({ error: "Invalid path" }, { status: 400 });
+    }
 
     if (read) {
-      const content = await readFile(path);
+      const content = await readFile(path, unzip);
       return new NextResponse(content, { headers: { "Content-Type": "text/plain" } });
     }
 
