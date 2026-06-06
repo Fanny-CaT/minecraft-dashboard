@@ -1015,7 +1015,24 @@ export default function Dashboard() {
   // ─────────────────────────────────────────────────────────────────────────────
 
   const handleAction = async (cmd: string) => {
-    await sendCommandDirect(cmd);
+    if (cmd.startsWith("clear-data ")) {
+      const parts = cmd.split(" ");
+      const uuid = parts[1];
+      const name = parts[2];
+      try {
+        const res = await fetch("/api/users/clear", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ uuid, name }),
+        });
+        if (!res.ok) throw new Error("Failed to clear data");
+        showToast(`Cleared data for ${name}`, "success");
+      } catch (err) {
+        showToast("Error clearing player data", "error");
+      }
+    } else {
+      await sendCommandDirect(cmd);
+    }
     setTimeout(() => loadUsers(userList), 1200);
   };
 
