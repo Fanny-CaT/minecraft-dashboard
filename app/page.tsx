@@ -1,5 +1,6 @@
 "use client";
 
+import { fetchWithAuth } from "@/lib/apiClient";
 import React, { useEffect, useState, useRef, useCallback } from "react";
 
 import { StatusData, FileEntry, PlayerEntry, Tab, Toast } from "@/lib/types";
@@ -217,7 +218,7 @@ export default function Dashboard() {
 
   const fetchStatus = useCallback(async () => {
     try {
-      const res = await fetch("/api/status", { cache: "no-store" });
+      const res = await fetchWithAuth("/api/status", { cache: "no-store" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data: StatusData = await res.json();
 
@@ -286,7 +287,7 @@ export default function Dashboard() {
     setActionLoading(action);
     showToast(`Sending ${action} state signal...`, "info");
     try {
-      const res = await fetch("/api/power", {
+      const res = await fetchWithAuth("/api/power", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action }),
@@ -315,7 +316,7 @@ export default function Dashboard() {
 
     setWsStatus("connecting");
     try {
-      const res = await fetch("/api/auth", { cache: "no-store" });
+      const res = await fetchWithAuth("/api/auth", { cache: "no-store" });
       if (!res.ok) throw new Error("Token fetch failed");
       const { accessToken, wsUrl } = await res.json();
       if (!accessToken) throw new Error("No token");
@@ -407,7 +408,7 @@ export default function Dashboard() {
     let active = true;
     const pollLogs = async () => {
       try {
-        const res = await fetch(`/api/console?time=${lastEpochRef.current}`, {
+        const res = await fetchWithAuth(`/api/console?time=${lastEpochRef.current}`, {
           cache: "no-store",
         });
         if (!res.ok) return;
@@ -489,7 +490,7 @@ export default function Dashboard() {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify({ event: "console", args: [cmd] }));
     } else {
-      await fetch("/api/power", {
+      await fetchWithAuth("/api/power", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "command", command: cmd }),
@@ -502,7 +503,7 @@ export default function Dashboard() {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify({ event: "console", args: [cmd] }));
     } else {
-      await fetch("/api/power", {
+      await fetchWithAuth("/api/power", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "command", command: cmd }),
@@ -528,7 +529,7 @@ export default function Dashboard() {
     );
     sentMessages.current.push(msg);
 
-    await fetch("/api/power", {
+    await fetchWithAuth("/api/power", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "command", command: `say ${msg}` }),
@@ -549,7 +550,7 @@ export default function Dashboard() {
     setSelectedFile(null);
     setSelectedFileNames(new Set());
     try {
-      const res = await fetch(`/api/files?path=${encodeURIComponent(path)}`, {
+      const res = await fetchWithAuth(`/api/files?path=${encodeURIComponent(path)}`, {
         cache: "no-store",
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -576,7 +577,7 @@ export default function Dashboard() {
     setLoadingFile(true);
     const path = currentPath ? `${currentPath}/${f.name}` : f.name;
     try {
-      const res = await fetch(`/api/files?path=${encodeURIComponent(path)}&read=1`, {
+      const res = await fetchWithAuth(`/api/files?path=${encodeURIComponent(path)}&read=1`, {
         cache: "no-store",
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -595,7 +596,7 @@ export default function Dashboard() {
     setSavingFile(true);
     const path = currentPath ? `${currentPath}/${selectedFile.name}` : selectedFile.name;
     try {
-      const res = await fetch("/api/files", {
+      const res = await fetchWithAuth("/api/files", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "write", path, content: fileContent }),
@@ -616,7 +617,7 @@ export default function Dashboard() {
     if (!newName.trim()) return;
     const path = currentPath ? `${currentPath}/${newName.trim()}` : newName.trim();
     try {
-      const res = await fetch("/api/files", {
+      const res = await fetchWithAuth("/api/files", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "write", path, content: "" }),
@@ -636,7 +637,7 @@ export default function Dashboard() {
     if (!newName.trim()) return;
     const path = currentPath ? `${currentPath}/${newName.trim()}` : newName.trim();
     try {
-      const res = await fetch("/api/files", {
+      const res = await fetchWithAuth("/api/files", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "mkdir", path }),
@@ -655,7 +656,7 @@ export default function Dashboard() {
     if (!(await confirmAction("Delete File", `Delete ${f.name}?`))) return;
     const path = currentPath ? `${currentPath}/${f.name}` : f.name;
     try {
-      const res = await fetch("/api/files", {
+      const res = await fetchWithAuth("/api/files", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "delete", path }),
@@ -678,7 +679,7 @@ export default function Dashboard() {
       names.map(async (name) => {
         const path = currentPath ? `${currentPath}/${name}` : name;
         try {
-          const res = await fetch("/api/files", {
+          const res = await fetchWithAuth("/api/files", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ action: "delete", path }),
@@ -709,7 +710,7 @@ export default function Dashboard() {
       const path = currentPath ? `${currentPath}/${file.name}` : file.name;
       formData.append("path", path);
 
-      const res = await fetch("/api/upload", {
+      const res = await fetchWithAuth("/api/upload", {
         method: "POST",
         body: formData,
       });
@@ -744,7 +745,7 @@ export default function Dashboard() {
     setLoadingPlugins(true);
     setPluginError("");
     try {
-      const res = await fetch("/api/files?path=plugins", { cache: "no-store" });
+      const res = await fetchWithAuth("/api/files?path=plugins", { cache: "no-store" });
       if (!res.ok) throw new Error("Failed to load plugins directory");
       const list = await res.json();
       if (Array.isArray(list)) {
@@ -761,7 +762,7 @@ export default function Dashboard() {
     } catch (err: any) {
       console.warn("Plugins directory fetch error:", err);
       try {
-        await fetch("/api/files", {
+        await fetchWithAuth("/api/files", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ action: "mkdir", path: "plugins" }),
@@ -778,7 +779,7 @@ export default function Dashboard() {
     setPluginError("");
     try {
       const cat = pluginCategory;
-      const res = await fetch(
+      const res = await fetchWithAuth(
         `/api/plugins/search?q=${encodeURIComponent(pluginSearch)}&category=${cat}`
       );
       if (!res.ok) throw new Error("Search failed");
@@ -796,7 +797,7 @@ export default function Dashboard() {
     setPluginError("");
     showToast(`Downloading & installing "${plugin.name}"...`, "info");
     try {
-      const res = await fetch("/api/plugins/install", {
+      const res = await fetchWithAuth("/api/plugins/install", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -831,7 +832,7 @@ export default function Dashboard() {
     if (!(await confirmAction("Uninstall Plugin", `Are you sure you want to delete ${filename}?`))) return;
     setLoadingPlugins(true);
     try {
-      const res = await fetch("/api/files", {
+      const res = await fetchWithAuth("/api/files", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "delete", path: `plugins/${filename}` }),
@@ -877,7 +878,7 @@ export default function Dashboard() {
     showToast("Triggering RAM optimization & Garbage Collection...", "info");
     
     try {
-      await fetch("/api/power", {
+      await fetchWithAuth("/api/power", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "command", command: "gc" }),
@@ -913,7 +914,7 @@ export default function Dashboard() {
     showToast(`Initiating server reinstall to Minecraft ${selectedVersion}...`, "info");
     
     try {
-      const res = await fetch("/api/minecraft/reinstall", {
+      const res = await fetchWithAuth("/api/minecraft/reinstall", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ version: selectedVersion, provider: selectedProvider }),
@@ -935,7 +936,7 @@ export default function Dashboard() {
 
   const loadStartupSettings = async () => {
     try {
-      const res = await fetch("/api/minecraft/startup");
+      const res = await fetchWithAuth("/api/minecraft/startup");
       if (res.ok) {
         const data = await res.json();
         setJvmArgsStart(data.jvmArgsStart || "");
@@ -962,7 +963,7 @@ export default function Dashboard() {
         enableAutosaveLoop: updates.enableAutosaveLoop !== undefined ? updates.enableAutosaveLoop : enableAutosaveLoop,
       };
 
-      const res = await fetch("/api/minecraft/startup", {
+      const res = await fetchWithAuth("/api/minecraft/startup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -1001,7 +1002,7 @@ export default function Dashboard() {
     setLoadingConfig(true);
     setConfigError("");
     try {
-      const res = await fetch("/api/config", { cache: "no-store" });
+      const res = await fetchWithAuth("/api/config", { cache: "no-store" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       setConfigProps(data.props || {});
@@ -1017,7 +1018,7 @@ export default function Dashboard() {
     setSavingConfig(true);
     setConfigError("");
     try {
-      const res = await fetch("/api/config", {
+      const res = await fetchWithAuth("/api/config", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ props: configProps }),
@@ -1042,7 +1043,7 @@ export default function Dashboard() {
       const uuid = parts[1];
       const name = parts[2];
       try {
-        const res = await fetch("/api/users/clear", {
+        const res = await fetchWithAuth("/api/users/clear", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ uuid, name }),
@@ -1062,7 +1063,7 @@ export default function Dashboard() {
     setLoadingUsers(true);
     setUserError("");
     try {
-      const res = await fetch(`/api/users?list=${list}`, { cache: "no-store" });
+      const res = await fetchWithAuth(`/api/users?list=${list}`, { cache: "no-store" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const { data } = await res.json();
       setPlayers(Array.isArray(data) ? data : []);
@@ -1077,7 +1078,7 @@ export default function Dashboard() {
     e.preventDefault();
     if (!userCmd.trim()) return;
     const cmd = userCmd.trim();
-    await fetch("/api/users", {
+    await fetchWithAuth("/api/users", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "command", command: cmd }),
@@ -1094,7 +1095,7 @@ export default function Dashboard() {
   const loadBackups = async () => {
     setLoadingBackups(true);
     try {
-      const res = await fetch("/api/backups", { cache: "no-store" });
+      const res = await fetchWithAuth("/api/backups", { cache: "no-store" });
       if (res.ok) {
         const data = await res.json();
         setBackups(data);
@@ -1110,7 +1111,7 @@ export default function Dashboard() {
     setCreatingBackup(true);
     showToast("Starting full server backup ZIP...", "info");
     try {
-      const res = await fetch("/api/backups", {
+      const res = await fetchWithAuth("/api/backups", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "create" }),
@@ -1141,7 +1142,7 @@ export default function Dashboard() {
     setRestoringBackup(filename);
     showToast(`Extracting zip backup ${filename}...`, "info");
     try {
-      const res = await fetch("/api/backups", {
+      const res = await fetchWithAuth("/api/backups", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "restore", filename }),
@@ -1162,7 +1163,7 @@ export default function Dashboard() {
   const deleteBackup = async (filename: string) => {
     if (!(await confirmAction("Delete Backup", `Are you sure you want to delete backup "${filename}"?`))) return;
     try {
-      const res = await fetch("/api/backups", {
+      const res = await fetchWithAuth("/api/backups", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "delete", filename }),
@@ -1183,7 +1184,7 @@ export default function Dashboard() {
   const loadLogFiles = async () => {
     setLoadingLogFiles(true);
     try {
-      const res = await fetch("/api/files?path=logs", { cache: "no-store" });
+      const res = await fetchWithAuth("/api/files?path=logs", { cache: "no-store" });
       if (res.ok) {
         const files: { name: string; size: number; isFile: boolean; modifyTime: number }[] = await res.json();
         const sorted = files
@@ -1204,7 +1205,7 @@ export default function Dashboard() {
     try {
       const isGz = path.endsWith(".gz");
       const url = `/api/files?path=${encodeURIComponent(path)}&read=1${isGz ? "&unzip=1" : ""}`;
-      const res = await fetch(url, { cache: "no-store" });
+      const res = await fetchWithAuth(url, { cache: "no-store" });
       if (res.ok) {
         const text = await res.text();
         setLogsContent(text);
@@ -1223,7 +1224,7 @@ export default function Dashboard() {
       return;
     setLoadingLogs(true);
     try {
-      const res = await fetch("/api/files", {
+      const res = await fetchWithAuth("/api/files", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "write", path: "logs/latest.log", content: "" }),
@@ -1245,7 +1246,7 @@ export default function Dashboard() {
   const loadNetworkSettings = async () => {
     try {
       setLoadingNetwork(true);
-      const res = await fetch("/api/minecraft/network");
+      const res = await fetchWithAuth("/api/minecraft/network");
       if (res.ok) {
         const data = await res.json();
         setBindIp(data.ip || "0.0.0.0");
@@ -1261,7 +1262,7 @@ export default function Dashboard() {
   const saveNetworkSettingsAndRestart = async () => {
     try {
       setSavingNetwork(true);
-      const res = await fetch("/api/minecraft/network", {
+      const res = await fetchWithAuth("/api/minecraft/network", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ip: bindIp, port: bindPort }),
