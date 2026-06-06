@@ -885,11 +885,7 @@ export default function Dashboard() {
   };
 
   const triggerVersionChange = async () => {
-    // Guard: never reinstall the version already running
-    if (selectedVersion === statusData?.mcVersion) {
-      showToast("Server is already running this version.", "info");
-      return;
-    }
+
     setConfirmReinstallOpen(false);
     setReinstallingVersion(true);
     showToast(`Initiating server reinstall to Minecraft ${selectedVersion}...`, "info");
