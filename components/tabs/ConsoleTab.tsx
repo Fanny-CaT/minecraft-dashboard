@@ -110,17 +110,17 @@ export const ConsoleTab: React.FC<ConsoleTabProps> = ({
               width: "8px",
               height: "8px",
               borderRadius: "50%",
-              backgroundColor: isOnline ? S.green : S.red,
+              backgroundColor: statusData?.status === "online" ? S.green : statusData?.status === "starting" || statusData?.status === "stopping" ? S.orange : S.red,
             }}
           />
           <span
             style={{
               fontSize: "11px",
               fontWeight: "bold",
-              color: isOnline ? S.green : S.red,
+              color: statusData?.status === "online" ? S.green : statusData?.status === "starting" || statusData?.status === "stopping" ? S.orange : S.red,
             }}
           >
-            {isOnline ? "ONLINE" : "OFFLINE"}
+            {(statusData?.status || "offline").toUpperCase()}
           </span>
         </div>
         <span style={{ width: "1px", height: "12px", backgroundColor: S.border }} />

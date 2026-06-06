@@ -1964,8 +1964,8 @@ export default function Dashboard() {
         />
         <span style={{ fontWeight: 700, color: S.white, letterSpacing: "0.5px", fontSize: "13px" }}>MeowTopia</span>
         <span style={{ color: S.border }}>|</span>
-        <span style={{ color: isOnline ? S.green : S.red, fontFamily: "monospace", fontSize: "11px", fontWeight: 600 }}>
-          {isOnline ? "● ONLINE" : "● OFFLINE"}
+        <span style={{ color: statusData?.status === "online" ? S.green : statusData?.status === "starting" || statusData?.status === "stopping" ? S.orange : S.red, fontFamily: "monospace", fontSize: "11px", fontWeight: 600 }}>
+          ● {(statusData?.status || "offline").toUpperCase()}
         </span>
         <span style={{ color: S.border }}>|</span>
         <span style={{ color: S.muted, fontFamily: "monospace", fontSize: "11px" }}>
@@ -2254,7 +2254,7 @@ export default function Dashboard() {
                           <span className="spinner-mini" style={{ borderTopColor: "#ffaa33", width: "10px", height: "10px" }} />
                           {actionLoading}ING
                         </div>
-                      ) : isOnline ? (
+                      ) : statusData?.status === "online" ? (
                         <div style={{
                           display: "flex",
                           alignItems: "center",
@@ -2276,6 +2276,29 @@ export default function Dashboard() {
                             display: "inline-block"
                           }} />
                           ONLINE
+                        </div>
+                      ) : statusData?.status === "starting" || statusData?.status === "stopping" ? (
+                        <div style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                          background: "rgba(255, 170, 51, 0.1)",
+                          border: "1px solid rgba(255, 170, 51, 0.3)",
+                          padding: "6px 14px",
+                          borderRadius: "3px",
+                          color: S.orange,
+                          fontWeight: "bold",
+                          fontSize: "12px",
+                          letterSpacing: "0.5px"
+                        }}>
+                          <span style={{
+                            width: "7px",
+                            height: "7px",
+                            borderRadius: "50%",
+                            backgroundColor: S.orange,
+                            display: "inline-block"
+                          }} />
+                          {statusData?.status.toUpperCase()}
                         </div>
                       ) : (
                         <div style={{
@@ -2610,7 +2633,9 @@ export default function Dashboard() {
                           </div>
                           <div style={{ fontSize: "10px", color: S.muted, textAlign: "right" }}>
                             <div>Polling every 5s</div>
-                            <div style={{ color: isOnline ? S.green : S.red, fontWeight: "bold", marginTop: "2px" }}>{isOnline ? "● LIVE" : "○ OFFLINE"}</div>
+                            <div style={{ color: statusData?.status === "online" ? S.green : statusData?.status === "starting" || statusData?.status === "stopping" ? S.orange : S.red, fontWeight: "bold", marginTop: "2px" }}>
+                              {statusData?.status === "online" ? "● LIVE" : statusData?.status === "starting" ? "● STARTING" : statusData?.status === "stopping" ? "● STOPPING" : "○ OFFLINE"}
+                            </div>
                           </div>
                         </div>
                         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "12px" }}>
