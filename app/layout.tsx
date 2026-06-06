@@ -61,7 +61,9 @@ export default function RootLayout({
     <html lang="en" style={{ height: "100%", backgroundColor: "#1a1a1a" }}>
       <body style={{ margin: 0, padding: 0, height: "100%", backgroundColor: "#1a1a1a" }}>
         <AuthProvider>
-          {children}
+          <main style={{ height: "100%" }}>
+            {children}
+          </main>
         </AuthProvider>
       </body>
     </html>

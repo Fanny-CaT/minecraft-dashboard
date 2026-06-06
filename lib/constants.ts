@@ -5,18 +5,18 @@ export const S = {
   topBar: "#16181d",    // Frame border
   border: "#2d313a",    // Soft borders
   rowHover: "#262a33",  // Hover state for rows
-  cyan: "#3b82f6",      // Blue accent (more modern than cyan)
-  white: "#f8fafc",     // Off-white for better readability
-  muted: "#94a3b8",     // Slate muted text
-  red: "#ef4444",
-  green: "#10b981",
-  orange: "#f59e0b",
-  purple: "#8b5cf6",
-  chartGreen: "#10b981",
-  chartOrange: "#f59e0b",
-  chartBlue: "#3b82f6",
-  input: "rgba(0, 0, 0, 0.25)",
-  inputBdr: "#334155",
+  cyan: "#60a5fa",      // Blue-400
+  white: "#f8fafc",     // Slate-50
+  muted: "#cbd5e1",     // Slate-300 (Higher contrast)
+  red: "#f87171",       // Red-400
+  green: "#34d399",     // Emerald-400
+  orange: "#fbbf24",    // Amber-400
+  purple: "#a78bfa",    // Violet-400
+  chartGreen: "#34d399",
+  chartOrange: "#fbbf24",
+  chartBlue: "#60a5fa",
+  input: "rgba(0, 0, 0, 0.4)", // Darker input background for higher contrast with text
+  inputBdr: "#475569",  // Slate-600
 };
 
 export const POPULAR_PLUGINS_META: Record<string, { name: string; tagline: string; iconUrl: string; provider: string; color: string; bg: string; border: string }> = {
