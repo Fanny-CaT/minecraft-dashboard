@@ -166,6 +166,6 @@ async function fetchHangar(query: string, category: string, limit: number, userA
     latestVersion: item.promotedVersions?.[0]?.version || "",
     provider: "hangar",
     categories: item.category ? [item.category] : [],
-    versions: item.promotedVersions?.flatMap((v: any) => v.tags?.flatMap((t: any) => t.gameVersions || []) || []) || [],
+    versions: item.supportedPlatforms?.PAPER || item.supportedPlatforms?.WATERFALL || item.supportedPlatforms?.VELOCITY || [],
   }));
 }

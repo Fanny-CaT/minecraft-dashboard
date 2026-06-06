@@ -2945,10 +2945,17 @@ export default function Dashboard() {
                       }
                       if (filterVersion !== "all") {
                         const versions = plugin.versions || [];
+                        if (versions.length === 0) return true; // Don't hide plugins that don't report versions
+                        
+                        const cleanFilter = filterVersion.trim().toLowerCase();
                         const hasVersion = versions.some((v: string) => {
                           const cleanV = v.trim().toLowerCase();
-                          const cleanFilter = filterVersion.trim().toLowerCase();
-                          return cleanV === cleanFilter || cleanV.startsWith(cleanFilter) || cleanFilter.startsWith(cleanV);
+                          if (cleanV === cleanFilter) return true;
+                          // If plugin supports '1.20', it should match filter '1.20.4'
+                          if (cleanFilter.startsWith(cleanV + ".")) return true;
+                          // If filter is '1.20', it should match plugin '1.20.4'
+                          if (cleanV.startsWith(cleanFilter + ".")) return true;
+                          return false;
                         });
                         if (!hasVersion) return false;
                       }
