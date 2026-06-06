@@ -1,6 +1,6 @@
 export interface StatusData {
   running: boolean;
-  status: "online" | "offline";
+  status: string;
   cpu: number;
   memory: number;
   maxMemory: number;
