@@ -78,6 +78,7 @@ export const ConsoleTab: React.FC<ConsoleTabProps> = ({
             />
             {wsMode === "live" ? "Live WebSocket" : "HTTP Polling"}
           </span>
+          <OutlineBtn label="Copy Console" onClick={() => navigator.clipboard.writeText(logs.join('\n'))} />
           <OutlineBtn label="Clear Screen" onClick={() => setLogs([])} />
           {wsStatus !== "connected" && (
             <OutlineBtn
