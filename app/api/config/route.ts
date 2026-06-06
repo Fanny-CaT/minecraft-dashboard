@@ -13,6 +13,8 @@ const CONFIG_PATH = "server.properties";
  * Saves back to server.properties preserving comments.
  */
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const raw = await readFile(CONFIG_PATH);
