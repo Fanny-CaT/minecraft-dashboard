@@ -17,7 +17,7 @@ const WINDOW_MS = 60_000; // 1-minute window
 // Per-route limits (requests per minute per IP)
 const LIMITS: [string, number][] = [
   ["/api/power",   5],    // power actions are destructive
-  ["/api/console", 30],   // console commands
+  ["/api/console", 60],   // console commands (increased to 60 for 2s polling)
   ["/api/players", 30],
   ["/api/backups", 20],
   ["/api/files",   120],  // file browser needs headroom
