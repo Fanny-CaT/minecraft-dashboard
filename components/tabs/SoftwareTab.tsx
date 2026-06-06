@@ -192,10 +192,10 @@ export function SoftwareTab({
                 {reinstalling ? (
                   <>
                     <span className="spinner" style={{ width: "16px", height: "16px", border: "2px solid #555", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
-                    Installing {provider.toUpperCase()} {selectedVersion}...
+                    {currentVersion === selectedVersion ? "Reinstalling" : "Installing"} {provider.toUpperCase()} {selectedVersion}...
                   </>
                 ) : (
-                  `Install ${PROVIDERS.find(p => p.id === provider)?.name} ${selectedVersion}`
+                  `${currentVersion === selectedVersion ? "Reinstall" : "Install"} ${PROVIDERS.find(p => p.id === provider)?.name} ${selectedVersion}`
                 )}
               </button>
             </div>
