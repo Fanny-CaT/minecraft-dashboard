@@ -1,6 +1,7 @@
 import { verifyAdmin } from "@/lib/authGuard";
 import { NextRequest, NextResponse } from "next/server";
 import { listFiles, readFile, writeFile, createFolder, deleteFile } from "@/lib/pufferpanel";
+import { sanitizePath } from "@/lib/pathUtils";
 
 /**
  * GET /api/files?path=<path>          — list directory
@@ -18,16 +19,19 @@ export async function GET(request: NextRequest) {
 
   try {
     const { searchParams } = new URL(request.url);
-    const path  = searchParams.get("path") || "";
-    const read  = searchParams.get("read") === "1";
+    const rawPath = searchParams.get("path") || "";
+    const read = searchParams.get("read") === "1";
     const unzip = searchParams.get("unzip") === "1";
 
-    // Guard against path traversal attacks
-    if (path.includes("..") || /[<>:"\\|?*]/.test(path)) {
-      return NextResponse.json({ error: "Invalid path" }, { status: 400 });
+    const path = sanitizePath(rawPath, true); // Allow empty path for listing root directory
+    if (path === null) {
+      return NextResponse.json({ error: "Invalid or unauthorized path" }, { status: 400 });
     }
 
     if (read) {
+      if (path === "") {
+         return NextResponse.json({ error: "Cannot read root directory as file" }, { status: 400 });
+      }
       const content = await readFile(path, unzip);
       return new NextResponse(content, { headers: { "Content-Type": "text/plain" } });
     }
@@ -45,9 +49,12 @@ export async function POST(request: NextRequest) {
   if (authResult instanceof Response) return authResult;
 
   try {
-    const { action, path, content } = await request.json();
+    const { action, path: rawPath, content } = await request.json();
 
-    if (!path) return NextResponse.json({ error: "path required" }, { status: 400 });
+    const path = sanitizePath(rawPath, false); // DO NOT allow empty path for writes/deletes
+    if (path === null) {
+      return NextResponse.json({ error: "Invalid path or attempting to modify root directory" }, { status: 400 });
+    }
 
     switch (action) {
       case "write":

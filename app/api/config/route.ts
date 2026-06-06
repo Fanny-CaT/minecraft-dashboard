@@ -13,7 +13,10 @@ const CONFIG_PATH = "server.properties";
  * Saves back to server.properties preserving comments.
  */
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const authResult = await verifyAdmin(request);
+  if (authResult instanceof Response) return authResult;
+
   try {
     const raw = await readFile(CONFIG_PATH);
     const props = parseServerProperties(raw);

@@ -8,7 +8,10 @@ const SETTINGS_PATH = "config/dashboard-startup.json";
  * GET /api/minecraft/startup
  * Returns the saved startup variables and autosave configurations.
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const authResult = await verifyAdmin(request);
+  if (authResult instanceof Response) return authResult;
+
   try {
     let settings = {
       jvmArgsStart: "",

@@ -100,6 +100,14 @@ export async function POST(request: NextRequest) {
       throw new Error(`Failed to fetch plugin file from remote: ${fileRes.status}`);
     }
 
+    const contentLength = fileRes.headers.get("content-length");
+    if (contentLength) {
+      const sizeBytes = parseInt(contentLength, 10);
+      if (sizeBytes > 4.5 * 1024 * 1024) {
+        return NextResponse.json({ error: "Plugin file exceeds Vercel 4.5MB serverless payload limit. Please download it manually and upload via SFTP." }, { status: 400 });
+      }
+    }
+
     const bytes = await fileRes.arrayBuffer();
 
     // 4. Upload it to the server's plugins directory

@@ -1,6 +1,7 @@
 import { verifyAdmin } from "@/lib/authGuard";
 import { NextRequest, NextResponse } from "next/server";
 import { pufferFetch } from "@/lib/pufferpanel";
+import { sanitizePath } from "@/lib/pathUtils";
 
 /**
  * POST /api/upload
@@ -16,13 +17,17 @@ export async function POST(request: NextRequest) {
 
   try {
     const form = await request.formData();
-    const path    = form.get("path") as string | null;
+    const rawPath = form.get("path") as string | null;
     const file    = form.get("file") as File | null;
 
-    if (!path) return NextResponse.json({ error: "path field required" }, { status: 400 });
+    if (!rawPath) return NextResponse.json({ error: "path field required" }, { status: 400 });
     if (!file) return NextResponse.json({ error: "file field required" }, { status: 400 });
 
-    const clean = path.replace(/^\//, "");
+    const clean = sanitizePath(rawPath, false); // DO NOT allow empty path
+    if (clean === null) {
+      return NextResponse.json({ error: "Invalid path or attempting to modify root directory" }, { status: 400 });
+    }
+
     const bytes = await file.arrayBuffer();
 
     const res = await pufferFetch(`/file/${clean}`, {

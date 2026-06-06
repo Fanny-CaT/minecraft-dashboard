@@ -113,6 +113,19 @@ export function SettingsTab({ statusData, startupForm, showToast }: SettingsTabP
       </div>
 
       <div style={{ marginTop: "10px" }}>
+        <div style={{
+          backgroundColor: "rgba(255, 170, 51, 0.1)",
+          border: `1px solid rgba(255, 170, 51, 0.3)`,
+          padding: "16px",
+          borderRadius: "4px",
+          marginBottom: "20px"
+        }}>
+          <h3 style={{ margin: "0 0 8px 0", color: S.orange, fontSize: "14px" }}>⚠️ Important: Environment Variables vs Configs</h3>
+          <p style={{ margin: 0, color: S.muted, fontSize: "12px", lineHeight: "1.5" }}>
+            The settings below control the <strong>PufferPanel Environment Variables</strong> used to start the server (e.g., RAM, Java Version).<br/>
+            They <strong>DO NOT</strong> modify your <code>server.properties</code> file. To change your server's Port, MOTD, or Max Players, please go to the <strong>Files</strong> tab and edit <code>server.properties</code> directly.
+          </p>
+        </div>
         {startupForm}
       </div>
 

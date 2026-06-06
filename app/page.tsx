@@ -1626,10 +1626,10 @@ export default function Dashboard() {
         {!isSubTab && (
           <div>
             <div style={{ fontSize: "14px", fontWeight: 600, color: S.white }}>
-              Startup Variables
+              Environment Variables (Startup Config)
             </div>
             <div style={{ fontSize: "11px", color: S.muted, marginTop: "2px" }}>
-              Changes will save automatically but a server restart is required to apply.
+              These settings dictate HOW the server starts (RAM, Java). Changes save automatically but require a server restart to apply.
             </div>
           </div>
         )}
@@ -2845,7 +2845,7 @@ export default function Dashboard() {
                       display: "flex",
                       justifyContent: "space-between",
                       alignItems: "center",
-                      marginBottom: "12px",
+                      marginBottom: "4px",
                     }}
                   >
                     <div style={{ fontSize: "14px", fontWeight: 600, color: S.white }}>
@@ -2854,6 +2854,9 @@ export default function Dashboard() {
                     <span style={{ fontSize: "11px", color: S.muted, border: `1px solid ${S.border}`, padding: "2px 8px", borderRadius: "3px", backgroundColor: "#1e1e1e" }}>
                       Modrinth, Spiget & Hangar
                     </span>
+                  </div>
+                  <div style={{ fontSize: "11px", color: S.orange, marginBottom: "12px", lineHeight: "1.4" }}>
+                    ⚠️ Note: Due to Vercel free tier limits, plugins larger than 4.5MB may fail to install via the dashboard and cause an HTTP 500. For large plugins like WorldEdit, please upload manually via SFTP.
                   </div>
 
 
@@ -2945,10 +2948,17 @@ export default function Dashboard() {
                       }
                       if (filterVersion !== "all") {
                         const versions = plugin.versions || [];
+                        if (versions.length === 0) return true; // Don't hide plugins that don't report versions
+
+                        const cleanFilter = filterVersion.trim().toLowerCase();
                         const hasVersion = versions.some((v: string) => {
                           const cleanV = v.trim().toLowerCase();
-                          const cleanFilter = filterVersion.trim().toLowerCase();
-                          return cleanV === cleanFilter || cleanV.startsWith(cleanFilter) || cleanFilter.startsWith(cleanV);
+                          if (cleanV === cleanFilter) return true;
+                          // If plugin supports '1.20', it should match filter '1.20.4'
+                          if (cleanFilter.startsWith(cleanV + ".")) return true;
+                          // If filter is '1.20', it should match plugin '1.20.4'
+                          if (cleanV.startsWith(cleanFilter + ".")) return true;
+                          return false;
                         });
                         if (!hasVersion) return false;
                       }
