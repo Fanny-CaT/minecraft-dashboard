@@ -1626,10 +1626,10 @@ export default function Dashboard() {
         {!isSubTab && (
           <div>
             <div style={{ fontSize: "14px", fontWeight: 600, color: S.white }}>
-              Environment Variables (Startup Config)
+              Startup Variables
             </div>
             <div style={{ fontSize: "11px", color: S.muted, marginTop: "2px" }}>
-              These settings dictate HOW the server starts (RAM, Java). Changes save automatically but require a server restart to apply.
+              Changes will save automatically but a server restart is required to apply.
             </div>
           </div>
         )}
@@ -2945,17 +2945,10 @@ export default function Dashboard() {
                       }
                       if (filterVersion !== "all") {
                         const versions = plugin.versions || [];
-                        if (versions.length === 0) return true; // Don't hide plugins that don't report versions
-                        
-                        const cleanFilter = filterVersion.trim().toLowerCase();
                         const hasVersion = versions.some((v: string) => {
                           const cleanV = v.trim().toLowerCase();
-                          if (cleanV === cleanFilter) return true;
-                          // If plugin supports '1.20', it should match filter '1.20.4'
-                          if (cleanFilter.startsWith(cleanV + ".")) return true;
-                          // If filter is '1.20', it should match plugin '1.20.4'
-                          if (cleanV.startsWith(cleanFilter + ".")) return true;
-                          return false;
+                          const cleanFilter = filterVersion.trim().toLowerCase();
+                          return cleanV === cleanFilter || cleanV.startsWith(cleanFilter) || cleanFilter.startsWith(cleanV);
                         });
                         if (!hasVersion) return false;
                       }

@@ -23,13 +23,7 @@ export async function GET(request: NextRequest) {
     const unzip = searchParams.get("unzip") === "1";
 
     // Guard against path traversal attacks
-    let decodedPath = path;
-    try {
-      decodedPath = decodeURIComponent(path);
-    } catch (e) {}
-
-    const normalizedPath = decodedPath.replace(/\\/g, '/');
-    if (normalizedPath.includes("..") || /[<>:"|?*]/.test(normalizedPath) || normalizedPath.startsWith("/")) {
+    if (path.includes("..") || /[<>:"\\|?*]/.test(path)) {
       return NextResponse.json({ error: "Invalid path" }, { status: 400 });
     }
 
@@ -54,16 +48,6 @@ export async function POST(request: NextRequest) {
     const { action, path, content } = await request.json();
 
     if (!path) return NextResponse.json({ error: "path required" }, { status: 400 });
-
-    let decodedPath = path;
-    try {
-      decodedPath = decodeURIComponent(path);
-    } catch (e) {}
-
-    const normalizedPath = decodedPath.replace(/\\/g, '/');
-    if (normalizedPath.includes("..") || /[<>:"|?*]/.test(normalizedPath) || normalizedPath.startsWith("/")) {
-      return NextResponse.json({ error: "Invalid path" }, { status: 400 });
-    }
 
     switch (action) {
       case "write":

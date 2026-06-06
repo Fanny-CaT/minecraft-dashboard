@@ -8,8 +8,6 @@ const SETTINGS_PATH = "config/dashboard-startup.json";
  * GET /api/minecraft/startup
  * Returns the saved startup variables and autosave configurations.
  */
-export const dynamic = 'force-dynamic';
-
 export async function GET() {
   try {
     let settings = {
