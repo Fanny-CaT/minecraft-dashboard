@@ -3,10 +3,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /users/{userId} {
-      // Super admin has full read/write
-      allow read, write: if request.auth != null && request.auth.uid == 'AGGukM4aXuYsURCTX5eA2SAtwVF3';
-      
-      // Other admins
+      // Admins have full read/write. Removed the dangerous hardcoded UID.
       allow read, write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
       
       // Users can read their own profile

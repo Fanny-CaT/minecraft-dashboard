@@ -59,8 +59,7 @@ export type Tab =
   | "logs"
   | "backups"
   | "software"
-  | "settings"
-  | "players";
+  | "settings";
 
 
 export interface Toast {

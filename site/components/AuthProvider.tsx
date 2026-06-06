@@ -35,27 +35,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       
-      // Setup global fetch interceptor to attach Firebase ID Token to /api routes
-      if (typeof window !== "undefined" && !(window as any).__fetchPatched) {
-        (window as any).__fetchPatched = true;
-        const originalFetch = window.fetch;
-        window.fetch = async (...args) => {
-          const [resource, config] = args;
-          if (typeof resource === 'string' && resource.startsWith('/api/')) {
-            const token = await auth.currentUser?.getIdToken();
-            if (token) {
-              const newConfig = { ...config };
-              newConfig.headers = {
-                ...newConfig.headers,
-                Authorization: `Bearer ${token}`
-              };
-              return originalFetch(resource, newConfig);
-            }
-          }
-          return originalFetch(...args);
-        };
-      }
-      
+      // Global fetch interceptor removed for security. Use fetchWithAuth instead.      
       if (!currentUser) {
         setRole("guest");
         setPermissions([]);

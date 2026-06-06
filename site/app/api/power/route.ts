@@ -1,7 +1,6 @@
 import { verifyAdmin } from "@/lib/authGuard";
 import { NextRequest, NextResponse } from "next/server";
 import { powerAction, sendConsoleCommand } from "@/lib/pufferpanel";
-import { sendDiscordNotification } from "@/lib/discord";
 
 /**
  * POST /api/power
@@ -29,34 +28,6 @@ export async function POST(request: NextRequest) {
     }
 
     await powerAction(action as "start" | "stop" | "restart" | "kill");
-
-    // Send discord notification for power actions
-    let title = "";
-    let desc = "";
-    let color = 0xaaaaaa;
-    
-    if (action === "start") {
-      title = "🟢 Server Starting";
-      desc = "The Minecraft server is starting up...";
-      color = 0x00ff00;
-    } else if (action === "stop") {
-      title = "🔴 Server Stopping";
-      desc = "The Minecraft server has been instructed to stop safely.";
-      color = 0xffa500;
-    } else if (action === "restart") {
-      title = "🔄 Server Restarting";
-      desc = "The Minecraft server is rebooting.";
-      color = 0x00ffff;
-    } else if (action === "kill") {
-      title = "💀 Server Killed";
-      desc = "The Minecraft server process was forcefully terminated.";
-      color = 0xff0000;
-    }
-
-    if (title) {
-      await sendDiscordNotification(title, desc, color);
-    }
-
     return NextResponse.json({ success: true, action });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);

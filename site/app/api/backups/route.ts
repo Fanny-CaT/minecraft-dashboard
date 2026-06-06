@@ -1,7 +1,6 @@
 import { verifyAdmin } from "@/lib/authGuard";
 import { NextRequest, NextResponse } from "next/server";
 import { pufferFetch, listFiles, createFolder, getStatus, powerAction, deleteFile } from "@/lib/pufferpanel";
-import { sendDiscordNotification } from "@/lib/discord";
 
 /**
  * GET /api/backups
@@ -111,8 +110,6 @@ export async function POST(request: NextRequest) {
           throw new Error(`Backup creation failed: ${res.status} — ${text}`);
         }
 
-        await sendDiscordNotification("📦 Manual Backup Created", `Successfully created manual backup archive:\n\`${backupName}.zip\``, 0x5865F2);
-
         return NextResponse.json({ success: true, filename: backupName });
       }
 
@@ -168,8 +165,6 @@ export async function POST(request: NextRequest) {
           throw new Error(msg);
         }
 
-        await sendDiscordNotification("⏪ Backup Restored", `The server was successfully restored from backup:\n\`${filename}\``, 0xeb459e);
-
         return NextResponse.json({ success: true });
       }
 
@@ -180,8 +175,6 @@ export async function POST(request: NextRequest) {
         // Since backups/{filename} is a directory, the daemon's delete handler will succeed,
         // deleting both the directory and the nested zip file inside it.
         await deleteFile(`backups/${filename}`);
-
-        await sendDiscordNotification("🗑️ Backup Deleted", `The backup archive \`${filename}\` was deleted.`, 0xed4245);
 
         return NextResponse.json({ success: true });
       }

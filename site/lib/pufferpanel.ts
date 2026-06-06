@@ -154,12 +154,6 @@ export async function getStats(): Promise<{ cpu: number; memory: number }> {
   return res.json();
 }
 export async function powerAction(action: "start" | "stop" | "restart" | "kill"): Promise<void> {
-  // Use console command for graceful stop instead of PufferPanel's stop which may be aggressive
-  if (action === "stop") {
-    await sendConsoleCommand("stop");
-    return;
-  }
-
   if (action === "restart") {
     let isRunning = false;
     try {
@@ -171,21 +165,13 @@ export async function powerAction(action: "start" | "stop" | "restart" | "kill")
     }
 
     if (isRunning) {
-      try {
-        await sendConsoleCommand("stop");
-      } catch (err) {
-        console.warn(`[pufferpanel] Stop command failed during restart: ${err}.`);
+      const stopRes = await pufferFetch("/stop", { method: "POST" });
+      if (!stopRes.ok) {
+        const text = await stopRes.text();
+        console.warn(`[pufferpanel] Stop failed during restart (status ${stopRes.status}): ${text}. Attempting to start anyway.`);
       }
-      // Wait for the JVM process to terminate (poll every 1 second, max 10 seconds)
-      for (let i = 0; i < 10; i++) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        try {
-          const status = await getStatus();
-          if (!status.running) break;
-        } catch {
-          break;
-        }
-      }
+      // Wait 2.5 seconds for the JVM process to terminate
+      await new Promise(resolve => setTimeout(resolve, 2500));
     }
 
     const startRes = await pufferFetch("/start", { method: "POST" });
