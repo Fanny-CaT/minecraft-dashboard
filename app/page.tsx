@@ -1626,10 +1626,10 @@ export default function Dashboard() {
         {!isSubTab && (
           <div>
             <div style={{ fontSize: "14px", fontWeight: 600, color: S.white }}>
-              Startup Variables
+              Environment Variables (Startup Config)
             </div>
             <div style={{ fontSize: "11px", color: S.muted, marginTop: "2px" }}>
-              Changes will save automatically but a server restart is required to apply.
+              These settings dictate HOW the server starts (RAM, Java). Changes save automatically but require a server restart to apply.
             </div>
           </div>
         )}
