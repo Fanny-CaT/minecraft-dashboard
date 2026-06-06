@@ -13,7 +13,7 @@ export async function verifyAdmin(request: NextRequest): Promise<{ uid: string }
 
   const token = authHeader.split("Bearer ")[1];
   const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
-  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "meowtopia-panel-9812";
 
   if (!projectId) {
     return NextResponse.json({ error: "Server misconfiguration: Missing Project ID" }, { status: 500 });
