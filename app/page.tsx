@@ -2237,6 +2237,8 @@ export default function Dashboard() {
               doPower={doPower}
               uptimeDisplay={uptimeDisplay}
               TabHeader={TabHeader}
+              players={players}
+              logs={logs}
             />
           )}
 

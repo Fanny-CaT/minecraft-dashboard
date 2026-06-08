@@ -5,174 +5,7 @@ import { SparklineChart } from "@/components/SparklineChart";
 import { BarChart } from "@/components/BarChart";
 import type { StatusData } from "@/lib/types";
 
-// ─── Shared sub-components ──────────────────────────────────────────────────
-
-/** Consistent label style across all stat displays */
-const LABEL_STYLE: React.CSSProperties = {
-  fontSize: "10px",
-  color: S.muted,
-  textTransform: "uppercase",
-  letterSpacing: "0.8px",
-  display: "block",
-};
-
-/** Card wrapper used by every section */
-export function Card({
-  children,
-  style,
-}: {
-  children: React.ReactNode;
-  style?: React.CSSProperties;
-}) {
-  return (
-    <div
-      style={{
-        backgroundColor: S.content,
-        border: `1px solid ${S.border}`,
-        padding: "20px",
-        borderRadius: "4px",
-        display: "flex",
-        flexDirection: "column",
-        gap: "16px",
-        ...style,
-      }}
-    >
-      {children}
-    </div>
-  );
-}
-
-export function CardHeader({ title, subtitle }: { title: string; subtitle: string }) {
-  return (
-    <div>
-      <h2 style={{ fontSize: "14px", fontWeight: "bold", color: S.white, margin: 0 }}>{title}</h2>
-      <p style={{ fontSize: "11px", color: S.muted, margin: "4px 0 0" }}>{subtitle}</p>
-    </div>
-  );
-}
-
-// ─── StatCard ────────────────────────────────────────────────────────────────
-
-interface StatCardProps {
-  label: string;
-  value: string;
-  desc: string;
-  color?: string;
-  locked?: boolean;
-  offline?: boolean;
-}
-
-function StatCard({ label, value, desc, color = S.white, locked = false }: StatCardProps) {
-  return (
-    <div
-      style={{
-        position: "relative",
-        backgroundColor: S.bg,
-        border: `1px solid ${S.border}`,
-        borderRadius: "3px",
-        padding: "16px",
-        textAlign: "center",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-        alignItems: "center",
-        minHeight: "96px",
-        overflow: "hidden",
-      }}
-    >
-      {locked && (
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            backgroundColor: "rgba(18,18,18,0.93)",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "2px",
-            zIndex: 2,
-          }}
-        >
-          <span style={{ fontSize: "10px", color: S.orange, fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.6px" }}>
-            Stats Mod
-          </span>
-          <span style={{ fontSize: "9px", color: S.muted, textTransform: "uppercase", letterSpacing: "0.6px" }}>
-            Required
-          </span>
-        </div>
-      )}
-      <div style={{ filter: locked ? "blur(3px)" : "none", width: "100%", zIndex: 1 }}>
-        <span style={LABEL_STYLE}>{label}</span>
-        <div style={{ fontSize: "20px", fontWeight: 700, color, marginTop: "6px", fontFamily: "monospace" }}>
-          {value}
-        </div>
-        <span style={{ fontSize: "10px", color: S.muted, marginTop: "4px", display: "block" }}>{desc}</span>
-      </div>
-    </div>
-  );
-}
-
-// ─── SparkCard ───────────────────────────────────────────────────────────────
-
-interface SparkCardProps {
-  title: string;
-  value: string;
-  sub: string;
-  valueColor: string;
-  data: number[];
-  sparkColor: string;
-  gradientId: string;
-  max: number;
-  badge?: { label: string; color: string };
-}
-
-function SparkCard({ title, value, sub, valueColor, data, sparkColor, gradientId, max, badge }: SparkCardProps) {
-  return (
-    <div
-      style={{
-        backgroundColor: S.bg,
-        border: `1px solid ${S.border}`,
-        borderRadius: "3px",
-        padding: "16px",
-        display: "flex",
-        flexDirection: "column",
-        gap: "12px",
-      }}
-    >
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-        <div>
-          <span style={LABEL_STYLE}>{title}</span>
-          <div style={{ fontSize: "22px", fontWeight: 700, color: valueColor, fontFamily: "monospace", marginTop: "4px" }}>
-            {value}
-          </div>
-          <div style={{ fontSize: "10px", color: S.muted, marginTop: "2px" }}>{sub}</div>
-        </div>
-        {badge && (
-          <div
-            style={{
-              fontSize: "9px",
-              fontWeight: "bold",
-              textTransform: "uppercase",
-              letterSpacing: "1px",
-              color: badge.color,
-              border: `1px solid ${badge.color}`,
-              borderRadius: "2px",
-              padding: "2px 8px",
-              opacity: 0.9,
-              whiteSpace: "nowrap",
-            }}
-          >
-            {badge.label}
-          </div>
-        )}
-      </div>
-      <div style={{ height: "52px", borderRadius: "2px", overflow: "hidden" }}>
-        <SparklineChart data={data} color={sparkColor} gradientId={gradientId} max={max} height={52} />
-      </div>
-    </div>
-  );
-}
+import { Card, CardHeader, SparkCard } from "@/components/ui/Cards";
 
 // VersionManager has been moved to SoftwareTab.tsx
 
@@ -199,6 +32,8 @@ interface StatusTabProps {
   doPower: (action: string) => void;
   uptimeDisplay: string;
   TabHeader: React.FC<any>;
+  players?: any[];
+  logs?: string[];
 }
 
 export function StatusTab({
@@ -222,6 +57,8 @@ export function StatusTab({
   doPower,
   uptimeDisplay,
   TabHeader,
+  players = [],
+  logs = [],
 }: StatusTabProps) {
   const tpsVal = tpsHistory.length ? tpsHistory[tpsHistory.length - 1] : 20;
   const cpuVal = cpuHistory.length ? cpuHistory[cpuHistory.length - 1] : 0;
@@ -276,8 +113,8 @@ export function StatusTab({
                   <span style={{ fontSize: "10px", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "1.5px", color: S.cyan }}>
                     Server Instance
                   </span>
-                  <span style={{ fontSize: "10px", color: S.muted, fontFamily: "monospace", background: "rgba(255,255,255,0.05)", padding: "1px 6px", borderRadius: "3px" }}>
-                    {statusData?.serverId ? `ID: ${statusData.serverId}` : "ID: ········"}
+                  <span style={{ fontSize: "10px", color: S.muted, fontFamily: "monospace", background: "rgba(255,255,255,0.05)", padding: "1px 6px", borderRadius: "3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "150px" }}>
+                    {statusData?.serverId ? `ID: ${statusData.serverId.substring(0, 36)}` : "ID: ········"}
                   </span>
                 </div>
                 <h1 style={{ fontSize: "22px", fontWeight: 700, color: S.white, letterSpacing: "-0.5px", margin: 0 }}>
@@ -289,7 +126,9 @@ export function StatusTab({
                     <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
                     <path d="M2 12h20" />
                   </svg>
-                  <span style={{ fontFamily: "monospace" }}>{statusData?.ip || "play.meowtopia.mooo.com:25565"}</span>
+                  <span style={{ fontFamily: "monospace", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "200px" }}>
+                    {statusData?.ip ? statusData.ip.substring(0, 64) : "play.meowtopia.mooo.com:25565"}
+                  </span>
                 </div>
               </div>
 
@@ -514,111 +353,46 @@ export function StatusTab({
               </div>
             </div>
 
-        {/* System + Diagnostics grid */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))", gap: "20px" }}>
-
-          {/* System Resources */}
+        {/* Player List & Console Preview */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
           <Card>
-            <CardHeader title="System Resources" subtitle="Process hardware usage overview" />
-            <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-              {/* CPU */}
-              <div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "8px" }}>
-                  <span style={{ fontSize: "12px", color: S.white, fontWeight: 500 }}>CPU Usage</span>
-                  <span style={{ fontSize: "13px", fontWeight: "bold", color: S.orange, fontFamily: "monospace" }}>{cpuPct.toFixed(1)}%</span>
+            <CardHeader title="Live Server Activity" subtitle="Players currently online and recent console logs" />
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: "20px", marginTop: "4px" }}>
+              {/* Players */}
+              <div style={{ backgroundColor: S.bg, border: `1px solid ${S.border}`, borderRadius: "4px", overflow: "hidden" }}>
+                <div style={{ padding: "10px", borderBottom: `1px solid ${S.border}`, fontSize: "11px", fontWeight: "bold", color: S.muted, display: "flex", justifyContent: "space-between", letterSpacing: "1px" }}>
+                  <span>PLAYERS</span>
+                  <span style={{ color: S.cyan }}>{isOnline ? players.length : 0} ONLINE</span>
                 </div>
-                <div style={{ height: "64px", border: `1px solid ${S.border}`, borderRadius: "4px", overflow: "hidden", position: "relative", backgroundColor: "rgba(0,0,0,0.2)" }}>
-                  {/* Subtle Grid Lines */}
-                  <div style={{ position: "absolute", top: "25%", left: 0, right: 0, borderTop: "1px dashed rgba(255,255,255,0.05)" }} />
-                  <div style={{ position: "absolute", top: "50%", left: 0, right: 0, borderTop: "1px dashed rgba(255,255,255,0.05)" }} />
-                  <div style={{ position: "absolute", top: "75%", left: 0, right: 0, borderTop: "1px dashed rgba(255,255,255,0.05)" }} />
-                  <SparklineChart data={cpuHistory} color={S.chartOrange} gradientId="cpuResources" max={100} height={64} />
-                </div>
-                <span style={{ fontSize: "10px", color: S.muted, marginTop: "4px", display: "block" }}>
-                  {statusData?.maxCpus ? `${statusData.maxCpus} core limit` : "No core limit set"}
-                </span>
-              </div>
-              {/* RAM */}
-              <div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "8px" }}>
-                  <span style={{ fontSize: "12px", color: S.white, fontWeight: 500 }}>Memory Usage</span>
-                  <span style={{ fontSize: "13px", fontWeight: "bold", color: S.cyan, fontFamily: "monospace" }}>
-                    {Math.max(0, (((statusData?.memory || 0) - ramBoostOffset * 1024 * 1024) / (statusData?.maxMemory || 1)) * 100).toFixed(1)}%
-                  </span>
-                </div>
-                <div style={{ height: "64px", border: `1px solid ${S.border}`, borderRadius: "4px", overflow: "hidden", position: "relative", backgroundColor: "rgba(0,0,0,0.2)" }}>
-                  {/* Subtle Grid Lines */}
-                  <div style={{ position: "absolute", top: "25%", left: 0, right: 0, borderTop: "1px dashed rgba(255,255,255,0.05)" }} />
-                  <div style={{ position: "absolute", top: "50%", left: 0, right: 0, borderTop: "1px dashed rgba(255,255,255,0.05)" }} />
-                  <div style={{ position: "absolute", top: "75%", left: 0, right: 0, borderTop: "1px dashed rgba(255,255,255,0.05)" }} />
-                  <SparklineChart data={ramHistory.map((v) => Math.max(0, v - ramBoostOffset / 1024))} color={S.chartBlue} gradientId="ramResources" max={maxRamMb} height={64} />
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "6px" }}>
-                  <span style={{ fontSize: "10px", color: S.muted }}>
-                    {Math.max(0, Math.round(ramMb) - ramBoostOffset)} MB used / {maxRamMb} MB allocated
-                  </span>
-                  <button
-                    onClick={boostRam}
-                    disabled={!mounted || boostingRam || !isOnline}
-                    className="button-hover"
-                    style={{
-                      display: "flex", alignItems: "center", gap: "4px",
-                      padding: "4px 10px",
-                      backgroundColor: boostingRam || !isOnline ? "rgba(255,255,255,0.02)" : "rgba(59,130,246,0.08)",
-                      border: `1px solid ${boostingRam || !isOnline ? S.border : "rgba(59,130,246,0.3)"}`,
-                      borderRadius: "3px",
-                      color: boostingRam || !isOnline ? S.muted : S.cyan,
-                      fontSize: "11px", fontWeight: "bold",
-                      cursor: boostingRam || !isOnline ? "not-allowed" : "pointer",
-                      opacity: isOnline ? 1 : 0.5,
-                      pointerEvents: isOnline ? "auto" : "none",
-                      transition: "all 0.1s",
-                    }}
-                  >
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 2L2 22h20L12 2z" /></svg>
-                    <span>{boostingRam ? "Boosting..." : "Boost RAM"}</span>
-                  </button>
+                <div style={{ height: "240px", overflowY: "auto", padding: "10px", display: "flex", flexDirection: "column", gap: "8px" }}>
+                  {!isOnline ? (
+                    <div style={{ color: S.muted, fontSize: "11px", textAlign: "center", marginTop: "20px" }}>Server offline</div>
+                  ) : players.length === 0 ? (
+                    <div style={{ color: S.muted, fontSize: "11px", textAlign: "center", marginTop: "20px" }}>No players online</div>
+                  ) : (
+                    players.map((p, i) => (
+                      <div key={i} style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "13px", padding: "6px", backgroundColor: "rgba(255,255,255,0.02)", borderRadius: "4px" }}>
+                        <img src={`https://minotar.net/helm/${p.name}/24.png`} alt={p.name} style={{ width: "24px", height: "24px", borderRadius: "3px" }} />
+                        <span>{p.name}</span>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
-            </div>
-          </Card>
-
-          {/* Diagnostics & Telemetry */}
-          <Card>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <CardHeader title="Diagnostics & Telemetry" subtitle="In-game stats & network load" />
-              <button
-                onClick={() => {
-                  setHasStatsMod(!hasStatsMod);
-                  showToast(hasStatsMod ? "Stats Add-on disabled." : "Stats Add-on enabled.", hasStatsMod ? "info" : "success");
-                }}
-                className="tab-hover"
-                style={{
-                  padding: "4px 8px",
-                  backgroundColor: hasStatsMod ? "rgba(16,185,129,0.08)" : "rgba(255,255,255,0.02)",
-                  border: `1px solid ${hasStatsMod ? "rgba(16,185,129,0.3)" : S.border}`,
-                  borderRadius: "3px",
-                  color: hasStatsMod ? S.green : S.cyan,
-                  fontSize: "11px", fontWeight: "bold",
-                  cursor: "pointer",
-                  transition: "all 0.1s",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {hasStatsMod ? "Stats Mod: Active" : "Enable Stats Mod"}
-              </button>
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px" }}>
-              {[
-                { label: "TPS", value: !isOnline ? "–" : (statusData?.tps || 20).toFixed(1), desc: "Target: 20.0", locked: !hasStatsMod && isOnline, color: tpsColor },
-                { label: "Chunks", value: !isOnline ? "–" : (statusData?.loadedChunks || 0).toLocaleString(), desc: "Loaded regions", locked: !hasStatsMod && isOnline, color: S.cyan },
-                { label: "Entities", value: !isOnline ? "–" : (statusData?.loadedEntities || 0).toLocaleString(), desc: "Active mobs/items", locked: !hasStatsMod && isOnline, color: S.orange },
-                { label: "Disk Space", value: fmtBytes(statusData?.diskUsageBytes || 3.46 * 1024 * 1024 * 1024), desc: "World folder size", locked: false, color: S.white },
-                { label: "Net In", value: !isOnline ? "0 B/s" : `${fmtBytes(statusData?.networkIncoming || 0)}/s`, desc: "Download rate", locked: false, color: S.white },
-                { label: "Net Out", value: !isOnline ? "0 B/s" : `${fmtBytes(statusData?.networkOutgoing || 0)}/s`, desc: "Upload rate", locked: false, color: S.white },
-              ].map((c) => (
-                <StatCard key={c.label} label={c.label} value={c.value} desc={c.desc} color={c.color} locked={c.locked} />
-              ))}
+              
+              {/* Console Preview */}
+              <div style={{ backgroundColor: "#111", border: `1px solid ${S.border}`, borderRadius: "4px", overflow: "hidden", display: "flex", flexDirection: "column" }}>
+                <div style={{ padding: "10px", borderBottom: `1px solid ${S.border}`, fontSize: "11px", fontWeight: "bold", color: S.muted, letterSpacing: "1px" }}>
+                  LATEST LOGS
+                </div>
+                <div style={{ height: "240px", overflowY: "auto", padding: "10px", fontFamily: "monospace", fontSize: "11px", color: "#ccc", display: "flex", flexDirection: "column-reverse" }}>
+                  {logs.slice(-30).reverse().map((log, i) => (
+                    <div key={i} style={{ whiteSpace: "pre-wrap", wordBreak: "break-all", borderBottom: "1px solid rgba(255,255,255,0.05)", paddingBottom: "2px", marginBottom: "2px" }}>
+                      {log.replace(/\[\d{2}:\d{2}:\d{2} \w+\]:? /g, "").substring(0, 150)}
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </Card>
         </div>
