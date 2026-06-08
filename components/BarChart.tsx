@@ -12,11 +12,11 @@ export function BarChart({ values, color }: { values: number[]; color: string })
       style={{
         width: "100%",
         height: "100%",
-        backgroundColor: "#111",
+        backgroundColor: "transparent",
         display: "flex",
         alignItems: "flex-end",
-        gap: "1px",
-        padding: "3px",
+        gap: "2px",
+        padding: "0 2px",
         boxSizing: "border-box",
       }}
     >
@@ -27,7 +27,11 @@ export function BarChart({ values, color }: { values: number[]; color: string })
             flex: 1,
             height: `${Math.max(v > 0 ? 2 : 0, v)}%`,
             backgroundColor: color,
-            minWidth: 1,
+            minWidth: "2px",
+            borderTopLeftRadius: "2px",
+            borderTopRightRadius: "2px",
+            opacity: v > 0 ? 0.9 : 0.1,
+            transition: "height 0.3s ease",
           }}
         />
       ))}

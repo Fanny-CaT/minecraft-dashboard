@@ -2065,9 +2065,9 @@ export default function Dashboard() {
         <div
           className="caution-bar"
           style={{
-            backgroundColor: "#fffbeb",
-            borderBottom: "1px solid #fcd34d",
-            color: "#d97706",
+            backgroundColor: "rgba(204, 167, 0, 0.1)",
+            borderBottom: "1px solid #cca700",
+            color: "#cca700",
             padding: "7px 16px",
             fontSize: "12px",
             textAlign: "center",
@@ -2210,7 +2210,7 @@ export default function Dashboard() {
             overflow: "auto",
             margin: "20px",
             border: `1px solid ${S.border}`,
-            boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+            boxShadow: "0 8px 24px rgba(0, 0, 0, 0.4)",
             borderRadius: "8px",
           }}
         >
