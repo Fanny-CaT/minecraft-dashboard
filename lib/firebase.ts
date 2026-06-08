@@ -6,7 +6,7 @@ const firebaseConfig = {
   projectId: "meowtopia-panel-9812",
   appId: "1:924292768830:web:e0cef1bace2a2f74265d6f",
   storageBucket: "meowtopia-panel-9812.firebasestorage.app",
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyBjdtr-yPqd8IiGGYnkaFXdTxcHcSuBo98",
   authDomain: "meowtopia-panel-9812.firebaseapp.com",
   messagingSenderId: "924292768830",
 };
