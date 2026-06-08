@@ -72,10 +72,10 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: S.bg }}>
       <div style={{
-        width: "100%", maxWidth: "400px", padding: "32px",
-        backgroundColor: S.content, borderRadius: "8px",
-        boxShadow: "0 10px 25px rgba(0,0,0,0.5)",
-        border: `1px solid ${S.border}`
+        width: "100%", maxWidth: "420px", padding: "40px", boxSizing: "border-box",
+        backgroundColor: S.content, borderRadius: "12px",
+        boxShadow: "0 25px 50px -12px rgba(0,0,0,0.7)",
+        border: `1px solid rgba(255,255,255,0.05)`
       }}>
         <div className="text-center mb-8">
           <h1 style={{ fontSize: "24px", fontWeight: "bold", color: S.white }}>MeowTopia Panel</h1>
@@ -84,47 +84,57 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <form onSubmit={handleEmailAuth} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+        <form onSubmit={handleEmailAuth} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
           <div>
+            <label style={{ display: "block", marginBottom: "8px", fontSize: "13px", color: S.muted, fontWeight: "500" }}>Email</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Email address"
+              placeholder="admin@example.com"
               style={{
-                width: "100%", padding: "12px 16px",
-                backgroundColor: S.sidebar, border: `1px solid ${S.inputBdr}`,
-                borderRadius: "4px", color: S.white, outline: "none"
+                width: "100%", padding: "12px 16px", boxSizing: "border-box",
+                backgroundColor: "rgba(0,0,0,0.2)", border: `1px solid ${S.border}`,
+                borderRadius: "6px", color: S.white, outline: "none", fontSize: "14px",
+                transition: "border-color 0.2s"
               }}
+              onFocus={(e) => e.target.style.borderColor = S.cyan}
+              onBlur={(e) => e.target.style.borderColor = S.border}
               required
             />
           </div>
           <div>
+            <label style={{ display: "block", marginBottom: "8px", fontSize: "13px", color: S.muted, fontWeight: "500" }}>Password</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password"
+              placeholder="••••••••"
               style={{
-                width: "100%", padding: "12px 16px",
-                backgroundColor: S.sidebar, border: `1px solid ${S.inputBdr}`,
-                borderRadius: "4px", color: S.white, outline: "none"
+                width: "100%", padding: "12px 16px", boxSizing: "border-box",
+                backgroundColor: "rgba(0,0,0,0.2)", border: `1px solid ${S.border}`,
+                borderRadius: "6px", color: S.white, outline: "none", fontSize: "14px",
+                transition: "border-color 0.2s"
               }}
+              onFocus={(e) => e.target.style.borderColor = S.cyan}
+              onBlur={(e) => e.target.style.borderColor = S.border}
               required
             />
           </div>
 
-          {error && <p style={{ color: S.red, fontSize: "14px" }}>{error}</p>}
+          {error && <p style={{ color: S.red, fontSize: "13px", backgroundColor: "rgba(239, 68, 68, 0.1)", padding: "8px 12px", borderRadius: "4px", border: `1px solid rgba(239, 68, 68, 0.2)` }}>{error}</p>}
 
           <button
             type="submit"
             disabled={loading}
+            className="button-hover"
             style={{
-              width: "100%", padding: "12px",
-              backgroundColor: S.cyan, color: "#fff",
-              fontWeight: "bold", borderRadius: "4px",
+              width: "100%", padding: "14px", boxSizing: "border-box",
+              backgroundColor: S.cyan, color: "#111",
+              fontWeight: "600", borderRadius: "6px",
               border: "none", opacity: loading ? 0.7 : 1,
-              marginTop: "8px", cursor: "pointer"
+              marginTop: "4px", cursor: "pointer", fontSize: "14px",
+              boxShadow: `0 4px 14px rgba(0, 200, 220, 0.2)`
             }}
           >
             {loading ? "Authenticating..." : (isSignUp ? "Sign Up" : "Sign In")}
@@ -153,14 +163,17 @@ export default function LoginPage() {
         <button
           onClick={handleGoogleLogin}
           disabled={loading}
+          className="button-hover"
           style={{
-            width: "100%", padding: "12px",
-            backgroundColor: S.white, color: "#000",
-            fontWeight: "bold", borderRadius: "4px",
-            border: "none", opacity: loading ? 0.7 : 1,
-            display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
-            cursor: "pointer"
+            width: "100%", padding: "12px", boxSizing: "border-box",
+            backgroundColor: "transparent", color: S.white,
+            fontWeight: "500", borderRadius: "6px",
+            border: `1px solid ${S.border}`, opacity: loading ? 0.7 : 1,
+            display: "flex", alignItems: "center", justifyContent: "center", gap: "10px",
+            cursor: "pointer", fontSize: "14px", transition: "background-color 0.2s"
           }}
+          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.05)"}
+          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
