@@ -3,6 +3,8 @@
 import React, { useState } from "react";
 import { S } from "@/lib/constants";
 import { Ico } from "@/components/icons";
+import { useContextMenu, ContextMenuAction } from "@/components/ui/ContextMenu";
+import { Shield, ShieldAlert, ShieldOff, Ban, UserCheck, Trash2, Zap, Heart, UserMinus } from "lucide-react";
 
 const OutlineBtn = ({ label, onClick, disabled }: { label: string; onClick: () => void; disabled?: boolean }) => (
   <button
@@ -93,6 +95,45 @@ export default function UsersTab({
   const [kickReasonInput, setKickReasonInput] = useState("");
   const [pardonInput, setPardonInput] = useState("");
   const [pardonIpInput, setPardonIpInput] = useState("");
+
+  const { showMenu } = useContextMenu();
+
+  const handlePlayerContextMenu = (e: React.MouseEvent, p: any, listType: string) => {
+    const actions: ContextMenuAction[] = [];
+
+    if (listType === "ops") {
+      actions.push(
+        { label: "De-OP", icon: <ShieldOff size={14} />, color: S.orange, onClick: () => handleAction(`deop ${p.name}`) },
+        { label: "Add to Whitelist", icon: <UserCheck size={14} />, color: S.cyan, onClick: () => handleAction(`whitelist add ${p.name}`) },
+        { separator: true, label: "", onClick: () => {} },
+        { label: "Ban Player", icon: <Ban size={14} />, color: S.red, onClick: () => handleAction(`ban ${p.name}`) }
+      );
+    } else if (listType === "whitelist") {
+      actions.push(
+        { label: "Make OP", icon: <Shield size={14} />, color: S.green, onClick: () => handleAction(`op ${p.name}`) },
+        { label: "Remove from Whitelist", icon: <UserMinus size={14} />, color: S.orange, onClick: () => handleAction(`whitelist remove ${p.name}`) },
+        { separator: true, label: "", onClick: () => {} },
+        { label: "Ban Player", icon: <Ban size={14} />, color: S.red, onClick: () => handleAction(`ban ${p.name}`) }
+      );
+    } else if (listType === "banned-players") {
+      actions.push({ label: "Pardon (Unban)", icon: <UserCheck size={14} />, color: S.cyan, onClick: () => handleAction(`pardon ${p.name}`) });
+    } else if (listType === "banned-ips") {
+      actions.push({ label: "Pardon IP", icon: <UserCheck size={14} />, color: S.cyan, onClick: () => handleAction(`pardon-ip ${p.ip}`) });
+    } else if (listType === "all-players") {
+      actions.push(
+        { label: "Set Gamemode: Creative", icon: <Zap size={14} />, color: "#a855f7", onClick: () => handleAction(`gamemode creative ${p.name}`) },
+        { label: "Set Gamemode: Survival", icon: <Heart size={14} />, color: S.green, onClick: () => handleAction(`gamemode survival ${p.name}`) },
+        { label: "Give 30 Levels", icon: <Zap size={14} />, color: "#10b981", onClick: () => handleAction(`xp add ${p.name} 30 levels`) },
+        { separator: true, label: "", onClick: () => {} },
+        { label: "Clear Inventory", icon: <Trash2 size={14} />, color: S.orange, onClick: () => handleAction(`clear ${p.name}`) },
+        { label: "Wipe Player Data", icon: <ShieldAlert size={14} />, color: "#ef4444", onClick: () => handleAction(`clear-data ${p.uuid} ${p.name}`) },
+        { separator: true, label: "", onClick: () => {} },
+        { label: "Kill Player", icon: <Trash2 size={14} />, color: S.red, onClick: () => handleAction(`kill ${p.name}`) }
+      );
+    }
+
+    showMenu(e, actions);
+  };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1, height: "100%" }}>
@@ -269,7 +310,12 @@ export default function UsersTab({
                   </tr>
                 ) : (
                   players.map((p) => (
-                    <tr key={p.uuid || p.name || p.ip} className="tab-hover" style={{ borderBottom: `1px solid ${S.border}` }}>
+                    <tr 
+                      key={p.uuid || p.name || p.ip} 
+                      className="tab-hover" 
+                      style={{ borderBottom: `1px solid ${S.border}`, cursor: "context-menu" }}
+                      onContextMenu={(e) => handlePlayerContextMenu(e, p, userList)}
+                    >
                       <td style={{ padding: "8px 12px", fontFamily: "monospace", fontSize: "11.5px", color: S.muted }}>
                         {userList === "banned-ips" ? (p.ip || "–") : (p.uuid || "–")}
                       </td>
@@ -293,31 +339,8 @@ export default function UsersTab({
                         <td style={{ padding: "8px 12px", color: S.muted }}>{p.expiresOn ? p.expiresOn.split(" ")[0] : "–"}</td>
                       )}
                       <td style={{ padding: "8px 12px", textAlign: "right" }}>
-                        <div style={{ display: "flex", gap: "5px", justifyContent: "flex-end", flexWrap: "wrap" }}>
-                          {userList === "ops" && (<>
-                            <button onClick={() => handleAction(`deop ${p.name}`)} className="button-hover" style={{ backgroundColor: "transparent", color: S.orange, border: `1px solid ${S.orange}`, cursor: "pointer", padding: "2px 8px", fontSize: "11px", borderRadius: "2px" }}>De-OP</button>
-                            <button onClick={() => handleAction(`whitelist add ${p.name}`)} className="button-hover" style={{ backgroundColor: "transparent", color: S.cyan, border: `1px solid ${S.cyan}`, cursor: "pointer", padding: "2px 8px", fontSize: "11px", borderRadius: "2px" }}>+Whitelist</button>
-                            <button onClick={() => handleAction(`ban ${p.name}`)} className="button-hover" style={{ backgroundColor: "transparent", color: S.red, border: `1px solid ${S.red}`, cursor: "pointer", padding: "2px 8px", fontSize: "11px", borderRadius: "2px" }}>Ban</button>
-                          </>)}
-                          {userList === "whitelist" && (<>
-                            <button onClick={() => handleAction(`op ${p.name}`)} className="button-hover" style={{ backgroundColor: "transparent", color: S.green, border: `1px solid ${S.green}`, cursor: "pointer", padding: "2px 8px", fontSize: "11px", borderRadius: "2px" }}>OP</button>
-                            <button onClick={() => handleAction(`whitelist remove ${p.name}`)} className="button-hover" style={{ backgroundColor: "transparent", color: S.orange, border: `1px solid ${S.orange}`, cursor: "pointer", padding: "2px 8px", fontSize: "11px", borderRadius: "2px" }}>Remove</button>
-                            <button onClick={() => handleAction(`ban ${p.name}`)} className="button-hover" style={{ backgroundColor: "transparent", color: S.red, border: `1px solid ${S.red}`, cursor: "pointer", padding: "2px 8px", fontSize: "11px", borderRadius: "2px" }}>Ban</button>
-                          </>)}
-                          {userList === "banned-players" && (<>
-                            <button onClick={() => handleAction(`pardon ${p.name}`)} className="button-hover" style={{ backgroundColor: "transparent", color: S.cyan, border: `1px solid ${S.cyan}`, cursor: "pointer", padding: "2px 8px", fontSize: "11px", borderRadius: "2px" }}>Pardon</button>
-                          </>)}
-                          {userList === "banned-ips" && (
-                            <button onClick={() => handleAction(`pardon-ip ${p.ip}`)} className="button-hover" style={{ backgroundColor: "transparent", color: S.cyan, border: `1px solid ${S.cyan}`, cursor: "pointer", padding: "2px 8px", fontSize: "11px", borderRadius: "2px" }}>Pardon IP</button>
-                          )}
-                          {userList === "all-players" && (<>
-                            <button onClick={() => handleAction(`gamemode creative ${p.name}`)} className="button-hover" style={{ backgroundColor: "transparent", color: "#a855f7", border: `1px solid #a855f7`, cursor: "pointer", padding: "2px 8px", fontSize: "11px", borderRadius: "2px" }}>Creative</button>
-                            <button onClick={() => handleAction(`gamemode survival ${p.name}`)} className="button-hover" style={{ backgroundColor: "transparent", color: S.green, border: `1px solid ${S.green}`, cursor: "pointer", padding: "2px 8px", fontSize: "11px", borderRadius: "2px" }}>Survival</button>
-                            <button onClick={() => handleAction(`clear ${p.name}`)} className="button-hover" style={{ backgroundColor: "transparent", color: S.orange, border: `1px solid ${S.orange}`, cursor: "pointer", padding: "2px 8px", fontSize: "11px", borderRadius: "2px" }}>Clear Inv</button>
-                            <button onClick={() => handleAction(`clear-data ${p.uuid} ${p.name}`)} className="button-hover" style={{ backgroundColor: "transparent", color: "#ef4444", border: `1px solid #ef4444`, cursor: "pointer", padding: "2px 8px", fontSize: "11px", borderRadius: "2px" }}>Clear Data</button>
-                            <button onClick={() => handleAction(`kill ${p.name}`)} className="button-hover" style={{ backgroundColor: "transparent", color: S.red, border: `1px solid ${S.red}`, cursor: "pointer", padding: "2px 8px", fontSize: "11px", borderRadius: "2px" }}>Kill</button>
-                            <button onClick={() => handleAction(`xp add ${p.name} 30 levels`)} className="button-hover" style={{ backgroundColor: "transparent", color: "#10b981", border: `1px solid #10b981`, cursor: "pointer", padding: "2px 8px", fontSize: "11px", borderRadius: "2px" }}>+30 LVL</button>
-                          </>)}
+                        <div style={{ fontSize: "11px", color: S.muted }}>
+                          Right-click for options
                         </div>
                       </td>
                     </tr>

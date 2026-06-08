@@ -31,6 +31,7 @@ import { SettingsTab } from "@/components/tabs/SettingsTab";
 import { PluginsTab } from "@/components/tabs/PluginsTab";
 import { ConfigTab } from "@/components/tabs/ConfigTab";
 import { NetworkingTab } from "@/components/tabs/NetworkingTab";
+import { ContextMenuProvider } from "@/components/ui/ContextMenu";
 import UsersTab from "@/components/tabs/UsersTab";
 import { LogsTab } from "@/components/tabs/LogsTab";
 import { BackupsTab } from "@/components/tabs/BackupsTab";
@@ -137,10 +138,19 @@ export default function Dashboard() {
   const [pluginCategory, setPluginCategory] = useState<string>("");
   const [selectedPluginDetails, setSelectedPluginDetails] = useState<any | null>(null);
   const [confirmModal, setConfirmModal] = useState<{ title: string; message: string; resolve: (val: boolean) => void } | null>(null);
+  const [promptModal, setPromptModal] = useState<{ title: string; label: string; defaultValue: string; resolve: (val: string | null) => void } | null>(null);
+  const [promptValue, setPromptValue] = useState("");
 
   const confirmAction = (title: string, message: string): Promise<boolean> => {
     return new Promise((resolve) => {
       setConfirmModal({ title, message, resolve });
+    });
+  };
+
+  const promptAction = (title: string, label: string, defaultValue = ""): Promise<string | null> => {
+    return new Promise((resolve) => {
+      setPromptValue(defaultValue);
+      setPromptModal({ title, label, defaultValue, resolve });
     });
   };
   const [filterProvider, setFilterProvider] = useState<string>("all");
@@ -1407,15 +1417,15 @@ export default function Dashboard() {
   const navItems: { id: Tab; label: string; icon: React.ReactNode }[] = [
     { id: "status", label: "Dashboard", icon: <LayoutDashboard size={18} /> },
     { id: "console", label: "Console", icon: <Terminal size={18} /> },
-    { id: "users", label: "Players", icon: <Users size={18} /> },
+    { id: "logs", label: "Logs", icon: <ScrollText size={18} /> },
     { id: "files", label: "Files", icon: <FolderOpen size={18} /> },
-    { id: "software", label: "Software", icon: <Cpu size={18} /> },
     { id: "plugins", label: "Plugins", icon: <Puzzle size={18} /> },
-    { id: "settings", label: "Settings", icon: <Settings size={18} /> },
+    { id: "users", label: "Players", icon: <Users size={18} /> },
+    { id: "backups", label: "Backups", icon: <Archive size={18} /> },
     { id: "config", label: "Files: Config", icon: <FileCog size={18} /> },
     { id: "networking", label: "Network", icon: <Network size={18} /> },
-    { id: "logs", label: "Logs", icon: <ScrollText size={18} /> },
-    { id: "backups", label: "Backups", icon: <Archive size={18} /> },
+    { id: "software", label: "Software", icon: <Cpu size={18} /> },
+    { id: "settings", label: "Settings", icon: <Settings size={18} /> },
     ...(role === "admin" ? [{ id: "panel-users" as Tab, label: "Panel Access", icon: <ShieldAlert size={18} /> }] : []),
   ];
 
@@ -1898,8 +1908,9 @@ export default function Dashboard() {
   };
 
   return (
-    <div
-      style={{
+    <ContextMenuProvider>
+      <div
+        style={{
         height: "100vh",
         maxHeight: "100vh",
         overflow: "hidden",
@@ -2348,6 +2359,8 @@ export default function Dashboard() {
               doDelete={doDelete}
               doRename={doRename}
               doMove={doMove}
+              promptAction={promptAction}
+              confirmAction={confirmAction}
             />
           )}
 
@@ -2752,6 +2765,67 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+      {promptModal && (
+        <div
+          style={{
+            position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.75)", backdropFilter: "blur(4px)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            zIndex: 10000, padding: "20px"
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: S.sidebar, border: `1px solid ${S.border}`,
+              borderRadius: "8px", width: "100%", maxWidth: "400px",
+              boxShadow: "0 10px 30px rgba(0,0,0,0.5)",
+              display: "flex", flexDirection: "column", overflow: "hidden"
+            }}
+          >
+            <div style={{ backgroundColor: "rgba(0, 200, 220, 0.1)", padding: "16px 20px", borderBottom: `1px solid ${S.border}` }}>
+              <div style={{ color: S.cyan, fontWeight: "bold", fontSize: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
+                ✏️ {promptModal.title}
+              </div>
+            </div>
+            <div style={{ padding: "20px", display: "flex", flexDirection: "column", gap: "10px" }}>
+              <label style={{ color: S.muted, fontSize: "13px" }}>{promptModal.label}</label>
+              <input 
+                type="text" 
+                value={promptValue} 
+                onChange={(e) => setPromptValue(e.target.value)} 
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    promptModal.resolve(promptValue);
+                    setPromptModal(null);
+                  }
+                }}
+                autoFocus
+                style={{
+                  backgroundColor: S.input, border: `1px solid ${S.inputBdr}`, color: S.white,
+                  padding: "8px 12px", borderRadius: "4px", fontSize: "14px", outline: "none", width: "100%"
+                }}
+              />
+            </div>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", padding: "16px 20px", borderTop: `1px solid ${S.border}`, backgroundColor: "rgba(255,255,255,0.02)" }}>
+              <button
+                onClick={() => { promptModal.resolve(null); setPromptModal(null); }}
+                style={{ backgroundColor: "transparent", color: S.muted, border: `1px solid ${S.border}`, padding: "8px 16px", borderRadius: "4px", fontSize: "13px", cursor: "pointer", fontWeight: "bold" }}
+                className="button-hover"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => { promptModal.resolve(promptValue); setPromptModal(null); }}
+                style={{ backgroundColor: S.cyan, color: "#1a1a1a", border: "none", padding: "8px 16px", borderRadius: "4px", fontSize: "13px", cursor: "pointer", fontWeight: "bold" }}
+                className="button-hover"
+              >
+                Submit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
+    </ContextMenuProvider>
   );
 }

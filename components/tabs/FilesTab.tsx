@@ -2,6 +2,8 @@ import React from "react";
 import { Ico } from "@/components/icons";
 import { S } from "@/lib/constants";
 import { fmtFileSize } from "@/lib/utils";
+import { useContextMenu, ContextMenuAction } from "@/components/ui/ContextMenu";
+import { FileDown, Edit, Move, Trash2 } from "lucide-react";
 
 interface FilesTabProps {
   TabHeader: any;
@@ -47,6 +49,8 @@ interface FilesTabProps {
   doDelete: any;
   doRename: (file: any, newName: string) => void;
   doMove: (file: any, newPath: string) => void;
+  promptAction: (title: string, label: string, defaultValue?: string) => Promise<string | null>;
+  confirmAction: (title: string, message: string) => Promise<boolean>;
 }
 
 
@@ -92,8 +96,60 @@ export const FilesTab: React.FC<FilesTabProps> = ({
   downloadFile,
   doDelete,
   doRename,
-  doMove
+  doMove,
+  promptAction,
+  confirmAction
 }) => {
+  const { showMenu } = useContextMenu();
+
+  const handleContextMenu = (e: React.MouseEvent, file: any) => {
+    const actions: ContextMenuAction[] = [];
+    if (file.isFile) {
+      actions.push({
+        label: "Download",
+        icon: <FileDown size={14} />,
+        color: S.cyan,
+        onClick: () => downloadFile(file)
+      });
+      actions.push({ separator: true, label: "", onClick: () => {} });
+    }
+    
+    actions.push(
+      {
+        label: "Rename",
+        icon: <Edit size={14} />,
+        color: S.orange,
+        onClick: async () => {
+          const newName = await promptAction(`Rename ${file.name}`, "Enter new name:", file.name);
+          if (newName && newName !== file.name) doRename(file, newName);
+        }
+      },
+      {
+        label: "Move",
+        icon: <Move size={14} />,
+        color: S.purple,
+        onClick: async () => {
+          const defaultPath = currentPath ? `${currentPath}/${file.name}` : file.name;
+          const newPath = await promptAction(`Move ${file.name}`, "Enter new destination path:", defaultPath);
+          if (newPath && newPath !== defaultPath) doMove(file, newPath);
+        }
+      },
+      { separator: true, label: "", onClick: () => {} },
+      {
+        label: "Delete",
+        icon: <Trash2 size={14} />,
+        color: "#aa4444",
+        onClick: async () => {
+          if (await confirmAction("Delete File", `Are you sure you want to delete ${file.name}?`)) {
+            doDelete(file);
+          }
+        }
+      }
+    );
+
+    showMenu(e, actions);
+  };
+
   return (
     <>
       
@@ -442,7 +498,6 @@ export const FilesTab: React.FC<FilesTabProps> = ({
                             <th style={{ padding: "8px 6px" }}>File Name</th>
                             <th style={{ padding: "8px 6px", width: "100px" }}>Size</th>
                             <th style={{ padding: "8px 6px", width: "160px" }}>Modified</th>
-                            <th style={{ padding: "8px 6px", width: "150px", textAlign: "right" }}>Actions</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -486,6 +541,7 @@ export const FilesTab: React.FC<FilesTabProps> = ({
                                     borderBottom: `1px solid ${S.border}`,
                                     backgroundColor: isChecked ? "rgba(0,200,220,0.05)" : undefined,
                                   }}
+                                  onContextMenu={(e) => handleContextMenu(e, file)}
                                 >
                                   {/* Checkbox */}
                                   <td style={{ padding: "9px 6px" }}>
@@ -520,46 +576,6 @@ export const FilesTab: React.FC<FilesTabProps> = ({
                                   {/* Modified */}
                                   <td style={{ padding: "9px 6px", color: S.muted }}>
                                     {file.modifyTime ? new Date(file.modifyTime * 1000).toLocaleString() : "–"}
-                                  </td>
-                                  {/* Actions */}
-                                  <td style={{ padding: "9px 6px", textAlign: "right", display: "flex", gap: "6px", justifyContent: "flex-end" }}>
-                                    {file.isFile && (
-                                      <button
-                                        onClick={() => downloadFile(file)}
-                                        className="button-hover"
-                                        style={{ backgroundColor: "transparent", color: S.cyan, border: "none", cursor: "pointer", fontSize: "11px", textDecoration: "underline" }}
-                                      >
-                                        Download
-                                      </button>
-                                    )}
-                                    <button
-                                      onClick={() => {
-                                        const newName = window.prompt(`Enter new name for ${file.name}:`, file.name);
-                                        if (newName && newName !== file.name) doRename(file, newName);
-                                      }}
-                                      className="button-hover"
-                                      style={{ backgroundColor: "transparent", color: S.orange, border: "none", cursor: "pointer", fontSize: "11px", textDecoration: "underline" }}
-                                    >
-                                      Rename
-                                    </button>
-                                    <button
-                                      onClick={() => {
-                                        const defaultPath = currentPath ? `${currentPath}/${file.name}` : file.name;
-                                        const newPath = window.prompt(`Enter new destination path for ${file.name}:`, defaultPath);
-                                        if (newPath && newPath !== defaultPath) doMove(file, newPath);
-                                      }}
-                                      className="button-hover"
-                                      style={{ backgroundColor: "transparent", color: S.purple, border: "none", cursor: "pointer", fontSize: "11px", textDecoration: "underline" }}
-                                    >
-                                      Move
-                                    </button>
-                                    <button
-                                      onClick={() => doDelete(file)}
-                                      className="button-hover"
-                                      style={{ backgroundColor: "transparent", color: "#aa4444", border: "none", cursor: "pointer", fontSize: "11px", textDecoration: "underline" }}
-                                    >
-                                      Delete
-                                    </button>
                                   </td>
                                 </tr>
                               );
