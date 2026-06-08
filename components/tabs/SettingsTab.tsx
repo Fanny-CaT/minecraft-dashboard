@@ -1,7 +1,7 @@
 import React from "react";
 import { S } from "@/lib/constants";
 import { StatusData } from "@/lib/types";
-import { Card, CardHeader } from "./StatusTab";
+import { Card, CardHeader } from "@/components/ui/Cards";
 
 interface SettingsTabProps {
   statusData: StatusData | null;

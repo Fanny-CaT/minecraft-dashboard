@@ -23,7 +23,8 @@
     "prismarine-nbt": "^2.8.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
-    "ssh2-sftp-client": "^12.1.1"
+    "ssh2-sftp-client": "^12.1.1",
+    "zustand": "^5.0.14"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

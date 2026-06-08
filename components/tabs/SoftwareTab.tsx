@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { S } from "@/lib/constants";
-import { Card, CardHeader } from "./StatusTab";
+import { Card, CardHeader } from "@/components/ui/Cards";
 
 // ─── Supported Providers & Versions ──────────────────────────────────────────
 
