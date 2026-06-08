@@ -45,6 +45,8 @@ interface FilesTabProps {
   fmtFileSize: any;
   downloadFile: any;
   doDelete: any;
+  doRename: (file: any, newName: string) => void;
+  doMove: (file: any, newPath: string) => void;
 }
 
 
@@ -88,7 +90,9 @@ export const FilesTab: React.FC<FilesTabProps> = ({
   currentPath,
   fmtFileSize,
   downloadFile,
-  doDelete
+  doDelete,
+  doRename,
+  doMove
 }) => {
   return (
     <>
@@ -159,9 +163,9 @@ export const FilesTab: React.FC<FilesTabProps> = ({
                 <div
                   style={{
                     padding: "7px 18px",
-                    backgroundColor: "#2a1111",
-                    borderBottom: `1px solid #553333`,
-                    color: "#cc6666",
+                    backgroundColor: "rgba(239, 68, 68, 0.1)",
+                    borderBottom: `1px solid rgba(239, 68, 68, 0.3)`,
+                    color: S.red,
                     fontSize: "12px",
                     display: "flex",
                     justifyContent: "space-between",
@@ -170,7 +174,7 @@ export const FilesTab: React.FC<FilesTabProps> = ({
                   <span>{fileError}</span>
                   <button
                     onClick={() => setFileError("")}
-                    style={{ background: "none", border: "none", color: "#cc6666", cursor: "pointer" }}
+                    style={{ background: "none", border: "none", color: S.red, cursor: "pointer" }}
                   >
                     ×
                   </button>
@@ -182,7 +186,7 @@ export const FilesTab: React.FC<FilesTabProps> = ({
                 <div
                   style={{
                     margin: "14px 18px 0",
-                    backgroundColor: "#242424",
+                    backgroundColor: S.content,
                     border: `1px solid ${S.border}`,
                     padding: "10px 14px",
                     fontSize: "12.5px",
@@ -234,7 +238,7 @@ export const FilesTab: React.FC<FilesTabProps> = ({
                     style={{
                       flex: 1,
                       minHeight: "400px",
-                      backgroundColor: "#111",
+                      backgroundColor: S.bg,
                       color: "#ccc",
                       border: `1px solid ${S.border}`,
                       padding: "10px",
@@ -455,8 +459,20 @@ export const FilesTab: React.FC<FilesTabProps> = ({
                           )}
                           {filtered.length === 0 ? (
                             <tr>
-                              <td colSpan={5} style={{ color: S.muted, fontStyle: "italic", padding: "16px 6px", textAlign: "center" }}>
-                                {files.length === 0 ? "This directory is empty." : "No files match your filter."}
+                              <td colSpan={5} style={{ padding: "40px 20px", textAlign: "center" }}>
+                                {files.length === 0 ? (
+                                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "12px", color: S.muted }}>
+                                    <div style={{ fontSize: "40px", opacity: 0.5 }}>📂</div>
+                                    <h3 style={{ margin: 0, color: S.white, fontSize: "16px", fontWeight: "bold" }}>This directory is empty</h3>
+                                    <p style={{ margin: 0, fontSize: "13px", maxWidth: "250px" }}>There are no files or folders here. You can create a new file to get started.</p>
+                                    <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
+                                      <Btn label="New File" color={S.cyan} onClick={() => setShowNewFile(true)} />
+                                      <OutlineBtn label="New Folder" onClick={() => setShowNewFolder(true)} />
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div style={{ color: S.muted, fontSize: "13px" }}>No files match your search filter.</div>
+                                )}
                               </td>
                             </tr>
                           ) : (
@@ -516,6 +532,27 @@ export const FilesTab: React.FC<FilesTabProps> = ({
                                         Download
                                       </button>
                                     )}
+                                    <button
+                                      onClick={() => {
+                                        const newName = window.prompt(`Enter new name for ${file.name}:`, file.name);
+                                        if (newName && newName !== file.name) doRename(file, newName);
+                                      }}
+                                      className="button-hover"
+                                      style={{ backgroundColor: "transparent", color: S.orange, border: "none", cursor: "pointer", fontSize: "11px", textDecoration: "underline" }}
+                                    >
+                                      Rename
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        const defaultPath = currentPath ? `${currentPath}/${file.name}` : file.name;
+                                        const newPath = window.prompt(`Enter new destination path for ${file.name}:`, defaultPath);
+                                        if (newPath && newPath !== defaultPath) doMove(file, newPath);
+                                      }}
+                                      className="button-hover"
+                                      style={{ backgroundColor: "transparent", color: S.purple, border: "none", cursor: "pointer", fontSize: "11px", textDecoration: "underline" }}
+                                    >
+                                      Move
+                                    </button>
                                     <button
                                       onClick={() => doDelete(file)}
                                       className="button-hover"

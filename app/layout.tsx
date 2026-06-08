@@ -1,5 +1,8 @@
 import type { Metadata, Viewport } from "next";
+import { Inter } from "next/font/google";
 import "./globals.css";
+
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
   title: "MeowTopia — Minecraft Control Panel",
@@ -58,8 +61,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" style={{ height: "100%", backgroundColor: "#1a1a1a" }}>
-      <body style={{ margin: 0, padding: 0, height: "100%", backgroundColor: "#1a1a1a" }}>
+    <html lang="en" className={`${inter.variable} ${inter.className}`} style={{ height: "100%", backgroundColor: "var(--bg-base)" }}>
+      <body style={{ margin: 0, padding: 0, height: "100%", backgroundColor: "var(--bg-base)", color: "var(--text-primary)" }}>
         <AuthProvider>
           <main style={{ height: "100%" }}>
             {children}

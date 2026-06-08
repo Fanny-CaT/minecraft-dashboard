@@ -65,7 +65,7 @@ export function LogsTab({
       {/* Body: sidebar + viewer */}
       <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
         {/* File list sidebar */}
-        <div style={{ width: "210px", flexShrink: 0, borderRight: `1px solid ${S.border}`, overflowY: "auto", backgroundColor: "#171717" }}>
+        <div style={{ width: "210px", flexShrink: 0, borderRight: `1px solid ${S.border}`, overflowY: "auto", backgroundColor: S.bg }}>
           <div style={{ padding: "8px 12px 4px", fontSize: "10px", color: S.muted, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em" }}>
             Log Files
           </div>
@@ -122,7 +122,7 @@ export function LogsTab({
             <div
               style={{
                 flex: 1,
-                backgroundColor: "#111",
+                backgroundColor: S.bg,
                 margin: "12px",
                 border: `1px solid ${S.border}`,
                 padding: "12px 14px",

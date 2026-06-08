@@ -55,7 +55,7 @@ export function BackupsTab({
           <div
             style={{
               border: `1px solid ${S.border}`,
-              backgroundColor: "#242424",
+              backgroundColor: S.content,
               padding: "30px 20px",
               textAlign: "center",
               color: S.muted,
@@ -79,7 +79,7 @@ export function BackupsTab({
           <div
             style={{
               border: `1px solid ${S.border}`,
-              backgroundColor: "#242424",
+              backgroundColor: S.content,
               borderRadius: "3px",
               overflow: "hidden",
             }}
@@ -89,7 +89,7 @@ export function BackupsTab({
             </div>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12.5px", textAlign: "left" }}>
               <thead>
-                <tr style={{ borderBottom: `1px solid ${S.border}`, backgroundColor: "#1e1e1e", color: S.muted }}>
+                <tr style={{ borderBottom: `1px solid ${S.border}`, backgroundColor: S.content, color: S.muted }}>
                   <th style={{ padding: "10px 14px" }}>Archive Filename</th>
                   <th style={{ padding: "10px 14px", width: "120px" }}>Size</th>
                   <th style={{ padding: "10px 14px", width: "180px" }}>Created</th>

@@ -27,7 +27,7 @@ export function Card({
   return (
     <div
       style={{
-        backgroundColor: "#1c1c1c",
+        backgroundColor: S.content,
         border: `1px solid ${S.border}`,
         padding: "20px",
         borderRadius: "4px",
@@ -67,7 +67,7 @@ function StatCard({ label, value, desc, color = S.white, locked = false }: StatC
     <div
       style={{
         position: "relative",
-        backgroundColor: "#161616",
+        backgroundColor: S.bg,
         border: `1px solid ${S.border}`,
         borderRadius: "3px",
         padding: "16px",
@@ -131,7 +131,7 @@ function SparkCard({ title, value, sub, valueColor, data, sparkColor, gradientId
   return (
     <div
       style={{
-        backgroundColor: "#161616",
+        backgroundColor: S.bg,
         border: `1px solid ${S.border}`,
         borderRadius: "3px",
         padding: "16px",
@@ -257,7 +257,7 @@ export function StatusTab({
             {/* SERVER STATUS HERO CARD */}
             <div
               style={{
-                backgroundColor: "#1c1c1c",
+                backgroundColor: S.content,
                 border: `1px solid ${S.border}`,
                 borderRadius: "4px",
                 padding: "20px 24px",
@@ -527,8 +527,12 @@ export function StatusTab({
                   <span style={{ fontSize: "12px", color: S.white, fontWeight: 500 }}>CPU Usage</span>
                   <span style={{ fontSize: "13px", fontWeight: "bold", color: S.orange, fontFamily: "monospace" }}>{cpuPct.toFixed(1)}%</span>
                 </div>
-                <div style={{ height: "60px", border: `1px solid ${S.border}`, overflow: "hidden" }}>
-                  <BarChart values={cpuHistory} color={S.chartOrange} />
+                <div style={{ height: "64px", border: `1px solid ${S.border}`, borderRadius: "4px", overflow: "hidden", position: "relative", backgroundColor: "rgba(0,0,0,0.2)" }}>
+                  {/* Subtle Grid Lines */}
+                  <div style={{ position: "absolute", top: "25%", left: 0, right: 0, borderTop: "1px dashed rgba(255,255,255,0.05)" }} />
+                  <div style={{ position: "absolute", top: "50%", left: 0, right: 0, borderTop: "1px dashed rgba(255,255,255,0.05)" }} />
+                  <div style={{ position: "absolute", top: "75%", left: 0, right: 0, borderTop: "1px dashed rgba(255,255,255,0.05)" }} />
+                  <SparklineChart data={cpuHistory} color={S.chartOrange} gradientId="cpuResources" max={100} height={64} />
                 </div>
                 <span style={{ fontSize: "10px", color: S.muted, marginTop: "4px", display: "block" }}>
                   {statusData?.maxCpus ? `${statusData.maxCpus} core limit` : "No core limit set"}
@@ -542,8 +546,12 @@ export function StatusTab({
                     {Math.max(0, (((statusData?.memory || 0) - ramBoostOffset * 1024 * 1024) / (statusData?.maxMemory || 1)) * 100).toFixed(1)}%
                   </span>
                 </div>
-                <div style={{ height: "60px", border: `1px solid ${S.border}`, overflow: "hidden" }}>
-                  <BarChart values={ramHistory.map((v) => Math.max(0, v - ramBoostOffset / 1024))} color={S.chartBlue} />
+                <div style={{ height: "64px", border: `1px solid ${S.border}`, borderRadius: "4px", overflow: "hidden", position: "relative", backgroundColor: "rgba(0,0,0,0.2)" }}>
+                  {/* Subtle Grid Lines */}
+                  <div style={{ position: "absolute", top: "25%", left: 0, right: 0, borderTop: "1px dashed rgba(255,255,255,0.05)" }} />
+                  <div style={{ position: "absolute", top: "50%", left: 0, right: 0, borderTop: "1px dashed rgba(255,255,255,0.05)" }} />
+                  <div style={{ position: "absolute", top: "75%", left: 0, right: 0, borderTop: "1px dashed rgba(255,255,255,0.05)" }} />
+                  <SparklineChart data={ramHistory.map((v) => Math.max(0, v - ramBoostOffset / 1024))} color={S.chartBlue} gradientId="ramResources" max={maxRamMb} height={64} />
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "6px" }}>
                   <span style={{ fontSize: "10px", color: S.muted }}>

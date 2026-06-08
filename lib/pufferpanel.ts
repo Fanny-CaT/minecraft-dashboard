@@ -245,30 +245,27 @@ export async function createFolder(path: string): Promise<void> {
 
 export async function deleteFile(path: string): Promise<void> {
   const clean = path.replace(/^\//, "");
-  try {
-    const res = await pufferFetch(`/file/${clean}`, { method: "DELETE" });
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(`Delete failed: ${res.status} — ${text}`);
-    }
-  } catch (err: any) {
-    const errMsg = err?.message || String(err);
-    if (errMsg.includes("not a directory") || errMsg.includes("readdirent")) {
-      console.warn(`[deleteFile] Direct delete failed on file, truncating as workaround:`, err);
-      // Fallback: overwrite the file with empty content to effectively "delete" it
-      // If it's a JSON file, write an empty array to prevent parse errors
-      // If it's a jar/zip file, write a valid empty zip archive to prevent java ZipException
-      let content: string | Buffer = '';
-      if (path.endsWith('.json')) {
-        content = '[]';
-      } else if (path.endsWith('.jar') || path.endsWith('.zip')) {
-        content = Buffer.from("UEsFBgAAAAAAAAAAAAAAAAAAAAAAAA==", "base64");
+  const res = await pufferFetch(`/file/${clean}`, { method: "DELETE" });
+  if (!res.ok) {
+    const text = await res.text();
+    
+    // Check for the known PufferPanel daemon bug where it fails to delete files
+    // because it unconditionally calls ReadDir (which throws "readdirent... not a directory")
+    if (res.status === 500 && text.includes("readdirent") && text.includes("not a directory")) {
+      console.warn(`[pufferpanel] Caught known daemon delete bug for ${path}. Falling back to 0-byte truncate.`);
+      // Truncate the file to 0 bytes to "soft delete" it since actual deletion fails
+      const truncateRes = await pufferFetch(`/file/${clean}`, { 
+        method: "PUT", 
+        headers: { "Content-Type": "text/plain" },
+        body: "" 
+      });
+      if (!truncateRes.ok) {
+        throw new Error(`Delete (fallback truncate) failed: ${truncateRes.status} — ${await truncateRes.text()}`);
       }
-      await writeFile(path, content);
-    } else {
-      // Re-throw if it's a directory or some other error, preventing directory corruption
-      throw err;
+      return;
     }
+
+    throw new Error(`Delete failed: ${res.status} — ${text}`);
   }
 }
 

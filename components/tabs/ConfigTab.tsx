@@ -110,9 +110,9 @@ export function ConfigTab({
         <div
           style={{
             padding: "7px 18px",
-            backgroundColor: "#2a1111",
-            borderBottom: `1px solid #553333`,
-            color: "#cc6666",
+            backgroundColor: "rgba(239, 68, 68, 0.1)",
+            borderBottom: `1px solid rgba(239, 68, 68, 0.3)`,
+            color: S.red,
             fontSize: "12px",
           }}
         >
@@ -125,7 +125,7 @@ export function ConfigTab({
           <>
             <div
               style={{
-                backgroundColor: "#242424",
+                backgroundColor: S.content,
                 border: `1px solid ${S.border}`,
                 padding: "12px 14px",
                 display: "flex",
@@ -165,7 +165,7 @@ export function ConfigTab({
               <div
                 style={{
                   border: `1px solid ${S.border}`,
-                  backgroundColor: "#1e1e1e",
+                  backgroundColor: S.content,
                   borderRadius: "3px",
                   overflow: "hidden",
                 }}
@@ -175,7 +175,7 @@ export function ConfigTab({
                     <tr
                       style={{
                         borderBottom: `1px solid ${S.border}`,
-                        backgroundColor: "#161616",
+                        backgroundColor: S.bg,
                         color: S.muted,
                         textAlign: "left",
                       }}
@@ -400,7 +400,7 @@ export function ConfigTab({
           <div style={{ maxWidth: "800px", width: "100%", margin: "0 auto" }}>
             <div
               style={{
-                backgroundColor: "#242424",
+                backgroundColor: S.content,
                 border: `1px solid ${S.border}`,
                 padding: "20px",
                 borderRadius: "3px",

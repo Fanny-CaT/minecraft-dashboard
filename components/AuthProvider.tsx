@@ -67,37 +67,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center flex-col gap-6" style={{ backgroundColor: S.bg, color: S.white }}>
+      <div className="min-h-screen flex items-center justify-center flex-col gap-8" style={{ backgroundColor: S.bg, color: S.white }}>
         <style dangerouslySetInnerHTML={{ __html: `
-          @keyframes meowPulse {
-            0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 20px ${S.cyan}40; }
-            50% { opacity: 0.6; transform: scale(0.92); box-shadow: 0 0 40px ${S.cyan}20; }
+          .cube-grid {
+            width: 50px;
+            height: 50px;
+            margin: 0 auto;
           }
-          @keyframes shimmer {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
+          .cube-grid .cube {
+            width: 33.33%;
+            height: 33.33%;
+            background-color: ${S.cyan};
+            float: left;
+            animation: cubeGridScaleDelay 1.3s infinite ease-in-out;
+            box-shadow: inset 0 0 0 1px rgba(0,0,0,0.2);
+          }
+          .cube-grid .cube1 { animation-delay: 0.2s; }
+          .cube-grid .cube2 { animation-delay: 0.3s; }
+          .cube-grid .cube3 { animation-delay: 0.4s; }
+          .cube-grid .cube4 { animation-delay: 0.1s; }
+          .cube-grid .cube5 { animation-delay: 0.2s; }
+          .cube-grid .cube6 { animation-delay: 0.3s; }
+          .cube-grid .cube7 { animation-delay: 0.0s; }
+          .cube-grid .cube8 { animation-delay: 0.1s; }
+          .cube-grid .cube9 { animation-delay: 0.2s; }
+
+          @keyframes cubeGridScaleDelay {
+            0%, 70%, 100% { transform: scale3D(1, 1, 1); }
+            35% { transform: scale3D(0, 0, 1); }
           }
         `}} />
         
-        {/* Animated Logo Block */}
-        <div style={{
-          width: "60px", height: "60px", 
-          backgroundColor: S.cyan, 
-          borderRadius: "14px",
-          animation: "meowPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
-        }} />
-        
-        {/* Skeleton Bars */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "10px", width: "160px", alignItems: "center" }}>
-          <div style={{ height: "8px", width: "100%", backgroundColor: S.sidebar, borderRadius: "4px", overflow: "hidden", position: "relative" }}>
-             <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, background: `linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent)`, animation: "shimmer 1.5s infinite" }} />
-          </div>
-          <div style={{ height: "8px", width: "60%", backgroundColor: S.sidebar, borderRadius: "4px", overflow: "hidden", position: "relative" }}>
-             <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, background: `linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent)`, animation: "shimmer 1.5s infinite" }} />
-          </div>
+        <div className="cube-grid">
+          <div className="cube cube1"></div>
+          <div className="cube cube2"></div>
+          <div className="cube cube3"></div>
+          <div className="cube cube4"></div>
+          <div className="cube cube5"></div>
+          <div className="cube cube6"></div>
+          <div className="cube cube7"></div>
+          <div className="cube cube8"></div>
+          <div className="cube cube9"></div>
         </div>
         
-        <p style={{ marginTop: "4px", fontSize: "11px", color: S.muted, fontWeight: "bold", letterSpacing: "2px", textTransform: "uppercase" }}>
+        <p style={{ fontSize: "11px", color: S.muted, fontWeight: "bold", letterSpacing: "3px", textTransform: "uppercase" }}>
           Authenticating
         </p>
       </div>

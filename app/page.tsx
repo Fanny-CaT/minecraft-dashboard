@@ -337,21 +337,22 @@ export default function Dashboard() {
           let lines: string[] = [];
 
           if (d && Array.isArray(d.args)) {
-            lines = d.args.map(stripAnsi);
+            lines = d.args.map(String);
           } else if (d && typeof d.data === "string") {
-            lines = [stripAnsi(d.data)];
+            lines = [d.data];
           } else if (d && typeof d.logs === "string") {
-            lines = d.logs.split("\n").map((l: string) => l.trimEnd()).filter(Boolean).map(stripAnsi);
+            lines = d.logs.split("\n").map((l: string) => l.trimEnd()).filter(Boolean);
           } else if (d && d.event === "console" && Array.isArray(d.args)) {
-            lines = d.args.map(stripAnsi);
+            lines = d.args.map(String);
           }
 
           if (lines.length > 0) {
             setLogs((p) => [...p, ...lines].slice(-500));
 
-            // Feed chat tab
+            // Feed chat tab — Batched update
+            const newChatMessages: { player: string; msg: string; ts: string }[] = [];
             for (const line of lines) {
-              const m = CHAT_RE.exec(line);
+              const m = CHAT_RE.exec(stripAnsi(line));
               if (m) {
                 const sender = m[1] || m[2];
                 const msgText = m[3];
@@ -360,21 +361,19 @@ export default function Dashboard() {
                   sentMessages.current = sentMessages.current.filter((item) => item !== msgText);
                   continue;
                 }
-                setChatMessages((c) =>
-                  [
-                    ...c,
-                    {
-                      player: sender,
-                      msg: msgText,
-                      ts: new Date().toLocaleTimeString(),
-                    },
-                  ].slice(-200)
-                );
+                newChatMessages.push({
+                  player: sender,
+                  msg: msgText,
+                  ts: new Date().toLocaleTimeString(),
+                });
               }
+            }
+            if (newChatMessages.length > 0) {
+              setChatMessages((c) => [...c, ...newChatMessages].slice(-200));
             }
           }
         } catch {
-          if (typeof e.data === "string") setLogs((p) => [...p, stripAnsi(e.data)].slice(-500));
+          if (typeof e.data === "string") setLogs((p) => [...p, e.data].slice(-500));
         }
       };
 
@@ -419,8 +418,7 @@ export default function Dashboard() {
           const lines = data.logs
             .split("\n")
             .map((l: string) => l.trimEnd())
-            .filter(Boolean)
-            .map(stripAnsi);
+            .filter(Boolean);
           if (lines.length > 0) {
             setLogs((p) => {
               if (isFirstPollRef.current) {
@@ -431,9 +429,10 @@ export default function Dashboard() {
               }
             });
 
-            // Feed chat tab
+            // Feed chat tab — Batched update
+            const newChatMessages: { player: string; msg: string; ts: string }[] = [];
             for (const line of lines) {
-              const m = CHAT_RE.exec(line);
+              const m = CHAT_RE.exec(stripAnsi(line));
               if (m) {
                 const sender = m[1] || m[2];
                 const msgText = m[3];
@@ -442,17 +441,15 @@ export default function Dashboard() {
                   sentMessages.current = sentMessages.current.filter((item) => item !== msgText);
                   continue;
                 }
-                setChatMessages((c) =>
-                  [
-                    ...c,
-                    {
-                      player: sender,
-                      msg: msgText,
-                      ts: new Date().toLocaleTimeString(),
-                    },
-                  ].slice(-200)
-                );
+                newChatMessages.push({
+                  player: sender,
+                  msg: msgText,
+                  ts: new Date().toLocaleTimeString(),
+                });
               }
+            }
+            if (newChatMessages.length > 0) {
+              setChatMessages((c) => [...c, ...newChatMessages].slice(-200));
             }
           }
         }
@@ -473,10 +470,14 @@ export default function Dashboard() {
     };
   }, [wsMode]);
 
+  const [autoScroll, setAutoScroll] = useState(true);
+
   // Auto scroll console
   useEffect(() => {
-    consoleEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [logs]);
+    if (autoScroll) {
+      consoleEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [logs, autoScroll]);
 
   // ─────────────────────────────────────────────────────────────────────────────
   // Console / command commands
@@ -669,6 +670,45 @@ export default function Dashboard() {
     }
   };
 
+  const doRename = async (f: FileEntry, newName: string) => {
+    const oldPath = currentPath ? `${currentPath}/${f.name}` : f.name;
+    const newPath = currentPath ? `${currentPath}/${newName}` : newName;
+    try {
+      const res = await fetchWithAuth("/api/files/sftp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "rename", source: oldPath, target: newPath }),
+      });
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(txt);
+      }
+      showToast(`Renamed to ${newName}.`, "success");
+      loadDir(currentPath);
+    } catch (err: any) {
+      showToast(`Rename failed: ${err.message}`, "error");
+    }
+  };
+
+  const doMove = async (f: FileEntry, newPath: string) => {
+    const oldPath = currentPath ? `${currentPath}/${f.name}` : f.name;
+    try {
+      const res = await fetchWithAuth("/api/files/sftp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "move", source: oldPath, target: newPath }),
+      });
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(txt);
+      }
+      showToast(`Moved to ${newPath}.`, "success");
+      loadDir(currentPath);
+    } catch (err: any) {
+      showToast(`Move failed: ${err.message}`, "error");
+    }
+  };
+
   const doBulkDelete = async () => {
     if (selectedFileNames.size === 0) return;
     const names = Array.from(selectedFileNames);
@@ -805,7 +845,7 @@ export default function Dashboard() {
           downloadUrl: plugin.downloadUrl,
           versionId: plugin.latestVersion,
           projectId: plugin.id,
-          filename: `${plugin.name.replace(/[^a-zA-Z0-9_-]/g, "_")}.jar`,
+          filename: `${plugin.name.split(/[|\-\s\(\[<]+/)[0].replace(/[^a-zA-Z0-9_-]/g, "")}.jar`,
         }),
       });
 
@@ -853,15 +893,35 @@ export default function Dashboard() {
 
   const getInstalledPluginFile = (plugin: any) => {
     if (!installedPlugins || installedPlugins.length === 0) return null;
+    
     const searchNameClean = plugin.name.toLowerCase().replace(/[^a-z0-9]/g, "");
+    const pluginLower = plugin.name.toLowerCase();
+    const pluginLowerNoSpaces = pluginLower.replace(/ /g, '');
+    
     return installedPlugins.find((installed) => {
-      const installedNameClean = installed.name
-        .replace(/\.jar$/i, "")
-        .toLowerCase()
-        .replace(/[^a-z0-9]/g, "");
-      return installedNameClean === searchNameClean || 
-             installedNameClean.includes(searchNameClean) || 
-             searchNameClean.includes(installedNameClean);
+      const rawName = installed.name.replace(/\.jar$/i, "");
+      const installedNameClean = rawName.toLowerCase().replace(/[^a-z0-9]/g, "");
+      
+      if (installedNameClean === searchNameClean) return true;
+      
+      const rawLower = rawName.toLowerCase();
+      const rawLowerNoSpaces = rawLower.replace(/ /g, '');
+      
+      if (rawLower.startsWith(pluginLower)) {
+        const nextChar = rawLower.charAt(pluginLower.length);
+        if (nextChar === '-' || nextChar === '_' || nextChar === '.' || nextChar === ' ' || nextChar === '') {
+          return true;
+        }
+      }
+      
+      if (rawLowerNoSpaces.startsWith(pluginLowerNoSpaces)) {
+        const nextChar = rawLowerNoSpaces.charAt(pluginLowerNoSpaces.length);
+        if (nextChar === '-' || nextChar === '_' || nextChar === '.' || nextChar === '') {
+          return true;
+        }
+      }
+
+      return false;
     });
   };
 
@@ -1502,7 +1562,7 @@ export default function Dashboard() {
                 right: 0,
                 marginTop: "6px",
                 width: "165px",
-                backgroundColor: "#242424",
+                backgroundColor: S.content,
                 border: `1px solid ${S.border}`,
                 boxShadow: "0 6px 16px rgba(0,0,0,0.6)",
                 zIndex: 1000,
@@ -1930,7 +1990,7 @@ export default function Dashboard() {
             style={{
               pointerEvents: "auto",
               padding: "9px 14px 9px 12px",
-              backgroundColor: "#1e1e1e",
+              backgroundColor: S.content,
               border: `1px solid #333`,
               borderLeft: `3px solid ${
                 t.type === "success" ? S.green : t.type === "error" ? S.red : S.cyan
@@ -2005,9 +2065,9 @@ export default function Dashboard() {
         <div
           className="caution-bar"
           style={{
-            backgroundColor: "#332211",
-            borderBottom: "1px solid #aa6600",
-            color: S.orange,
+            backgroundColor: "#fffbeb",
+            borderBottom: "1px solid #fcd34d",
+            color: "#d97706",
             padding: "7px 16px",
             fontSize: "12px",
             textAlign: "center",
@@ -2149,14 +2209,9 @@ export default function Dashboard() {
             minWidth: 0,
             overflow: "auto",
             margin: "20px",
-            border: "1px solid #111",
-            boxShadow: `
-              inset 0 0 0 1px rgba(255,255,255,0.15),
-              inset 0 0 0 8px #333333,
-              inset 0 0 0 9px #111111,
-              0 10px 30px rgba(0,0,0,0.5)
-            `,
-            borderRadius: "2px",
+            border: `1px solid ${S.border}`,
+            boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+            borderRadius: "8px",
           }}
         >
           {/* ══ STATUS TAB ══ */}
@@ -2227,6 +2282,8 @@ export default function Dashboard() {
               PowerDropdown={PowerDropdown}
               logs={logs}
               consoleEndRef={consoleEndRef}
+              autoScroll={autoScroll}
+              setAutoScroll={setAutoScroll}
               sendCommandDirect={sendCommandDirect}
               sendCmd={sendCmd}
               OutlineBtn={OutlineBtn}
@@ -2287,6 +2344,8 @@ export default function Dashboard() {
               fmtFileSize={fmtFileSize}
               downloadFile={downloadFile}
               doDelete={doDelete}
+              doRename={doRename}
+              doMove={doMove}
             />
           )}
 
@@ -2318,6 +2377,7 @@ export default function Dashboard() {
               installedPlugins={installedPlugins}
               fmtFileSize={fmtFileSize}
               Btn={Btn}
+              statusData={statusData}
             />
           )}
 
@@ -2446,7 +2506,7 @@ export default function Dashboard() {
         >
           <div
             style={{
-              backgroundColor: "#242424",
+              backgroundColor: S.content,
               border: `1px solid ${S.red}`,
               padding: "24px",
               borderRadius: "4px",

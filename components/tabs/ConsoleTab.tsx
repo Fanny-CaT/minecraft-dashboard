@@ -2,6 +2,13 @@ import React, { useState } from "react";
 import { Ico } from "@/components/icons";
 import { S } from "@/lib/constants";
 import { StatusData } from "@/lib/types";
+import { AnsiUp } from "ansi_up";
+
+const ansiUp = new AnsiUp();
+
+const COMMON_COMMANDS = [
+  "help", "stop", "save-all", "save-on", "save-off", "tps", "gc", "ban", "ban-ip", "pardon", "pardon-ip", "kick", "op", "deop", "whitelist", "time", "weather", "say", "give", "tp", "gamemode", "difficulty", "kill", "seed", "reload", "plugins", "version", "geyser", "luckperms", "lp", "essentials", "eco", "pay", "spark", "discord", "list", "clear"
+].sort();
 
 interface ConsoleTabProps {
   wsStatus: string;
@@ -16,6 +23,8 @@ interface ConsoleTabProps {
   PowerDropdown: React.FC;
   logs: string[];
   consoleEndRef: React.RefObject<HTMLDivElement | null>;
+  autoScroll: boolean;
+  setAutoScroll: (v: boolean) => void;
   sendCommandDirect: (cmd: string) => void;
   sendCmd: (cmd: string) => void;
   OutlineBtn: React.FC<{ label: string; onClick: () => void }>;
@@ -34,17 +43,44 @@ export const ConsoleTab: React.FC<ConsoleTabProps> = ({
   PowerDropdown,
   logs,
   consoleEndRef,
+  autoScroll,
+  setAutoScroll,
   sendCommandDirect,
   sendCmd,
   OutlineBtn,
 }) => {
   const [command, setCommand] = useState("");
+  const [suggestion, setSuggestion] = useState("");
+
+  React.useEffect(() => {
+    if (!command) {
+      setSuggestion("");
+      return;
+    }
+    const rawCmd = command.startsWith("/") ? command.slice(1) : command;
+    const match = COMMON_COMMANDS.find(c => c.startsWith(rawCmd.toLowerCase()));
+    if (match && rawCmd.length > 0) {
+      setSuggestion(command + match.substring(rawCmd.length));
+    } else {
+      setSuggestion("");
+    }
+  }, [command]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (command.trim()) {
       sendCmd(command);
       setCommand("");
+      setSuggestion("");
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Tab") {
+      e.preventDefault();
+      if (suggestion) {
+        setCommand(suggestion + " ");
+      }
     }
   };
 
@@ -86,6 +122,10 @@ export const ConsoleTab: React.FC<ConsoleTabProps> = ({
           </span>
           <OutlineBtn label="Copy Console" onClick={() => navigator.clipboard.writeText(logs.join('\n'))} />
           <OutlineBtn label="Clear Screen" onClick={() => setLogs([])} />
+          <OutlineBtn 
+            label={autoScroll ? "Pause Scroll" : "Resume Scroll"} 
+            onClick={() => setAutoScroll(!autoScroll)} 
+          />
           {wsStatus !== "connected" && (
             <OutlineBtn
               label="Reconnect"
@@ -160,7 +200,7 @@ export const ConsoleTab: React.FC<ConsoleTabProps> = ({
       <div
         style={{
           flex: 1,
-          backgroundColor: "#111",
+          backgroundColor: S.bg,
           overflowY: "auto",
           padding: "12px 16px",
           fontFamily: "'JetBrains Mono', 'Consolas', 'Courier New', monospace",
@@ -174,14 +214,20 @@ export const ConsoleTab: React.FC<ConsoleTabProps> = ({
         ) : (
           logs.map((line, i) => {
             let color = "#bbb";
-            if (line.startsWith("> ")) color = S.cyan;
-            else if (line.startsWith("[Dashboard]")) color = "#667788";
-            else if (/ERROR|Exception/.test(line)) color = "#dd6666";
-            else if (/WARN/.test(line)) color = S.orange;
+            if (line.startsWith("> ")) {
+              return <div key={i} style={{ color: S.cyan, wordBreak: "break-all" }}>{line}</div>;
+            }
+            if (line.startsWith("[Dashboard]")) {
+              return <div key={i} style={{ color: "#667788", wordBreak: "break-all" }}>{line}</div>;
+            }
+            
+            const html = ansiUp.ansi_to_html(line);
             return (
-              <div key={i} style={{ color, wordBreak: "break-all" }}>
-                {line}
-              </div>
+              <div 
+                key={i} 
+                style={{ color, wordBreak: "break-all" }}
+                dangerouslySetInnerHTML={{ __html: html }}
+              />
             );
           })
         )}
@@ -195,7 +241,7 @@ export const ConsoleTab: React.FC<ConsoleTabProps> = ({
           gap: "6px",
           padding: "8px 12px",
           borderTop: `1px solid ${S.border}`,
-          backgroundColor: "#1c1c1c",
+          backgroundColor: S.content,
           flexWrap: "wrap",
           alignItems: "center",
           flexShrink: 0,
@@ -281,7 +327,7 @@ export const ConsoleTab: React.FC<ConsoleTabProps> = ({
           <div
             style={{
               flex: 1,
-              backgroundColor: "#161616",
+              backgroundColor: S.bg,
               color: S.muted,
               padding: "10px 14px",
               fontSize: "12px",
@@ -296,7 +342,7 @@ export const ConsoleTab: React.FC<ConsoleTabProps> = ({
             <span
               style={{
                 padding: "10px 12px",
-                backgroundColor: "#161616",
+                backgroundColor: S.bg,
                 color: S.cyan,
                 fontFamily: "monospace",
                 fontWeight: "bold",
@@ -306,22 +352,47 @@ export const ConsoleTab: React.FC<ConsoleTabProps> = ({
             >
               &gt;
             </span>
-            <input
-              type="text"
-              value={command}
-              onChange={(e) => setCommand(e.target.value)}
-              placeholder="Enter server command..."
-              style={{
-                flex: 1,
-                backgroundColor: S.input,
-                color: S.white,
-                border: "none",
-                padding: "10px 12px",
-                fontFamily: "monospace",
-                fontSize: "12.5px",
-                outline: "none",
-              }}
-            />
+            <div style={{ flex: 1, position: "relative", display: "flex", alignItems: "center", backgroundColor: S.input }}>
+              {suggestion && (
+                <input
+                  type="text"
+                  value={suggestion}
+                  disabled
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    backgroundColor: "transparent",
+                    color: "rgba(255, 255, 255, 0.3)",
+                    border: "none",
+                    padding: "10px 12px",
+                    fontFamily: "monospace",
+                    fontSize: "12.5px",
+                    outline: "none",
+                    pointerEvents: "none",
+                  }}
+                />
+              )}
+              <input
+                type="text"
+                value={command}
+                onChange={(e) => setCommand(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Enter server command..."
+                style={{
+                  position: "relative",
+                  flex: 1,
+                  width: "100%",
+                  backgroundColor: "transparent",
+                  color: S.white,
+                  border: "none",
+                  padding: "10px 12px",
+                  fontFamily: "monospace",
+                  fontSize: "12.5px",
+                  outline: "none",
+                  zIndex: 1,
+                }}
+              />
+            </div>
             <button
               type="submit"
               disabled={!command.trim()}

@@ -29,6 +29,7 @@ export function PluginsTab({
   installedPlugins,
   fmtFileSize,
   Btn,
+  statusData,
 }: any) {
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1, height: "100%" }}>
@@ -38,9 +39,9 @@ export function PluginsTab({
         <div
           style={{
             padding: "7px 18px",
-            backgroundColor: "#2a1111",
-            borderBottom: `1px solid #553333`,
-            color: "#cc6666",
+            backgroundColor: "rgba(239, 68, 68, 0.1)",
+            borderBottom: `1px solid rgba(239, 68, 68, 0.3)`,
+            color: S.red,
             fontSize: "12px",
             display: "flex",
             justifyContent: "space-between",
@@ -52,7 +53,7 @@ export function PluginsTab({
             style={{
               background: "none",
               border: "none",
-              color: "#cc6666",
+              color: S.red,
               cursor: "pointer",
             }}
           >
@@ -75,7 +76,7 @@ export function PluginsTab({
         <div
           style={{
             border: `1px solid ${S.border}`,
-            backgroundColor: "#242424",
+            backgroundColor: S.content,
             padding: "16px",
             borderRadius: "3px",
           }}
@@ -91,7 +92,7 @@ export function PluginsTab({
             <div style={{ fontSize: "14px", fontWeight: 600, color: S.white }}>
               Browse & Install Plugins
             </div>
-            <span style={{ fontSize: "11px", color: S.muted, border: `1px solid ${S.border}`, padding: "2px 8px", borderRadius: "3px", backgroundColor: "#1e1e1e" }}>
+            <span style={{ fontSize: "11px", color: S.muted, border: `1px solid ${S.border}`, padding: "2px 8px", borderRadius: "3px", backgroundColor: S.content }}>
               Modrinth, Spiget & Hangar
             </span>
           </div>
@@ -267,7 +268,7 @@ export function PluginsTab({
                           justifyContent: "space-between",
                           alignItems: "center",
                           padding: "8px 12px",
-                          backgroundColor: "#1e1e1e",
+                          backgroundColor: S.content,
                           border: `1px solid ${S.border}`,
                           borderRadius: "3px",
                         }}
@@ -354,7 +355,15 @@ export function PluginsTab({
                              <Btn
                                label={!!installingPluginIds[plugin.id] ? "Installing..." : "Install"}
                                color={S.green}
-                               onClick={() => installPlugin(plugin)}
+                               onClick={() => {
+                                 const versions = plugin.versions || [];
+                                 const serverVersion = statusData?.mcVersion || "1.21.1";
+                                 if (versions.length > 0 && !versions.some((v: string) => v.startsWith(serverVersion) || serverVersion.startsWith(v))) {
+                                   const proceed = window.confirm(`WARNING: Version Mismatch\n\nThis plugin is built for Minecraft ${versions.join(", ")}, but your server is running ${serverVersion}. It may be incompatible and cause crashes.\n\nAre you absolutely sure you want to install it?`);
+                                   if (!proceed) return;
+                                 }
+                                 installPlugin(plugin);
+                               }}
                                disabled={!!installingPluginIds[plugin.id]}
                              />
                           )}
@@ -378,7 +387,7 @@ export function PluginsTab({
         <div
           style={{
             border: `1px solid ${S.border}`,
-            backgroundColor: "#242424",
+            backgroundColor: S.content,
             padding: "16px",
             borderRadius: "3px",
           }}
@@ -433,7 +442,7 @@ export function PluginsTab({
                       justifyContent: "space-between",
                       alignItems: "center",
                       padding: "10px 14px",
-                      backgroundColor: "#1e1e1e",
+                      backgroundColor: S.content,
                       border: `1px solid ${S.border}`,
                       borderRadius: "3px",
                     }}

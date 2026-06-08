@@ -1,22 +1,22 @@
 export const S = {
-  bg: "#0f1115",        // Modern deep background
-  sidebar: "#16181d",   // Slightly lighter for sidebar
-  content: "#1e2128",   // Elevated content cards
-  topBar: "#16181d",    // Frame border
-  border: "#2d313a",    // Soft borders
-  rowHover: "#262a33",  // Hover state for rows
-  cyan: "#60a5fa",      // Blue-400
-  white: "#f8fafc",     // Slate-50
-  muted: "#cbd5e1",     // Slate-300 (Higher contrast)
-  red: "#f87171",       // Red-400
-  green: "#34d399",     // Emerald-400
-  orange: "#fbbf24",    // Amber-400
-  purple: "#a78bfa",    // Violet-400
-  chartGreen: "#34d399",
-  chartOrange: "#fbbf24",
-  chartBlue: "#60a5fa",
-  input: "rgba(0, 0, 0, 0.4)", // Darker input background for higher contrast with text
-  inputBdr: "#475569",  // Slate-600
+  bg: "var(--bg-base)",
+  sidebar: "var(--bg-sidebar)",
+  content: "var(--bg-panel)",
+  topBar: "var(--bg-header)",
+  border: "var(--border-subtle)",
+  rowHover: "var(--bg-panel-hover)",
+  cyan: "var(--color-cyan)",
+  white: "var(--text-primary)",
+  muted: "var(--text-muted)",
+  red: "var(--color-danger)",
+  green: "var(--color-success)",
+  orange: "var(--color-warning)",
+  purple: "var(--color-purple)",
+  chartGreen: "var(--color-success)",
+  chartOrange: "var(--color-warning)",
+  chartBlue: "var(--brand-accent)",
+  input: "rgba(0, 0, 0, 0.2)",
+  inputBdr: "var(--border-subtle)",
 };
 
 export const POPULAR_PLUGINS_META: Record<string, { name: string; tagline: string; iconUrl: string; provider: string; color: string; bg: string; border: string }> = {

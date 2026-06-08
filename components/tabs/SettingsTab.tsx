@@ -16,7 +16,7 @@ export function SettingsTab({ statusData, startupForm, showToast }: SettingsTabP
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))", gap: "20px" }}>
         {/* SERVER SPECIFICATIONS & METADATA */}
         <div style={{
-          backgroundColor: "#1c1c1c",
+          backgroundColor: S.content,
           border: `1px solid ${S.border}`,
           padding: "20px",
           borderRadius: "4px",
@@ -59,7 +59,7 @@ export function SettingsTab({ statusData, startupForm, showToast }: SettingsTabP
                 color: S.white,
                 fontFamily: "monospace",
                 fontSize: "11px",
-                backgroundColor: "#161616",
+                backgroundColor: S.bg,
                 padding: "8px 12px",
                 borderRadius: "3px",
                 border: `1px solid ${S.border}`,
@@ -72,7 +72,7 @@ export function SettingsTab({ statusData, startupForm, showToast }: SettingsTabP
             <div style={{ gridColumn: "1 / -1", borderTop: `1px solid ${S.border}`, paddingTop: "12px", marginTop: "4px" }}>
               <span style={{ color: S.muted, display: "block", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: "8px" }}>Quick Connect Info</span>
               <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "#161616", padding: "8px 12px", borderRadius: "3px", border: `1px solid ${S.border}` }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: S.bg, padding: "8px 12px", borderRadius: "3px", border: `1px solid ${S.border}` }}>
                   <span style={{ fontFamily: "monospace", fontSize: "11px", color: S.white }}>
                     IP: play.meowtopia.mooo.com:{statusData?.port || 25565}
                   </span>
@@ -87,7 +87,7 @@ export function SettingsTab({ statusData, startupForm, showToast }: SettingsTabP
                     Copy IP
                   </button>
                 </div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "#161616", padding: "8px 12px", borderRadius: "3px", border: `1px solid ${S.border}` }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: S.bg, padding: "8px 12px", borderRadius: "3px", border: `1px solid ${S.border}` }}>
                   <span style={{ fontFamily: "monospace", fontSize: "11px", color: statusData?.sftpUsername ? S.white : S.muted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "80%" }}>
                     {statusData?.sftpUsername
                       ? `SFTP: sftp://${statusData.sftpUsername}@${statusData.sftpHost || "play.meowtopia.mooo.com"}:${statusData.sftpPort || 5657}`

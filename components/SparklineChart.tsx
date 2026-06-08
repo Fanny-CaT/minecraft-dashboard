@@ -1,88 +1,83 @@
 "use client";
 
-interface SparklineProps {
+import React, { useMemo } from "react";
+
+interface SparklineChartProps {
   data: number[];
   color: string;
-  /** Y-axis max value (default 100) */
+  gradientId: string;
   max?: number;
   height?: number;
-  /** If true, fills the area under the line */
-  fill?: boolean;
-  /** Unique ID suffix for the SVG gradient — prevents id collisions */
-  gradientId: string;
+  width?: number;
 }
 
-/**
- * Lightweight SVG sparkline — no external dependencies.
- * Renders a polyline with an optional gradient fill and a live "dot" at the current value.
- */
 export function SparklineChart({
   data,
   color,
-  max = 100,
-  height = 52,
-  fill = true,
   gradientId,
-}: SparklineProps) {
-  const W = 300;
-  const H = height;
-  const PAD = 3;
-  const usableH = H - PAD * 2;
+  max,
+  height = 50,
+  width = 300,
+}: SparklineChartProps) {
+  const points = useMemo(() => {
+    if (data.length === 0) return "";
+    const effectiveMax = max !== undefined ? max : Math.max(...data, 1);
+    
+    // Create a smooth curve
+    const xStep = width / Math.max(data.length - 1, 1);
+    const getCoords = (val: number, i: number) => {
+      const x = i * xStep;
+      // height - 2 so the stroke doesn't clip
+      const y = height - (val / effectiveMax) * (height - 2) - 1;
+      return { x, y };
+    };
 
-  if (data.length < 2) {
+    let path = `M ${getCoords(data[0], 0).x},${getCoords(data[0], 0).y}`;
+    
+    for (let i = 0; i < data.length - 1; i++) {
+      const p0 = getCoords(data[i], i);
+      const p1 = getCoords(data[i + 1], i + 1);
+      // Cubic bezier for smoothing
+      const cx = (p0.x + p1.x) / 2;
+      path += ` C ${cx},${p0.y} ${cx},${p1.y} ${p1.x},${p1.y}`;
+    }
+    return path;
+  }, [data, max, height, width]);
+
+  const fillPath = useMemo(() => {
+    if (!points) return "";
+    return `${points} L ${width},${height} L 0,${height} Z`;
+  }, [points, width, height]);
+
+  if (data.length === 0) {
     return (
-      <svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none">
-        <line x1={0} y1={H / 2} x2={W} y2={H / 2} stroke={color} strokeOpacity={0.15} strokeWidth={1} strokeDasharray="4 4" />
-      </svg>
+      <div style={{ width: "100%", height, display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.2)", fontSize: "10px" }}>
+        NO DATA
+      </div>
     );
   }
 
-  const toY = (v: number) => PAD + usableH - (Math.min(Math.max(v, 0), max) / max) * usableH;
-
-  const points = data.map((v, i) => {
-    const x = (i / (data.length - 1)) * W;
-    const y = toY(v);
-    return `${x.toFixed(1)},${y.toFixed(1)}`;
-  });
-
-  const lastX = W;
-  const lastY = toY(data[data.length - 1]);
-
   return (
-    <svg
-      width="100%"
-      height={H}
-      viewBox={`0 0 ${W} ${H}`}
-      preserveAspectRatio="none"
-      style={{ display: "block", overflow: "visible" }}
-    >
+    <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" style={{ width: "100%", height: "100%", display: "block" }}>
       <defs>
-        <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity="0.25" />
-          <stop offset="100%" stopColor={color} stopOpacity="0.02" />
+        <linearGradient id={gradientId} x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity={0.3} />
+          <stop offset="100%" stopColor={color} stopOpacity={0.0} />
         </linearGradient>
+        <filter id={`${gradientId}-glow`} x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="2" result="blur" />
+          <feComposite in="SourceGraphic" in2="blur" operator="over" />
+        </filter>
       </defs>
-
-      {fill && (
-        <polygon
-          points={`0,${H} ${points.join(" ")} ${W},${H}`}
-          fill={`url(#${gradientId})`}
-        />
-      )}
-
-      <polyline
-        points={points.join(" ")}
-        fill="none"
-        stroke={color}
-        strokeWidth="1.5"
-        strokeLinejoin="round"
-        strokeLinecap="round"
-        opacity="0.85"
-      />
-
-      {/* Current value dot */}
-      <circle cx={lastX} cy={lastY} r="3" fill={color} />
-      <circle cx={lastX} cy={lastY} r="5" fill={color} fillOpacity="0.2" />
+      
+      {/* Background fill */}
+      <path d={fillPath} fill={`url(#${gradientId})`} />
+      
+      {/* Glow path */}
+      <path d={points} fill="none" stroke={color} strokeWidth={1} strokeOpacity={0.5} filter={`url(#${gradientId}-glow)`} />
+      
+      {/* Main sharp path */}
+      <path d={points} fill="none" stroke={color} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }

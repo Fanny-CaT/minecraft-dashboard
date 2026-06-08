@@ -23,7 +23,7 @@ export function NetworkingTab({
         {/* Active ports card */}
         <div
           style={{
-            backgroundColor: "#242424",
+            backgroundColor: S.content,
             border: `1px solid ${S.border}`,
             padding: "16px",
             borderRadius: "3px",
@@ -84,7 +84,7 @@ export function NetworkingTab({
         {/* Configure Port Bindings card */}
         <div
           style={{
-            backgroundColor: "#242424",
+            backgroundColor: S.content,
             border: `1px solid ${S.border}`,
             padding: "18px",
             borderRadius: "3px",
@@ -153,7 +153,7 @@ export function NetworkingTab({
         {/* Connection Address info card */}
         <div
           style={{
-            backgroundColor: "#242424",
+            backgroundColor: S.content,
             border: `1px solid ${S.border}`,
             padding: "18px",
             borderRadius: "3px",
@@ -238,7 +238,7 @@ export function NetworkingTab({
         {/* Infrastructure specs card */}
         <div
           style={{
-            backgroundColor: "#242424",
+            backgroundColor: S.content,
             border: `1px solid ${S.border}`,
             padding: "16px",
             borderRadius: "3px",

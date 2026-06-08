@@ -93,7 +93,7 @@ export const ChatTab: React.FC<ChatTabProps> = ({
           <div
             style={{
               flex: 1,
-              backgroundColor: "#161616",
+              backgroundColor: S.bg,
               color: S.muted,
               padding: "10px 14px",
               fontSize: "12px",

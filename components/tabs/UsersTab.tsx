@@ -145,9 +145,9 @@ export default function UsersTab({
         <div
           style={{
             padding: "7px 18px",
-            backgroundColor: "#2a1111",
-            borderBottom: `1px solid #553333`,
-            color: "#cc6666",
+            backgroundColor: "rgba(239, 68, 68, 0.1)",
+            borderBottom: `1px solid rgba(239, 68, 68, 0.3)`,
+            color: S.red,
             fontSize: "12px",
           }}
         >
@@ -162,7 +162,7 @@ export default function UsersTab({
           <div
             style={{
               border: `1px solid ${S.border}`,
-              backgroundColor: "#242424",
+              backgroundColor: S.content,
               padding: "16px",
               borderRadius: "3px",
               display: "flex",
@@ -180,13 +180,13 @@ export default function UsersTab({
             </div>
             <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
               <button onClick={() => handleAction("whitelist on")} className="button-hover" style={{ backgroundColor: "#2e2e2e", border: `1px solid ${S.border}`, color: S.cyan, padding: "5px 10px", fontSize: "11px", cursor: "pointer", borderRadius: "3px", fontWeight: "bold" }}>Enable</button>
-              <button onClick={() => handleAction("whitelist off")} className="button-hover" style={{ backgroundColor: "#2e2e2e", border: `1px solid ${S.border}`, color: "#ff4d4d", padding: "5px 10px", fontSize: "11px", cursor: "pointer", borderRadius: "3px", fontWeight: "bold" }}>Disable</button>
+              <button onClick={() => handleAction("whitelist off")} className="button-hover" style={{ backgroundColor: "#2e2e2e", border: `1px solid ${S.border}`, color: S.red, padding: "5px 10px", fontSize: "11px", cursor: "pointer", borderRadius: "3px", fontWeight: "bold" }}>Disable</button>
               <button onClick={() => handleAction("whitelist reload")} className="button-hover" style={{ backgroundColor: "#2e2e2e", border: `1px solid ${S.border}`, color: S.orange, padding: "5px 10px", fontSize: "11px", cursor: "pointer", borderRadius: "3px", fontWeight: "bold" }}>Reload</button>
             </div>
           </div>
 
           {/* Add to Whitelist */}
-          <div style={{ border: `1px solid ${S.border}`, backgroundColor: "#242424", padding: "16px", borderRadius: "3px" }}>
+          <div style={{ border: `1px solid ${S.border}`, backgroundColor: S.content, padding: "16px", borderRadius: "3px" }}>
             <div style={{ fontSize: "13px", fontWeight: 600, color: S.white, marginBottom: "4px" }}>Add to Whitelist</div>
             <div style={{ fontSize: "11px", color: S.muted, marginBottom: "12px" }}>Allow a player to join when whitelist is enabled.</div>
             <div style={{ display: "flex", gap: "8px" }}>
@@ -196,7 +196,7 @@ export default function UsersTab({
           </div>
 
           {/* OP Player */}
-          <div style={{ border: `1px solid ${S.border}`, backgroundColor: "#242424", padding: "16px", borderRadius: "3px" }}>
+          <div style={{ border: `1px solid ${S.border}`, backgroundColor: S.content, padding: "16px", borderRadius: "3px" }}>
             <div style={{ fontSize: "13px", fontWeight: 600, color: S.white, marginBottom: "4px" }}>Promote to Operator (OP)</div>
             <div style={{ fontSize: "11px", color: S.muted, marginBottom: "12px" }}>Grant full admin/moderator permissions.</div>
             <div style={{ display: "flex", gap: "8px" }}>
@@ -206,7 +206,7 @@ export default function UsersTab({
           </div>
 
           {/* Ban Player */}
-          <div style={{ border: `1px solid ${S.border}`, backgroundColor: "#242424", padding: "16px", borderRadius: "3px" }}>
+          <div style={{ border: `1px solid ${S.border}`, backgroundColor: S.content, padding: "16px", borderRadius: "3px" }}>
             <div style={{ fontSize: "13px", fontWeight: 600, color: S.white, marginBottom: "4px" }}>Ban Player</div>
             <div style={{ fontSize: "11px", color: S.muted, marginBottom: "12px" }}>Prevent player from connecting to the server.</div>
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
@@ -220,7 +220,7 @@ export default function UsersTab({
         </div>
 
         {/* Send action commands */}
-        <div style={{ border: `1px solid ${S.border}`, backgroundColor: "#242424", padding: "16px", borderRadius: "3px" }}>
+        <div style={{ border: `1px solid ${S.border}`, backgroundColor: S.content, padding: "16px", borderRadius: "3px" }}>
           <div style={{ fontSize: "13px", fontWeight: 600, color: S.white, marginBottom: "10px" }}>Quick Management Command</div>
           <form onSubmit={sendUserCmd} style={{ display: "flex", gap: "10px" }}>
             <input type="text" placeholder="e.g. whitelist add Notch, op agreeable_guy, ban Herobrine..." value={userCmd} onChange={(e) => setUserCmd(e.target.value)} style={{ flex: 1, backgroundColor: S.input, border: `1px solid ${S.inputBdr}`, color: S.white, padding: "8px 12px", fontSize: "13px", outline: "none" }} />
@@ -229,7 +229,7 @@ export default function UsersTab({
         </div>
 
         {/* Players Listing Table */}
-        <div style={{ border: `1px solid ${S.border}`, backgroundColor: "#1e1e1e", borderRadius: "3px", overflow: "hidden" }}>
+        <div style={{ border: `1px solid ${S.border}`, backgroundColor: S.content, borderRadius: "3px", overflow: "hidden" }}>
           {loadingUsers ? (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px", gap: "10px", color: S.muted }}>
               <div className="spinner" />
@@ -238,7 +238,7 @@ export default function UsersTab({
           ) : (
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12.5px" }}>
               <thead>
-                <tr style={{ borderBottom: `1px solid ${S.border}`, backgroundColor: "#161616", color: S.muted, textAlign: "left" }}>
+                <tr style={{ borderBottom: `1px solid ${S.border}`, backgroundColor: S.bg, color: S.muted, textAlign: "left" }}>
                   <th style={{ padding: "8px 12px" }}>{userList === "banned-ips" ? "IP Address" : "UUID"}</th>
                   <th style={{ padding: "8px 12px" }}>{userList === "banned-ips" ? "Banned On" : "Username"}</th>
                   {userList === "ops" && <th style={{ padding: "8px 12px" }}>OP Level</th>}
@@ -280,13 +280,13 @@ export default function UsersTab({
                       {userList === "banned-players" && (
                         <>
                           <td style={{ padding: "8px 12px", color: S.muted }}>{p.created || "–"}</td>
-                          <td style={{ padding: "8px 12px", color: "#cc8866" }}>{p.reason || "No reason given"}</td>
+                          <td style={{ padding: "8px 12px", color: S.orange }}>{p.reason || "No reason given"}</td>
                         </>
                       )}
                       {userList === "banned-ips" && (
                         <>
                           <td style={{ padding: "8px 12px", color: S.muted }}>{p.source || "–"}</td>
-                          <td style={{ padding: "8px 12px", color: "#cc8866" }}>{p.reason || "No reason given"}</td>
+                          <td style={{ padding: "8px 12px", color: S.orange }}>{p.reason || "No reason given"}</td>
                         </>
                       )}
                       {userList === "all-players" && (
@@ -297,12 +297,12 @@ export default function UsersTab({
                           {userList === "ops" && (<>
                             <button onClick={() => handleAction(`deop ${p.name}`)} className="button-hover" style={{ backgroundColor: "transparent", color: S.orange, border: `1px solid ${S.orange}`, cursor: "pointer", padding: "2px 8px", fontSize: "11px", borderRadius: "2px" }}>De-OP</button>
                             <button onClick={() => handleAction(`whitelist add ${p.name}`)} className="button-hover" style={{ backgroundColor: "transparent", color: S.cyan, border: `1px solid ${S.cyan}`, cursor: "pointer", padding: "2px 8px", fontSize: "11px", borderRadius: "2px" }}>+Whitelist</button>
-                            <button onClick={() => handleAction(`ban ${p.name}`)} className="button-hover" style={{ backgroundColor: "transparent", color: "#ff4d4d", border: `1px solid #ff4d4d`, cursor: "pointer", padding: "2px 8px", fontSize: "11px", borderRadius: "2px" }}>Ban</button>
+                            <button onClick={() => handleAction(`ban ${p.name}`)} className="button-hover" style={{ backgroundColor: "transparent", color: S.red, border: `1px solid ${S.red}`, cursor: "pointer", padding: "2px 8px", fontSize: "11px", borderRadius: "2px" }}>Ban</button>
                           </>)}
                           {userList === "whitelist" && (<>
                             <button onClick={() => handleAction(`op ${p.name}`)} className="button-hover" style={{ backgroundColor: "transparent", color: S.green, border: `1px solid ${S.green}`, cursor: "pointer", padding: "2px 8px", fontSize: "11px", borderRadius: "2px" }}>OP</button>
                             <button onClick={() => handleAction(`whitelist remove ${p.name}`)} className="button-hover" style={{ backgroundColor: "transparent", color: S.orange, border: `1px solid ${S.orange}`, cursor: "pointer", padding: "2px 8px", fontSize: "11px", borderRadius: "2px" }}>Remove</button>
-                            <button onClick={() => handleAction(`ban ${p.name}`)} className="button-hover" style={{ backgroundColor: "transparent", color: "#ff4d4d", border: `1px solid #ff4d4d`, cursor: "pointer", padding: "2px 8px", fontSize: "11px", borderRadius: "2px" }}>Ban</button>
+                            <button onClick={() => handleAction(`ban ${p.name}`)} className="button-hover" style={{ backgroundColor: "transparent", color: S.red, border: `1px solid ${S.red}`, cursor: "pointer", padding: "2px 8px", fontSize: "11px", borderRadius: "2px" }}>Ban</button>
                           </>)}
                           {userList === "banned-players" && (<>
                             <button onClick={() => handleAction(`pardon ${p.name}`)} className="button-hover" style={{ backgroundColor: "transparent", color: S.cyan, border: `1px solid ${S.cyan}`, cursor: "pointer", padding: "2px 8px", fontSize: "11px", borderRadius: "2px" }}>Pardon</button>
@@ -315,7 +315,7 @@ export default function UsersTab({
                             <button onClick={() => handleAction(`gamemode survival ${p.name}`)} className="button-hover" style={{ backgroundColor: "transparent", color: S.green, border: `1px solid ${S.green}`, cursor: "pointer", padding: "2px 8px", fontSize: "11px", borderRadius: "2px" }}>Survival</button>
                             <button onClick={() => handleAction(`clear ${p.name}`)} className="button-hover" style={{ backgroundColor: "transparent", color: S.orange, border: `1px solid ${S.orange}`, cursor: "pointer", padding: "2px 8px", fontSize: "11px", borderRadius: "2px" }}>Clear Inv</button>
                             <button onClick={() => handleAction(`clear-data ${p.uuid} ${p.name}`)} className="button-hover" style={{ backgroundColor: "transparent", color: "#ef4444", border: `1px solid #ef4444`, cursor: "pointer", padding: "2px 8px", fontSize: "11px", borderRadius: "2px" }}>Clear Data</button>
-                            <button onClick={() => handleAction(`kill ${p.name}`)} className="button-hover" style={{ backgroundColor: "transparent", color: "#ff4d4d", border: `1px solid #ff4d4d`, cursor: "pointer", padding: "2px 8px", fontSize: "11px", borderRadius: "2px" }}>Kill</button>
+                            <button onClick={() => handleAction(`kill ${p.name}`)} className="button-hover" style={{ backgroundColor: "transparent", color: S.red, border: `1px solid ${S.red}`, cursor: "pointer", padding: "2px 8px", fontSize: "11px", borderRadius: "2px" }}>Kill</button>
                             <button onClick={() => handleAction(`xp add ${p.name} 30 levels`)} className="button-hover" style={{ backgroundColor: "transparent", color: "#10b981", border: `1px solid #10b981`, cursor: "pointer", padding: "2px 8px", fontSize: "11px", borderRadius: "2px" }}>+30 LVL</button>
                           </>)}
                         </div>
