@@ -3,6 +3,7 @@ import { Ico } from "@/components/icons";
 import { S } from "@/lib/constants";
 import { StatusData } from "@/lib/types";
 import { AnsiUp } from "ansi_up";
+import { TerminalSquare } from "lucide-react";
 
 const ansiUp = new AnsiUp();
 
@@ -85,43 +86,58 @@ export const ConsoleTab: React.FC<ConsoleTabProps> = ({
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", flex: 1, height: "100%" }}>
+    <div style={{ display: "flex", flexDirection: "column", flex: 1, height: "100%", position: "relative" }}>
+      {/* Sleek Glassmorphic Header */}
       <div
         style={{
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          padding: "13px 20px 11px",
-          borderBottom: `1px solid ${S.border}`,
+          padding: "16px 24px",
+          background: "linear-gradient(90deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%)",
+          backdropFilter: "blur(12px)",
+          borderBottom: "1px solid rgba(255,255,255,0.05)",
           flexShrink: 0,
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <Ico.Console />
-          <span style={{ fontSize: "18px", fontWeight: 300 }}>Console Logs</span>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <div style={{
+            width: "38px", height: "38px", borderRadius: "10px",
+            background: "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            boxShadow: "0 4px 15px rgba(59, 130, 246, 0.3)"
+          }}>
+            <TerminalSquare size={20} color="#fff" />
+          </div>
+          <div>
+            <h2 style={{ fontSize: "18px", fontWeight: 600, color: "#fff", margin: 0, textShadow: "0 2px 4px rgba(0,0,0,0.3)" }}>Live Console</h2>
+            <p style={{ fontSize: "12px", color: S.muted, margin: 0 }}>Monitor and command your server</p>
+          </div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "11px" }}>
-          <span
+        <div style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "12px" }}>
+          <div
             style={{
               display: "flex",
               alignItems: "center",
-              gap: "5px",
-              color: wsStatus === "connected" ? S.green : S.muted,
+              gap: "6px",
+              padding: "6px 12px",
+              borderRadius: "20px",
+              background: "rgba(0,0,0,0.2)",
+              border: "1px solid rgba(255,255,255,0.05)",
+              color: wsStatus === "connected" ? "#34d399" : S.muted,
             }}
           >
             <span
               style={{
-                width: "6px",
-                height: "6px",
-                borderRadius: "50%",
-                display: "inline-block",
-                backgroundColor: wsStatus === "connected" ? S.green : S.muted,
+                width: "8px", height: "8px", borderRadius: "50%",
+                backgroundColor: wsStatus === "connected" ? "#34d399" : S.muted,
+                boxShadow: wsStatus === "connected" ? "0 0 8px #34d399" : "none"
               }}
             />
             {wsMode === "live" ? "Live WebSocket" : "HTTP Polling"}
-          </span>
-          <OutlineBtn label="Copy Console" onClick={() => navigator.clipboard.writeText(logs.join('\n'))} />
-          <OutlineBtn label="Clear Screen" onClick={() => setLogs([])} />
+          </div>
+          <OutlineBtn label="Copy" onClick={() => navigator.clipboard.writeText(logs.join('\n'))} />
+          <OutlineBtn label="Clear" onClick={() => setLogs([])} />
           <OutlineBtn 
             label={autoScroll ? "Pause Scroll" : "Resume Scroll"} 
             onClick={() => setAutoScroll(!autoScroll)} 
@@ -138,57 +154,49 @@ export const ConsoleTab: React.FC<ConsoleTabProps> = ({
         </div>
       </div>
 
-      {/* Console live metrics bar */}
+      {/* Metrics Bar */}
       <div
         style={{
           display: "flex",
           alignItems: "center",
-          gap: "18px",
-          padding: "8px 20px",
-          borderBottom: `1px solid ${S.border}`,
-          backgroundColor: "#1f1f1f",
+          gap: "24px",
+          padding: "10px 24px",
+          background: "rgba(15, 23, 42, 0.4)",
+          borderBottom: "1px solid rgba(255,255,255,0.05)",
+          backdropFilter: "blur(4px)",
           flexWrap: "wrap",
           flexShrink: 0,
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <span
             style={{
-              width: "8px",
-              height: "8px",
-              borderRadius: "50%",
-              backgroundColor: statusData?.status === "online" ? S.green : statusData?.status === "starting" || statusData?.status === "stopping" ? S.orange : S.red,
+              width: "10px", height: "10px", borderRadius: "50%",
+              backgroundColor: statusData?.status === "online" ? "#10b981" : statusData?.status === "starting" || statusData?.status === "stopping" ? "#f59e0b" : "#ef4444",
+              boxShadow: `0 0 10px ${statusData?.status === "online" ? "#10b981" : statusData?.status === "starting" || statusData?.status === "stopping" ? "#f59e0b" : "#ef4444"}`
             }}
           />
           <span
             style={{
-              fontSize: "11px",
-              fontWeight: "bold",
-              color: statusData?.status === "online" ? S.green : statusData?.status === "starting" || statusData?.status === "stopping" ? S.orange : S.red,
+              fontSize: "12px", fontWeight: 700, letterSpacing: "1px",
+              color: statusData?.status === "online" ? "#10b981" : statusData?.status === "starting" || statusData?.status === "stopping" ? "#f59e0b" : "#ef4444",
             }}
           >
-            {(statusData?.status || "offline").toUpperCase()}
+            {(statusData?.status || "OFFLINE").toUpperCase()}
           </span>
         </div>
-        <span style={{ width: "1px", height: "12px", backgroundColor: S.border }} />
-        <div style={{ fontSize: "11.5px", color: S.muted }}>
+        <span style={{ width: "1px", height: "14px", backgroundColor: "rgba(255,255,255,0.1)" }} />
+        <div style={{ fontSize: "12px", color: S.muted, display: "flex", gap: "6px" }}>
           CPU:{" "}
-          <span style={{ color: S.white, fontWeight: "bold" }}>
+          <span style={{ color: "#fff", fontWeight: 600 }}>
             {statusData?.cpu.toFixed(1) || "0.0"}%
           </span>
         </div>
-        <span style={{ width: "1px", height: "12px", backgroundColor: S.border }} />
-        <div style={{ fontSize: "11.5px", color: S.muted }}>
+        <span style={{ width: "1px", height: "14px", backgroundColor: "rgba(255,255,255,0.1)" }} />
+        <div style={{ fontSize: "12px", color: S.muted, display: "flex", gap: "6px" }}>
           RAM:{" "}
-          <span style={{ color: S.white, fontWeight: "bold" }}>
+          <span style={{ color: "#fff", fontWeight: 600 }}>
             {ramMb} / {maxRamMb} MB
-          </span>
-        </div>
-        <span style={{ width: "1px", height: "12px", backgroundColor: S.border }} />
-        <div style={{ fontSize: "11.5px", color: S.muted }}>
-          Version:{" "}
-          <span style={{ color: S.white, fontWeight: "bold" }}>
-            {statusData?.mcVersion || "1.21.1"}
           </span>
         </div>
         <div style={{ marginLeft: "auto" }}>
@@ -196,29 +204,32 @@ export const ConsoleTab: React.FC<ConsoleTabProps> = ({
         </div>
       </div>
 
-      {/* Logs terminal box */}
+      {/* Logs Box */}
       <div
         style={{
           flex: 1,
-          backgroundColor: S.bg,
+          backgroundColor: "#0f111a", // Deep code editor background
           overflowY: "auto",
-          padding: "12px 16px",
-          fontFamily: "'JetBrains Mono', 'Consolas', 'Courier New', monospace",
-          fontSize: "12px",
-          lineHeight: "1.6",
+          padding: "16px 24px",
+          fontFamily: "'JetBrains Mono', 'Fira Code', 'Consolas', monospace",
+          fontSize: "13px",
+          lineHeight: "1.7",
           minHeight: 0,
+          boxShadow: "inset 0 10px 20px rgba(0,0,0,0.5)",
         }}
       >
         {logs.length === 0 ? (
-          <span style={{ color: "#555" }}>[No console output yet]</span>
+          <div style={{ color: "#475569", display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
+            [ Waiting for server output... ]
+          </div>
         ) : (
           logs.map((line, i) => {
-            let color = "#bbb";
+            let color = "#cbd5e1";
             if (line.startsWith("> ")) {
-              return <div key={i} style={{ color: S.cyan, wordBreak: "break-all" }}>{line}</div>;
+              return <div key={i} style={{ color: "#38bdf8", wordBreak: "break-all", fontWeight: 500 }}>{line}</div>;
             }
             if (line.startsWith("[Dashboard]")) {
-              return <div key={i} style={{ color: "#667788", wordBreak: "break-all" }}>{line}</div>;
+              return <div key={i} style={{ color: "#64748b", wordBreak: "break-all", fontStyle: "italic" }}>{line}</div>;
             }
             
             const html = ansiUp.ansi_to_html(line);
@@ -234,186 +245,137 @@ export const ConsoleTab: React.FC<ConsoleTabProps> = ({
         <div ref={consoleEndRef} />
       </div>
 
-      {/* Console Quick commands actions */}
-      <div
-        style={{
-          display: "flex",
-          gap: "6px",
-          padding: "8px 12px",
-          borderTop: `1px solid ${S.border}`,
-          backgroundColor: S.content,
-          flexWrap: "wrap",
-          alignItems: "center",
-          flexShrink: 0,
-          opacity: isOnline ? 1 : 0.5,
-          pointerEvents: isOnline ? "auto" : "none",
-        }}
-      >
-        <span style={{ color: S.muted, fontSize: "11px", marginRight: "6px" }}>
-          Quick Commands:
-        </span>
-        <button
-          onClick={() => sendCommandDirect("gc")}
-          className="button-hover"
+      {/* Quick Commands & Input Area */}
+      <div style={{ background: "linear-gradient(180deg, rgba(15,23,42,0.8) 0%, rgba(30,41,59,0.95) 100%)", backdropFilter: "blur(10px)", flexShrink: 0 }}>
+        {/* Quick Commands */}
+        <div
           style={{
-            backgroundColor: "#2e2e2e",
-            border: `1px solid ${S.border}`,
-            color: S.white,
-            padding: "3px 8px",
-            fontSize: "11px",
-            cursor: "pointer",
-            borderRadius: "3px",
+            display: "flex", gap: "8px", padding: "10px 24px",
+            borderBottom: "1px solid rgba(255,255,255,0.05)",
+            flexWrap: "wrap", alignItems: "center",
+            opacity: isOnline ? 1 : 0.5,
+            pointerEvents: isOnline ? "auto" : "none",
           }}
-          title="Force Java garbage collection"
         >
-          GC
-        </button>
-        <button
-          onClick={() => sendCommandDirect("tps")}
-          className="button-hover"
-          style={{
-            backgroundColor: "#2e2e2e",
-            border: `1px solid ${S.border}`,
-            color: S.white,
-            padding: "3px 8px",
-            fontSize: "11px",
-            cursor: "pointer",
-            borderRadius: "3px",
-          }}
-          title="Check Server tick performance"
-        >
-          TPS
-        </button>
-        <button
-          onClick={() => sendCommandDirect("save-all")}
-          className="button-hover"
-          style={{
-            backgroundColor: "#2e2e2e",
-            border: `1px solid ${S.border}`,
-            color: S.white,
-            padding: "3px 8px",
-            fontSize: "11px",
-            cursor: "pointer",
-            borderRadius: "3px",
-          }}
-          title="Force world data save"
-        >
-          Save
-        </button>
-        <button
-          onClick={() => sendCommandDirect("reload confirm")}
-          className="button-hover"
-          style={{
-            backgroundColor: "#2e2e2e",
-            border: `1px solid ${S.border}`,
-            color: S.white,
-            padding: "3px 8px",
-            fontSize: "11px",
-            cursor: "pointer",
-            borderRadius: "3px",
-          }}
-          title="Reload plugins configuration"
-        >
-          Reload
-        </button>
-      </div>
-
-      {/* Command input form */}
-      <form
-        onSubmit={handleSubmit}
-        style={{ display: "flex", borderTop: `1px solid ${S.border}`, flexShrink: 0 }}
-      >
-        {!isOnline ? (
-          <div
-            style={{
-              flex: 1,
-              backgroundColor: S.bg,
-              color: S.muted,
-              padding: "10px 14px",
-              fontSize: "12px",
-              fontStyle: "italic",
-              userSelect: "none",
-            }}
-          >
-            Console command input is disabled because the server process is offline.
-          </div>
-        ) : (
-          <>
-            <span
-              style={{
-                padding: "10px 12px",
-                backgroundColor: S.bg,
-                color: S.cyan,
-                fontFamily: "monospace",
-                fontWeight: "bold",
-                borderRight: `1px solid ${S.border}`,
-                userSelect: "none",
-              }}
-            >
-              &gt;
-            </span>
-            <div style={{ flex: 1, position: "relative", display: "flex", alignItems: "center", backgroundColor: S.input }}>
-              {suggestion && (
-                <input
-                  type="text"
-                  value={suggestion}
-                  disabled
-                  style={{
-                    position: "absolute",
-                    inset: 0,
-                    backgroundColor: "transparent",
-                    color: "rgba(255, 255, 255, 0.3)",
-                    border: "none",
-                    padding: "10px 12px",
-                    fontFamily: "monospace",
-                    fontSize: "12.5px",
-                    outline: "none",
-                    pointerEvents: "none",
-                  }}
-                />
-              )}
-              <input
-                type="text"
-                value={command}
-                onChange={(e) => setCommand(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Enter server command..."
-                style={{
-                  position: "relative",
-                  flex: 1,
-                  width: "100%",
-                  backgroundColor: "transparent",
-                  color: S.white,
-                  border: "none",
-                  padding: "10px 12px",
-                  fontFamily: "monospace",
-                  fontSize: "12.5px",
-                  outline: "none",
-                  zIndex: 1,
-                }}
-              />
-            </div>
+          <span style={{ color: S.muted, fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", marginRight: "8px" }}>
+            Quick Actions
+          </span>
+          {[
+            { cmd: "gc", label: "GC", color: "#8b5cf6" },
+            { cmd: "tps", label: "TPS", color: "#3b82f6" },
+            { cmd: "save-all", label: "Save All", color: "#10b981" },
+            { cmd: "reload confirm", label: "Reload", color: "#f59e0b" },
+          ].map((btn) => (
             <button
-              type="submit"
-              disabled={!command.trim()}
+              key={btn.cmd}
+              onClick={() => sendCommandDirect(btn.cmd)}
               className="button-hover"
               style={{
-                padding: "10px 18px",
-                backgroundColor: "transparent",
-                color: S.cyan,
-                border: "none",
-                borderLeft: `1px solid ${S.border}`,
+                backgroundColor: "rgba(255,255,255,0.05)",
+                border: `1px solid ${btn.color}40`,
+                color: btn.color,
+                padding: "4px 12px",
+                fontSize: "11px",
+                fontWeight: 600,
                 cursor: "pointer",
-                fontSize: "12px",
-                opacity: !command.trim() ? 0.4 : 1,
-                outline: "none",
+                borderRadius: "6px",
+                transition: "all 0.2s ease"
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = `${btn.color}20`; e.currentTarget.style.boxShadow = `0 0 10px ${btn.color}40`; }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.05)"; e.currentTarget.style.boxShadow = "none"; }}
+            >
+              {btn.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Input Form */}
+        <form
+          onSubmit={handleSubmit}
+          style={{ display: "flex", padding: "12px 24px" }}
+        >
+          {!isOnline ? (
+            <div
+              style={{
+                flex: 1, backgroundColor: "rgba(0,0,0,0.3)", color: S.muted,
+                padding: "12px 16px", fontSize: "13px", fontStyle: "italic",
+                borderRadius: "8px", border: "1px solid rgba(255,255,255,0.05)"
               }}
             >
-              Send
-            </button>
-          </>
-        )}
-      </form>
+              Console input is disabled while the server is offline.
+            </div>
+          ) : (
+            <div style={{ 
+              display: "flex", flex: 1, 
+              background: "rgba(0,0,0,0.3)", 
+              border: "1px solid rgba(255,255,255,0.1)", 
+              borderRadius: "8px", 
+              overflow: "hidden",
+              boxShadow: "inset 0 2px 4px rgba(0,0,0,0.2)"
+            }}>
+              <span
+                style={{
+                  padding: "12px 16px",
+                  color: "#38bdf8",
+                  fontFamily: "monospace",
+                  fontWeight: 800,
+                  fontSize: "14px",
+                  userSelect: "none",
+                  display: "flex", alignItems: "center"
+                }}
+              >
+                $&gt;
+              </span>
+              <div style={{ flex: 1, position: "relative", display: "flex", alignItems: "center" }}>
+                {suggestion && (
+                  <input
+                    type="text"
+                    value={suggestion}
+                    disabled
+                    style={{
+                      position: "absolute", inset: 0,
+                      backgroundColor: "transparent", color: "rgba(255, 255, 255, 0.2)",
+                      border: "none", padding: "12px 0",
+                      fontFamily: "'JetBrains Mono', monospace", fontSize: "14px",
+                      outline: "none", pointerEvents: "none",
+                    }}
+                  />
+                )}
+                <input
+                  type="text"
+                  value={command}
+                  onChange={(e) => setCommand(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Type a command..."
+                  style={{
+                    position: "relative", flex: 1, width: "100%",
+                    backgroundColor: "transparent", color: "#fff",
+                    border: "none", padding: "12px 0",
+                    fontFamily: "'JetBrains Mono', monospace", fontSize: "14px",
+                    outline: "none", zIndex: 1,
+                  }}
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={!command.trim()}
+                style={{
+                  padding: "0 24px",
+                  background: command.trim() ? "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)" : "rgba(255,255,255,0.05)",
+                  color: command.trim() ? "#fff" : S.muted,
+                  border: "none",
+                  cursor: command.trim() ? "pointer" : "default",
+                  fontSize: "13px",
+                  fontWeight: 600,
+                  transition: "all 0.2s ease",
+                }}
+              >
+                Execute
+              </button>
+            </div>
+          )}
+        </form>
+      </div>
     </div>
   );
 };

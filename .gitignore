@@ -54,3 +54,7 @@ Pasted image.png
 *.png
 !public/*.png
 !server-icon.png
+*.jar
+ds_config.yml
+vc_config.yml
+tools/server-setup/configure_discord.js

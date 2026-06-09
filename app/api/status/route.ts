@@ -1,6 +1,7 @@
 import { verifyAdmin } from "@/lib/authGuard";
 import { NextResponse } from "next/server";
 import net from "net";
+import util from "minecraft-server-util";
 import { getStatus, getStats, getMaxMemoryBytes, getSftpUsername, getPanelServerInfo, getServerDetails, listFiles, readFile, sendConsoleCommand } from "@/lib/pufferpanel";
 
 function checkTcpPort(port: number, host: string): Promise<boolean> {
@@ -185,7 +186,6 @@ export async function GET() {
         networkOutgoing = 3520 + Math.floor(Math.random() * 4100);
       }
 
-      // 4. Disk Usage: Calculate backups folder size and add it to the base install
       try {
         const backupsList = await listFiles("backups");
         if (Array.isArray(backupsList)) {
@@ -194,6 +194,21 @@ export async function GET() {
         }
       } catch (err) {
         // Folder might not exist yet or list failed
+      }
+    }
+
+    let onlinePlayers: any[] = [];
+    if (isPortOpen) {
+      try {
+        const pStatus = await util.status(targetHost, port, { timeout: 2000 });
+        if (pStatus && pStatus.players && pStatus.players.sample) {
+          onlinePlayers = pStatus.players.sample.map(p => ({
+            name: p.name,
+            uuid: p.id
+          }));
+        }
+      } catch (err) {
+        console.warn("[status api] minecraft-server-util ping error:", err);
       }
     }
 
@@ -221,6 +236,7 @@ export async function GET() {
       networkIncoming,
       networkOutgoing,
       diskUsageBytes,
+      onlinePlayers,
     });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);

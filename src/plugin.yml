@@ -1,0 +1,4 @@
+name: InstallerPlugin
+version: 1.0
+main: com.c7.InstallerPlugin
+api-version: '1.21'

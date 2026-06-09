@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { auth, db } from "@/lib/firebase";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, User } from "firebase/auth";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { S } from "@/lib/constants";
 
 export default function LoginPage() {
@@ -25,7 +25,7 @@ export default function LoginPage() {
           email: user.email,
           role: isAdmin ? "admin" : "pending",
           permissions: isAdmin ? ["all"] : [],
-          createdAt: new Date().toISOString()
+          createdAt: serverTimestamp()
         });
       }
       router.push("/");

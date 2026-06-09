@@ -1,0 +1,4 @@
+name: MeowTips
+version: 1.0
+main: com.c7.MeowTips
+api-version: '1.21'

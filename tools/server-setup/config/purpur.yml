@@ -1,0 +1,21 @@
+settings:
+  use-alternate-keepalive: true
+  logger:
+    suppress-init-legacy-material-errors: false
+    suppress-ignored-advancement-warnings: false
+    suppress-unrecognized-recipe-errors: false
+    suppress-setblock-in-far-chunk-errors: false
+    suppress-sign-errors: false
+    suppress-player-login-errors: false
+    suppress-invalid-signature-errors: false
+world-settings:
+  default:
+    gameplay-mechanics:
+      disable-suffocation: false
+    mobs:
+      villager:
+        brain-ticks: 2
+        lobotomize:
+          enabled: true
+      phantom:
+        spawn-modifier: 0.1

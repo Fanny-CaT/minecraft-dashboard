@@ -93,10 +93,9 @@ export function StatusTab({
 
             {/* SERVER STATUS HERO CARD */}
             <div
+              className="glass-card"
               style={{
-                backgroundColor: S.content,
-                border: `1px solid ${S.border}`,
-                borderRadius: "4px",
+                borderRadius: "8px",
                 padding: "20px 24px",
                 display: "flex",
                 justifyContent: "space-between",
@@ -359,18 +358,18 @@ export function StatusTab({
             <CardHeader title="Live Server Activity" subtitle="Players currently online and recent console logs" />
             <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: "20px", marginTop: "4px" }}>
               {/* Players */}
-              <div style={{ backgroundColor: S.bg, border: `1px solid ${S.border}`, borderRadius: "4px", overflow: "hidden" }}>
+              <div className="glass-card" style={{ borderRadius: "8px", overflow: "hidden" }}>
                 <div style={{ padding: "10px", borderBottom: `1px solid ${S.border}`, fontSize: "11px", fontWeight: "bold", color: S.muted, display: "flex", justifyContent: "space-between", letterSpacing: "1px" }}>
                   <span>PLAYERS</span>
-                  <span style={{ color: S.cyan }}>{isOnline ? players.length : 0} ONLINE</span>
+                  <span style={{ color: S.cyan }}>{isOnline ? (statusData?.onlinePlayers || []).length : 0} ONLINE</span>
                 </div>
                 <div style={{ height: "240px", overflowY: "auto", padding: "10px", display: "flex", flexDirection: "column", gap: "8px" }}>
                   {!isOnline ? (
                     <div style={{ color: S.muted, fontSize: "11px", textAlign: "center", marginTop: "20px" }}>Server offline</div>
-                  ) : players.length === 0 ? (
+                  ) : (statusData?.onlinePlayers || []).length === 0 ? (
                     <div style={{ color: S.muted, fontSize: "11px", textAlign: "center", marginTop: "20px" }}>No players online</div>
                   ) : (
-                    players.map((p, i) => (
+                    (statusData?.onlinePlayers || []).map((p, i) => (
                       <div key={i} style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "13px", padding: "6px", backgroundColor: "rgba(255,255,255,0.02)", borderRadius: "4px" }}>
                         <img src={`https://minotar.net/helm/${p.name}/24.png`} alt={p.name} style={{ width: "24px", height: "24px", borderRadius: "3px" }} />
                         <span>{p.name}</span>
@@ -381,7 +380,7 @@ export function StatusTab({
               </div>
               
               {/* Console Preview */}
-              <div style={{ backgroundColor: "#111", border: `1px solid ${S.border}`, borderRadius: "4px", overflow: "hidden", display: "flex", flexDirection: "column" }}>
+              <div className="glass-card" style={{ borderRadius: "8px", overflow: "hidden", display: "flex", flexDirection: "column" }}>
                 <div style={{ padding: "10px", borderBottom: `1px solid ${S.border}`, fontSize: "11px", fontWeight: "bold", color: S.muted, letterSpacing: "1px" }}>
                   LATEST LOGS
                 </div>

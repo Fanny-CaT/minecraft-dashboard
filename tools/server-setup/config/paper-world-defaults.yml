@@ -1,0 +1,50 @@
+anticheat:
+  anti-xray:
+    enabled: true
+    engine-mode: 2
+    hidden-blocks:
+      - copper_ore
+      - deepslate_copper_ore
+      - raw_copper_block
+      - diamond_ore
+      - deepslate_diamond_ore
+      - gold_ore
+      - deepslate_gold_ore
+      - iron_ore
+      - deepslate_iron_ore
+      - raw_iron_block
+      - lapis_ore
+      - deepslate_lapis_ore
+      - redstone_ore
+      - deepslate_redstone_ore
+      - coal_ore
+      - deepslate_coal_ore
+      - emerald_ore
+      - deepslate_emerald_ore
+      - nether_quartz_ore
+      - nether_gold_ore
+      - ancient_debris
+    replacement-blocks:
+      - stone
+      - oak_planks
+      - deepslate
+    update-radius: 2
+chunks:
+  auto-save-interval: 6000
+  delay-chunk-unloads-by: 10s
+  entity-per-chunk-save-limit:
+    experience_orb: 16
+    snowball: 16
+    ender_pearl: 16
+    arrow: 16
+    fireball: 16
+    small_fireball: 16
+environment:
+  optimize-explosions: true
+tick-rates:
+  sensor:
+    villager:
+      secondarypoisensor: 40
+  behavior:
+    villager:
+      validatenearbypoi: -1

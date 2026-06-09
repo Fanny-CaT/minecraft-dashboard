@@ -21,11 +21,10 @@ export function Card({
 }) {
   return (
     <div
+      className="glass-card"
       style={{
-        backgroundColor: S.content,
-        border: `1px solid ${S.border}`,
         padding: "20px",
-        borderRadius: "4px",
+        borderRadius: "8px",
         display: "flex",
         flexDirection: "column",
         gap: "16px",
@@ -61,10 +60,9 @@ interface SparkCardProps {
 export function SparkCard({ title, value, sub, valueColor, data, sparkColor, gradientId, max, badge }: SparkCardProps) {
   return (
     <div
+      className="glass-card"
       style={{
-        backgroundColor: S.bg,
-        border: `1px solid ${S.border}`,
-        borderRadius: "3px",
+        borderRadius: "6px",
         padding: "16px",
         display: "flex",
         flexDirection: "column",

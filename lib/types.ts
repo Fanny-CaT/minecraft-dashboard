@@ -22,6 +22,7 @@ export interface StatusData {
   networkIncoming?: number;
   networkOutgoing?: number;
   diskUsageBytes?: number;
+  onlinePlayers?: any[];
 }
 
 export interface FileEntry {
@@ -52,6 +53,7 @@ export type Tab =
   | "chat"
   | "files"
   | "plugins"
+  | "datapacks"
   | "config"
   | "users"
   | "panel-users"

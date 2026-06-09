@@ -3,7 +3,13 @@
 import { fetchWithAuth } from "@/lib/apiClient";
 import React, { useEffect, useState, useRef, useCallback } from "react";
 
-import { StatusData, FileEntry, PlayerEntry, Tab, Toast } from "@/lib/types";
+import { StatusData, FileEntry, PlayerEntry, Toast } from "@/lib/types";
+import { useServerStore } from "@/store/useServerStore";
+import { useUIStore } from "@/store/useUIStore";
+import { useConsoleStore } from "@/store/useConsoleStore";
+import { useFilesStore } from "@/store/useFilesStore";
+import { useNetworkStore } from "@/store/useNetworkStore";
+import { usePlayersStore } from "@/store/usePlayersStore";
 import { S, POPULAR_PLUGINS_META } from "@/lib/constants";
 import {
   LayoutDashboard,
@@ -17,7 +23,8 @@ import {
   Network,
   ScrollText,
   Archive,
-  ShieldAlert
+  ShieldAlert,
+  Database
 } from "lucide-react";
 import { BarChart } from "@/components/BarChart";
 import { SparklineChart } from "@/components/SparklineChart";
@@ -29,6 +36,7 @@ import { StatusTab } from "@/components/tabs/StatusTab";
 import { SoftwareTab } from "@/components/tabs/SoftwareTab";
 import { SettingsTab } from "@/components/tabs/SettingsTab";
 import { PluginsTab } from "@/components/tabs/PluginsTab";
+import { DatapacksTab } from "@/components/tabs/DatapacksTab";
 import { ConfigTab } from "@/components/tabs/ConfigTab";
 import { NetworkingTab } from "@/components/tabs/NetworkingTab";
 import { ContextMenuProvider } from "@/components/ui/ContextMenu";
@@ -53,44 +61,33 @@ export default function Dashboard() {
   
 
 
-  // ── Toasts state ──
-  const [toasts, setToasts] = useState<Toast[]>([]);
+  // ── UI Store ──
+  const {
+    activeTab, setActiveTab,
+    toasts, addToast: showToast, removeToast,
+    powerMenuOpen, setPowerMenuOpen,
+    sidebarCollapsed, setSidebarCollapsed
+  } = useUIStore();
 
-  const showToast = useCallback((msg: string, type: "success" | "error" | "info" = "info") => {
-    const id = Math.random().toString(36).slice(2);
-    setToasts((prev) => [...prev, { id, type, msg }]);
-    
-    if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
-      new Notification("Minecraft Panel", {
-        body: msg,
-      });
-    }
-
-    setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 4500);
-  }, []);
-
-  // ── Status state ──
-  const [statusData, setStatusData] = useState<StatusData | null>(null);
-  const [cpuHistory, setCpuHistory] = useState<number[]>([]);
-  const [ramHistory, setRamHistory] = useState<number[]>([]);
-  const [tpsHistory, setTpsHistory] = useState<number[]>([]);
-  const [uptimeStart, setUptimeStart] = useState<number | null>(null);
-  const [uptimeDisplay, setUptimeDisplay] = useState("–");
-  const [lastUpdate, setLastUpdate] = useState("–");
-  const [statusError, setStatusError] = useState(false);
+  // ── Server Store ──
+  const {
+    statusData, setStatusData,
+    cpuHistory, ramHistory, tpsHistory,
+    uptimeStart, setUptimeStart,
+    uptimeDisplay, setUptimeDisplay,
+    lastUpdate, statusError,
+    actionLoading, setActionLoading,
+    fetchStatus
+  } = useServerStore();
 
   // ── Nav ──
-  const [activeTab, setActiveTab] = useState<Tab>("status");
+  // (Migrated to useUIStore)
 
-  // ── Action loading ──
-  const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const [powerMenuOpen, setPowerMenuOpen] = useState(false);
+  // Action loading migrated to useServerStore
+  // powerMenuOpen migrated to useUIStore
 
   // ── Console ──
-  const [logs, setLogs] = useState<string[]>([]);
-
+  const { logs, setLogs, hasNewLogs, setHasNewLogs, autoScroll, setAutoScroll, clearLogs } = useConsoleStore();
   const [wsMode, setWsMode] = useState<"live" | "polling">("polling");
   const [wsStatus, setWsStatus] = useState<
     "connecting" | "connected" | "error" | "disconnected"
@@ -110,17 +107,20 @@ export default function Dashboard() {
   const sentMessages = useRef<string[]>([]);
 
   // ── Files ──
-  const [currentPath, setCurrentPath] = useState("");
-  const [files, setFiles] = useState<FileEntry[]>([]);
-  const [loadingFiles, setLoadingFiles] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<FileEntry | null>(null);
-  const [fileContent, setFileContent] = useState("");
-  const [loadingFile, setLoadingFile] = useState(false);
-  const [savingFile, setSavingFile] = useState(false);
+  const {
+    currentPath, setCurrentPath,
+    files, setFiles,
+    loadingFiles, setLoadingFiles,
+    fileError, setFileError,
+    editingFile: selectedFile, setEditingFile: setSelectedFile,
+    fileContent, setFileContent,
+    savingFile, setSavingFile,
+    newFileName: newName, setNewFileName: setNewName,
+    isCreatingDir, setIsCreatingDir
+  } = useFilesStore();
   const [showNewFile, setShowNewFile] = useState(false);
   const [showNewFolder, setShowNewFolder] = useState(false);
-  const [newName, setNewName] = useState("");
-  const [fileError, setFileError] = useState("");
+
   const uploadInputRef = useRef<HTMLInputElement>(null);
   const [selectedFileNames, setSelectedFileNames] = useState<Set<string>>(new Set());
   const [fileSearchQuery, setFileSearchQuery] = useState("");
@@ -137,6 +137,18 @@ export default function Dashboard() {
   const [pluginError, setPluginError] = useState("");
   const [pluginCategory, setPluginCategory] = useState<string>("");
   const [selectedPluginDetails, setSelectedPluginDetails] = useState<any | null>(null);
+
+  // ── Datapacks ──
+  const [installedDatapacks, setInstalledDatapacks] = useState<{ name: string; size?: number }[]>([]);
+  const [loadingDatapacks, setLoadingDatapacks] = useState(false);
+  const [datapackSearch, setDatapackSearch] = useState("");
+  const [datapackSearchResults, setDatapackSearchResults] = useState<any[]>([]);
+  const [searchingDatapacks, setSearchingDatapacks] = useState(false);
+  const [installingDatapackIds, setInstallingDatapackIds] = useState<Record<string, boolean>>({});
+  const [datapackError, setDatapackError] = useState("");
+  const [datapackCategory, setDatapackCategory] = useState<string>("");
+  const [selectedDatapackDetails, setSelectedDatapackDetails] = useState<any | null>(null);
+
   const [confirmModal, setConfirmModal] = useState<{ title: string; message: string; resolve: (val: boolean) => void } | null>(null);
   const [promptModal, setPromptModal] = useState<{ title: string; label: string; defaultValue: string; resolve: (val: string | null) => void } | null>(null);
   const [promptValue, setPromptValue] = useState("");
@@ -181,10 +193,8 @@ export default function Dashboard() {
   const [configSearch, setConfigSearch] = useState("");
 
   // ── Users ──
+  const { players, setPlayers, loadingPlayers: loadingUsers, setLoadingPlayers: setLoadingUsers, playerError: userError, setPlayerError: setUserError } = usePlayersStore();
   const [userList, setUserList] = useState<"ops" | "banned-players" | "whitelist" | "banned-ips" | "all-players">("all-players");
-  const [players, setPlayers] = useState<PlayerEntry[]>([]);
-  const [loadingUsers, setLoadingUsers] = useState(false);
-  const [userError, setUserError] = useState("");
   const [userCmd, setUserCmd] = useState("");
 
   // Players Form Inputs
@@ -216,41 +226,14 @@ export default function Dashboard() {
   const [loadingLogFiles, setLoadingLogFiles] = useState(false);
 
   // ── Network bindings ──
-  const [bindIp, setBindIp] = useState("0.0.0.0");
-  const [bindPort, setBindPort] = useState("25565");
-  const [loadingNetwork, setLoadingNetwork] = useState(false);
-  const [savingNetwork, setSavingNetwork] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const { bindIp, setBindIp, bindPort, setBindPort, loadingNetwork, setLoadingNetwork, savingNetwork, setSavingNetwork } = useNetworkStore();
+  // sidebarCollapsed migrated to useUIStore
 
   // ─────────────────────────────────────────────────────────────────────────────
   // Status polling
   // ─────────────────────────────────────────────────────────────────────────────
 
-  const fetchStatus = useCallback(async () => {
-    try {
-      const res = await fetchWithAuth("/api/status", { cache: "no-store" });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data: StatusData = await res.json();
-
-      setStatusData(data);
-      setStatusError(false);
-      setLastUpdate(new Date().toLocaleTimeString());
-
-      const cpuPct = Math.min(data.cpu, 100);
-      const ramPct = data.maxMemory > 0 ? (data.memory / data.maxMemory) * 100 : 0;
-      const tpsVal = data.tps ?? 20;
-      setCpuHistory((h) => [...h.slice(-119), cpuPct]);
-      setRamHistory((h) => [...h.slice(-119), ramPct]);
-      setTpsHistory((h) => [...h.slice(-119), tpsVal]);
-
-      if (data.running && !uptimeStart) setUptimeStart(Date.now());
-      if (!data.running) setUptimeStart(null);
-    } catch {
-      setStatusError(true);
-      setStatusData((d) => (d ? { ...d, status: "offline", running: false } : null));
-    }
-  }, [uptimeStart]);
-
+  // fetchStatus is now handled by useServerStore
   useEffect(() => {
     fetchStatus();
     const intv = setInterval(fetchStatus, 5000);
@@ -415,12 +398,18 @@ export default function Dashboard() {
     if (wsMode !== "polling") return;
 
     let active = true;
+    let activeRequest: AbortController | null = null;
+
     const pollLogs = async () => {
+      if (activeRequest) return;
+      activeRequest = new AbortController();
+
       try {
         const res = await fetchWithAuth(`/api/console?time=${lastEpochRef.current}`, {
           cache: "no-store",
+          signal: activeRequest.signal
         });
-        if (!res.ok) return;
+        if (!res.ok) throw new Error("Network error");
         const data = await res.json();
         if (!active) return;
 
@@ -467,8 +456,12 @@ export default function Dashboard() {
         if (data.epoch && data.epoch > lastEpochRef.current) {
           lastEpochRef.current = data.epoch;
         }
-      } catch (err) {
-        console.error("Polling logs failed:", err);
+      } catch (err: any) {
+        if (err.name !== "AbortError") {
+          console.error("Polling logs failed:", err);
+        }
+      } finally {
+        activeRequest = null;
       }
     };
 
@@ -476,11 +469,12 @@ export default function Dashboard() {
     const iv = setInterval(pollLogs, 3000);
     return () => {
       active = false;
+      activeRequest?.abort();
       clearInterval(iv);
     };
   }, [wsMode]);
 
-  const [autoScroll, setAutoScroll] = useState(true);
+
 
   // Auto scroll console
   useEffect(() => {
@@ -942,6 +936,158 @@ export default function Dashboard() {
     }
   }, [pluginCategory]);
 
+  // ── Datapacks ──
+  const loadInstalledDatapacks = async () => {
+    setLoadingDatapacks(true);
+    setDatapackError("");
+    try {
+      const res = await fetchWithAuth("/api/files?path=world/datapacks", { cache: "no-store" });
+      if (!res.ok) throw new Error("Failed to load datapacks directory");
+      const list = await res.json();
+      if (Array.isArray(list)) {
+        const packs = list
+          .filter((f) => f.isFile && (f.name.endsWith(".zip") || f.name.endsWith(".jar")) && (f.size ?? 0) > 22)
+          .map((f) => ({
+            name: f.name,
+            size: f.size,
+          }));
+        setInstalledDatapacks(packs);
+      } else {
+        setInstalledDatapacks([]);
+      }
+    } catch (err: any) {
+      console.warn("Datapacks directory fetch error:", err);
+      try {
+        await fetchWithAuth("/api/files", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "mkdir", path: "world/datapacks" }),
+        });
+      } catch {}
+      setInstalledDatapacks([]);
+    } finally {
+      setLoadingDatapacks(false);
+    }
+  };
+
+  const searchDatapacks = async () => {
+    setSearchingDatapacks(true);
+    setDatapackError("");
+    try {
+      const cat = datapackCategory;
+      const res = await fetchWithAuth(
+        `/api/datapacks/search?q=${encodeURIComponent(datapackSearch)}&category=${cat}`
+      );
+      if (!res.ok) throw new Error("Search failed");
+      const data = await res.json();
+      setDatapackSearchResults(data);
+    } catch (err: any) {
+      setDatapackError(err.message || "Failed to search datapacks");
+    } finally {
+      setSearchingDatapacks(false);
+    }
+  };
+
+  const installDatapack = async (plugin: any) => {
+    setInstallingDatapackIds((prev) => ({ ...prev, [plugin.id]: true }));
+    setDatapackError("");
+    showToast(`Downloading & installing "${plugin.name}"...`, "info");
+    try {
+      const res = await fetchWithAuth("/api/datapacks/install", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          provider: plugin.provider,
+          downloadUrl: plugin.downloadUrl,
+          versionId: plugin.latestVersion,
+          projectId: plugin.id,
+          filename: `${plugin.name.split(/[|\-\s\(\[<]+/)[0].replace(/[^a-zA-Z0-9_-]/g, "")}.zip`,
+        }),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || "Installation failed");
+      }
+
+      await loadInstalledDatapacks();
+      showToast(`Installed "${plugin.name}". Reload world to apply (/reload).`, "success");
+    } catch (err: any) {
+      setDatapackError(err.message || "Failed to install datapack");
+      showToast(`Datapack install failed: ${err.message}`, "error");
+    } finally {
+      setInstallingDatapackIds((prev) => {
+        const next = { ...prev };
+        delete next[plugin.id];
+        return next;
+      });
+    }
+  };
+
+  const deleteDatapack = async (filename: string) => {
+    if (!(await confirmAction("Uninstall Datapack", `Are you sure you want to delete ${filename}?`))) return;
+    setLoadingDatapacks(true);
+    try {
+      const res = await fetchWithAuth("/api/files", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "delete", path: `world/datapacks/${filename}` }),
+      });
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || "Failed to delete datapack");
+      }
+      showToast(`Datapack "${filename}" uninstalled.`, "success");
+      await loadInstalledDatapacks();
+    } catch (err: any) {
+      setDatapackError(err.message || "Failed to delete datapack");
+      showToast(`Failed to uninstall datapack: ${err.message || err}`, "error");
+    } finally {
+      setLoadingDatapacks(false);
+    }
+  };
+
+  const getInstalledDatapackFile = (plugin: any) => {
+    if (!installedDatapacks || installedDatapacks.length === 0) return null;
+    
+    const searchNameClean = plugin.name.toLowerCase().replace(/[^a-z0-9]/g, "");
+    const pluginLower = plugin.name.toLowerCase();
+    const pluginLowerNoSpaces = pluginLower.replace(/ /g, '');
+    
+    return installedDatapacks.find((installed) => {
+      const rawName = installed.name.replace(/\.(zip|jar)$/i, "");
+      const installedNameClean = rawName.toLowerCase().replace(/[^a-z0-9]/g, "");
+      
+      if (installedNameClean === searchNameClean) return true;
+      
+      const rawLower = rawName.toLowerCase();
+      const rawLowerNoSpaces = rawLower.replace(/ /g, '');
+      
+      if (rawLower.startsWith(pluginLower)) {
+        const nextChar = rawLower.charAt(pluginLower.length);
+        if (nextChar === '-' || nextChar === '_' || nextChar === '.' || nextChar === ' ' || nextChar === '') {
+          return true;
+        }
+      }
+      
+      if (rawLowerNoSpaces.startsWith(pluginLowerNoSpaces)) {
+        const nextChar = rawLowerNoSpaces.charAt(pluginLowerNoSpaces.length);
+        if (nextChar === '-' || nextChar === '_' || nextChar === '.' || nextChar === '') {
+          return true;
+        }
+      }
+
+      return false;
+    });
+  };
+
+  // Trigger search on filter changes
+  useEffect(() => {
+    if (activeTab === "datapacks") {
+      searchDatapacks();
+    }
+  }, [datapackCategory]);
+
   const boostRam = async () => {
     if (!isOnline) return;
     setBoostingRam(true);
@@ -1374,6 +1520,9 @@ export default function Dashboard() {
     if (activeTab === "plugins") {
       loadInstalledPlugins();
     }
+    if (activeTab === "datapacks") {
+      loadInstalledDatapacks();
+    }
     if (activeTab === "backups") {
       loadBackups();
     }
@@ -1394,6 +1543,15 @@ export default function Dashboard() {
     }, 450);
     return () => clearTimeout(delayDebounceFn);
   }, [pluginSearch, pluginCategory, activeTab]);
+
+  // Debounced search for datapacks as user types
+  useEffect(() => {
+    if (activeTab !== "datapacks") return;
+    const delayDebounceFn = setTimeout(() => {
+      searchDatapacks();
+    }, 450);
+    return () => clearTimeout(delayDebounceFn);
+  }, [datapackSearch, datapackCategory, activeTab]);
 
   // ─────────────────────────────────────────────────────────────────────────────
   // Derived
@@ -1420,6 +1578,7 @@ export default function Dashboard() {
     { id: "logs", label: "Logs", icon: <ScrollText size={18} /> },
     { id: "files", label: "Files", icon: <FolderOpen size={18} /> },
     { id: "plugins", label: "Plugins", icon: <Puzzle size={18} /> },
+    { id: "datapacks", label: "Datapacks", icon: <Database size={18} /> },
     { id: "users", label: "Players", icon: <Users size={18} /> },
     { id: "backups", label: "Backups", icon: <Archive size={18} /> },
     { id: "config", label: "Files: Config", icon: <FileCog size={18} /> },
@@ -1978,6 +2137,16 @@ export default function Dashboard() {
         .caution-bar {
           animation: blink 3s infinite ease-in-out;
         }
+        .glass-panel {
+          background: rgba(20, 20, 20, 0.7);
+          backdrop-filter: blur(10px);
+          border: 1px solid rgba(255,255,255,0.05);
+        }
+        .text-gradient {
+          background: linear-gradient(to right, #ff9d00, #ff5e00);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+        }
       `,
         }}
       />
@@ -2057,10 +2226,11 @@ export default function Dashboard() {
           alt="MeowTopia"
           style={{ width: "22px", height: "22px", imageRendering: "pixelated", flexShrink: 0 }}
         />
-        <span style={{ fontWeight: 700, color: S.white, letterSpacing: "0.5px", fontSize: "13px" }}>MeowTopia</span>
+        <span className="text-gradient" style={{ fontWeight: 800, color: S.white, letterSpacing: "1px", fontSize: "14px" }}>MeowTopia</span>
         <span style={{ color: S.border }}>|</span>
         <span style={{ color: statusData?.status === "online" ? S.green : statusData?.status === "starting" || statusData?.status === "stopping" ? S.orange : S.red, fontFamily: "monospace", fontSize: "11px", fontWeight: 600 }}>
-          ● {(statusData?.status || "offline").toUpperCase()}
+          <span className={statusData?.status === "online" ? "status-indicator-live" : ""} style={{display:"inline-block", borderRadius:"50%", width:"8px", height:"8px", backgroundColor: statusData?.status === "online" ? S.green : statusData?.status === "starting" || statusData?.status === "stopping" ? S.orange : S.red, marginRight:"4px"}}></span>
+          {(statusData?.status || "offline").toUpperCase()}
         </span>
         <span style={{ color: S.border }}>|</span>
         <span style={{ color: S.muted, fontFamily: "monospace", fontSize: "11px" }}>
@@ -2097,14 +2267,15 @@ export default function Dashboard() {
       <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
         {/* ── Sidebar ── */}
         <div
+          className="glass-panel"
           style={{
             width: sidebarCollapsed ? "60px" : "190px",
-            backgroundColor: S.sidebar,
             borderRight: `1px solid ${S.border}`,
             display: "flex",
             flexDirection: "column",
             flexShrink: 0,
             transition: "width 0.2s ease",
+            zIndex: 10,
           }}
         >
           <nav style={{ flex: 1, overflowY: "auto" }}>
@@ -2212,17 +2383,15 @@ export default function Dashboard() {
 
         {/* ── Main content ── */}
         <div
+          className="glass-panel"
           style={{
             flex: 1,
-            backgroundColor: S.content,
             display: "flex",
             flexDirection: "column",
             minWidth: 0,
             overflow: "auto",
             margin: "20px",
-            border: `1px solid ${S.border}`,
-            boxShadow: "0 8px 24px rgba(0, 0, 0, 0.4)",
-            borderRadius: "8px",
+            borderRadius: "12px",
           }}
         >
           {/* ══ STATUS TAB ══ */}
@@ -2390,6 +2559,34 @@ export default function Dashboard() {
               loadInstalledPlugins={loadInstalledPlugins}
               loadingPlugins={loadingPlugins}
               installedPlugins={installedPlugins}
+              fmtFileSize={fmtFileSize}
+              Btn={Btn}
+              statusData={statusData}
+            />
+          )}
+
+          {/* ══ DATAPACKS ══ */}
+          {activeTab === "datapacks" && (
+            <DatapacksTab
+              TabHeader={TabHeader}
+              datapackError={datapackError}
+              setDatapackError={setDatapackError}
+              searchDatapacks={searchDatapacks}
+              datapackSearch={datapackSearch}
+              setDatapackSearch={setDatapackSearch}
+              datapackCategory={datapackCategory}
+              setDatapackCategory={setDatapackCategory}
+              searchingDatapacks={searchingDatapacks}
+              searchResults={datapackSearchResults}
+              getInstalledDatapackFile={getInstalledDatapackFile}
+              setSelectedDatapackDetails={setSelectedDatapackDetails}
+              deleteDatapack={deleteDatapack}
+              installingDatapackIds={installingDatapackIds}
+              installDatapack={installDatapack}
+              OutlineBtn={OutlineBtn}
+              loadInstalledDatapacks={loadInstalledDatapacks}
+              loadingDatapacks={loadingDatapacks}
+              installedDatapacks={installedDatapacks}
               fmtFileSize={fmtFileSize}
               Btn={Btn}
               statusData={statusData}
