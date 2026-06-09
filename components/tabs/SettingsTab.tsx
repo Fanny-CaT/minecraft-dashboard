@@ -129,6 +129,73 @@ export function SettingsTab({ statusData, startupForm, showToast }: SettingsTabP
         {startupForm}
       </div>
 
+      <div style={{ marginTop: "10px" }}>
+        <div style={{
+          backgroundColor: S.content,
+          border: `1px solid ${S.border}`,
+          padding: "20px",
+          borderRadius: "4px",
+          display: "flex",
+          flexDirection: "column",
+          gap: "16px"
+        }}>
+          <div>
+            <h2 style={{ fontSize: "14px", fontWeight: "bold", color: S.white, margin: 0 }}>Account Settings</h2>
+            <p style={{ fontSize: "11px", color: S.muted, margin: "4px 0 0" }}>Manage your dashboard account</p>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px", maxWidth: "400px" }}>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                const form = e.target as HTMLFormElement;
+                const newPassword = (form.elements.namedItem("newPassword") as HTMLInputElement).value;
+                try {
+                  const { auth } = await import("@/lib/firebase");
+                  const { updatePassword } = await import("firebase/auth");
+                  if (!auth.currentUser) throw new Error("Not logged in");
+                  await updatePassword(auth.currentUser, newPassword);
+                  showToast("Password updated successfully!", "success");
+                  form.reset();
+                } catch (err: any) {
+                  showToast(err.message || "Failed to update password. You may need to log out and log back in first.", "error");
+                }
+              }}
+              style={{ display: "flex", flexDirection: "column", gap: "12px" }}
+            >
+              <div>
+                <label style={{ display: "block", marginBottom: "6px", fontSize: "12px", color: S.muted, fontWeight: "500" }}>Change Password</label>
+                <input
+                  type="password"
+                  name="newPassword"
+                  placeholder="Enter new password"
+                  required
+                  minLength={6}
+                  style={{
+                    width: "100%", padding: "10px 12px", boxSizing: "border-box",
+                    backgroundColor: "rgba(0,0,0,0.2)", border: `1px solid ${S.border}`,
+                    borderRadius: "4px", color: S.white, outline: "none", fontSize: "13px",
+                    transition: "border-color 0.2s"
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = S.cyan}
+                  onBlur={(e) => e.target.style.borderColor = S.border}
+                />
+              </div>
+              <button
+                type="submit"
+                className="button-hover"
+                style={{
+                  backgroundColor: S.cyan, color: "#111", padding: "8px 16px",
+                  fontSize: "12px", fontWeight: "bold", border: "none", borderRadius: "3px",
+                  cursor: "pointer", alignSelf: "flex-start"
+                }}
+              >
+                Update Password
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
     </div>
   );
 }

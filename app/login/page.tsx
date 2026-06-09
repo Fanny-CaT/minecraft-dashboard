@@ -141,7 +141,7 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div style={{ textAlign: "center", marginTop: "16px" }}>
+        <div style={{ textAlign: "center", marginTop: "16px", display: "flex", flexDirection: "column", gap: "8px" }}>
           <button
             type="button"
             onClick={() => setIsSignUp(!isSignUp)}
@@ -151,6 +151,29 @@ export default function LoginPage() {
             }}
           >
             {isSignUp ? "Already have an account? Sign In" : "Need an account? Sign Up"}
+          </button>
+          
+          <button
+            type="button"
+            onClick={async () => {
+              if (!email) {
+                setError("Please enter your email to reset password.");
+                return;
+              }
+              try {
+                const { sendPasswordResetEmail } = await import("firebase/auth");
+                await sendPasswordResetEmail(auth, email);
+                setError("Password reset email sent! Check your inbox.");
+              } catch (err: any) {
+                setError(err.message || "Failed to send reset email.");
+              }
+            }}
+            style={{
+              background: "none", border: "none", color: S.muted,
+              textDecoration: "underline", cursor: "pointer", fontSize: "13px"
+            }}
+          >
+            Forgot Password?
           </button>
         </div>
 
