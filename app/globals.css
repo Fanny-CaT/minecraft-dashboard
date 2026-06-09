@@ -148,7 +148,54 @@ input:focus, select:focus {
 }
 
 /* Base Body enhancement for Glassmorphism */
-body {
-  background: radial-gradient(circle at top right, #1e293b, #0f172a);
-  background-attachment: fixed;
+body::before {
+  content: "";
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  background: radial-gradient(circle at 15% 50%, rgba(77, 201, 176, 0.05), transparent 40%),
+              radial-gradient(circle at 85% 30%, rgba(0, 122, 204, 0.05), transparent 40%);
+  pointer-events: none;
+  z-index: -1;
 }
+
+/* Markdown styling for plugin/datapack details */
+.markdown-body {
+  color: #d4d4d4;
+}
+.markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4, .markdown-body h5, .markdown-body h6 {
+  color: #ffffff;
+  margin-top: 16px;
+  margin-bottom: 8px;
+  font-weight: 600;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  padding-bottom: 4px;
+}
+.markdown-body h1 { font-size: 1.5em; }
+.markdown-body h2 { font-size: 1.3em; }
+.markdown-body h3 { font-size: 1.1em; }
+.markdown-body p { margin-top: 0; margin-bottom: 12px; }
+.markdown-body a { color: #4dc9b0; text-decoration: none; }
+.markdown-body a:hover { text-decoration: underline; }
+.markdown-body ul, .markdown-body ol { margin-top: 0; margin-bottom: 12px; padding-left: 20px; }
+.markdown-body code {
+  background-color: rgba(255,255,255,0.1);
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-family: monospace;
+  font-size: 0.9em;
+}
+.markdown-body pre {
+  background-color: #1e1e1e;
+  padding: 10px;
+  border-radius: 4px;
+  overflow-x: auto;
+  margin-bottom: 12px;
+}
+.markdown-body pre code { background-color: transparent; padding: 0; }
+.markdown-body blockquote {
+  border-left: 3px solid #4dc9b0;
+  margin: 0 0 12px 0;
+  padding-left: 12px;
+  color: #858585;
+}
+.markdown-body img { max-width: 100%; height: auto; border-radius: 4px; }

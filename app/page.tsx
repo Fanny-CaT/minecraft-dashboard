@@ -24,8 +24,11 @@ import {
   ScrollText,
   Archive,
   ShieldAlert,
-  Database
+  Database,
+  ExternalLink
 } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { BarChart } from "@/components/BarChart";
 import { SparklineChart } from "@/components/SparklineChart";
 import { FilesTab } from "@/components/tabs/FilesTab";
@@ -1392,6 +1395,47 @@ export default function Dashboard() {
       showToast("Failed to delete backup file.", "error");
     }
   };
+
+  const activeProjectDetails = selectedPluginDetails || selectedDatapackDetails;
+  
+  const closeProjectDetails = () => {
+    setSelectedPluginDetails(null);
+    setSelectedDatapackDetails(null);
+  };
+
+  useEffect(() => {
+    const details = selectedPluginDetails || selectedDatapackDetails;
+    if (details && !details._fetched && details.provider && details.id) {
+      fetchWithAuth(`/api/plugins/details?provider=${details.provider}&id=${details.id}`)
+        .then(res => res.json())
+        .then(data => {
+          if (!data.error) {
+            const updated = {
+              ...details,
+              extendedDescription: data.description,
+              wikiUrl: data.wikiUrl,
+              sourceUrl: data.sourceUrl,
+              issuesUrl: data.issuesUrl,
+              discordUrl: data.discordUrl,
+              author: data.author,
+              _fetched: true
+            };
+            if (selectedPluginDetails) setSelectedPluginDetails(updated);
+            if (selectedDatapackDetails) setSelectedDatapackDetails(updated);
+          } else {
+            // mark as fetched so it doesn't loop
+            const updated = { ...details, _fetched: true };
+            if (selectedPluginDetails) setSelectedPluginDetails(updated);
+            if (selectedDatapackDetails) setSelectedDatapackDetails(updated);
+          }
+        })
+        .catch(() => {
+          const updated = { ...details, _fetched: true };
+          if (selectedPluginDetails) setSelectedPluginDetails(updated);
+          if (selectedDatapackDetails) setSelectedDatapackDetails(updated);
+        });
+    }
+  }, [selectedPluginDetails, selectedDatapackDetails]);
 
   // ─────────────────────────────────────────────────────────────────────────────
   // Logs File Viewer
@@ -2784,7 +2828,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      {selectedPluginDetails && (
+      {activeProjectDetails && (
         <div
           style={{
             position: "fixed",
@@ -2799,7 +2843,7 @@ export default function Dashboard() {
             zIndex: 100000,
             padding: "20px",
           }}
-          onClick={() => setSelectedPluginDetails(null)}
+          onClick={closeProjectDetails}
         >
           <div
             style={{
@@ -2818,18 +2862,18 @@ export default function Dashboard() {
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
               <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-                <PluginIcon url={selectedPluginDetails.iconUrl} size={36} color={selectedPluginDetails.color} />
+                <PluginIcon url={activeProjectDetails.iconUrl} size={36} color={activeProjectDetails.color} />
                 <div>
                   <div style={{ fontSize: "16px", fontWeight: "bold", color: S.white }}>
-                    {selectedPluginDetails.name}
+                    {activeProjectDetails.name}
                   </div>
                   <div style={{ fontSize: "11px", color: S.muted, marginTop: "2px" }}>
-                    Provider: {selectedPluginDetails.provider}
+                    Provider: {activeProjectDetails.provider} {activeProjectDetails.author && `• Author: ${activeProjectDetails.author}`}
                   </div>
                 </div>
               </div>
               <button
-                onClick={() => setSelectedPluginDetails(null)}
+                onClick={closeProjectDetails}
                 style={{
                   background: "none",
                   border: "none",
@@ -2844,37 +2888,43 @@ export default function Dashboard() {
               </button>
             </div>
 
-            <div style={{ borderTop: `1px solid ${S.border}`, paddingTop: "12px" }}>
+            <div style={{ borderTop: `1px solid ${S.border}`, paddingTop: "12px", flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
               <div style={{ fontSize: "11px", color: S.muted, fontWeight: "bold", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
                 Description
               </div>
-              <div style={{ fontSize: "13px", color: S.white, lineHeight: "1.5", maxHeight: "150px", overflowY: "auto" }}>
-                {selectedPluginDetails.description || selectedPluginDetails.tagline || "No description available."}
+              <div style={{ fontSize: "13px", color: S.white, lineHeight: "1.5", maxHeight: "300px", overflowY: "auto", flex: 1, padding: "8px", backgroundColor: "rgba(0,0,0,0.15)", borderRadius: "4px" }} className="markdown-body">
+                {activeProjectDetails.extendedDescription ? (
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {activeProjectDetails.extendedDescription}
+                  </ReactMarkdown>
+                ) : (
+                  activeProjectDetails.description || activeProjectDetails.tagline || (activeProjectDetails._fetched ? "No description available." : "Loading details...")
+                )}
               </div>
             </div>
 
-            {selectedPluginDetails.downloads !== undefined && selectedPluginDetails.downloads > 0 && (
+            {activeProjectDetails.downloads !== undefined && activeProjectDetails.downloads > 0 && (
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", backgroundColor: "#181818", padding: "8px 12px", borderRadius: "3px" }}>
                 <div>
                   <span style={{ color: S.muted }}>Downloads:</span>{" "}
-                  <span style={{ color: S.white, fontWeight: "bold" }}>{selectedPluginDetails.downloads.toLocaleString()}</span>
+                  <span style={{ color: S.white, fontWeight: "bold" }}>{activeProjectDetails.downloads.toLocaleString()}</span>
                 </div>
-                {selectedPluginDetails.categories && selectedPluginDetails.categories.length > 0 && (
+                {activeProjectDetails.categories && activeProjectDetails.categories.length > 0 && (
                   <div>
                     <span style={{ color: S.muted }}>Tags:</span>{" "}
-                    <span style={{ color: S.cyan }}>{selectedPluginDetails.categories.join(", ")}</span>
+                    <span style={{ color: S.cyan }}>{activeProjectDetails.categories.join(", ")}</span>
                   </div>
                 )}
               </div>
             )}
 
-            {selectedPluginDetails.versions && selectedPluginDetails.versions.length > 0 && (
+            {activeProjectDetails.versions && activeProjectDetails.versions.length > 0 && (
               <div>
                 <div style={{ fontSize: "11px", color: S.muted, fontWeight: "bold", marginBottom: "6px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
                   Compatible Versions
                 </div>
                 <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-                  {selectedPluginDetails.versions.slice(0, 10).map((v: string) => (
+                  {activeProjectDetails.versions.slice(0, 10).map((v: string) => (
                     <span
                       key={v}
                       style={{
@@ -2889,18 +2939,30 @@ export default function Dashboard() {
                       {v}
                     </span>
                   ))}
-                  {selectedPluginDetails.versions.length > 10 && (
+                  {activeProjectDetails.versions.length > 10 && (
                     <span style={{ fontSize: "10px", color: S.muted, alignSelf: "center" }}>
-                      +{selectedPluginDetails.versions.length - 10} more
+                      +{activeProjectDetails.versions.length - 10} more
                     </span>
                   )}
                 </div>
               </div>
             )}
 
-            <div style={{ display: "flex", justifyContent: "flex-end", borderTop: `1px solid ${S.border}`, paddingTop: "12px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", borderTop: `1px solid ${S.border}`, paddingTop: "12px" }}>
+              <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+                {activeProjectDetails.sourceUrl && (
+                  <a href={activeProjectDetails.sourceUrl} target="_blank" rel="noreferrer" style={{ fontSize: "12px", color: S.cyan, display: "flex", alignItems: "center", gap: "4px" }}>
+                    Source <ExternalLink size={12} />
+                  </a>
+                )}
+                {activeProjectDetails.wikiUrl && (
+                  <a href={activeProjectDetails.wikiUrl} target="_blank" rel="noreferrer" style={{ fontSize: "12px", color: S.cyan, display: "flex", alignItems: "center", gap: "4px" }}>
+                    Wiki <ExternalLink size={12} />
+                  </a>
+                )}
+              </div>
               <button
-                onClick={() => setSelectedPluginDetails(null)}
+                onClick={closeProjectDetails}
                 style={{
                   backgroundColor: S.cyan,
                   border: "none",
